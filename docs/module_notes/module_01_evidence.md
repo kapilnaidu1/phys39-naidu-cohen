@@ -5,7 +5,7 @@
 **Date:** September 2, 2026 (data collection), _[submission date]_
 **Repository URL:** https://github.com/kapilnaidu1/phys39-naidu-cohen
 **Branch:** main
-**Pushed Git checkpoint (full commit hash):** _[paste the full 40-character hash here]_
+**Pushed Git checkpoint (full commit hash):** `a4ef57f81b18333d24000e1ad54695b8305b01a4`
 
 ---
 
@@ -271,5 +271,7 @@ The fusion threshold is not a single universal frequency. It rises with luminanc
 
 - Repository: https://github.com/kapilnaidu1/phys39-naidu-cohen
 - Branch: main
-- Full commit hash: _[paste the 40-character hash]_
-- Commit message: Module 1: sketches, averaging data and evidence note
+- Full commit hash: `a4ef57f81b18333d24000e1ad54695b8305b01a4`
+- Commit message: Correct series resistor to 3.25k and note that Blink required no recorded data
+
+Note: the hash above is the commit that was pushed at the time this note was written. If figures or the raw data file are added afterwards, replace it with the hash of the final pushed commit before exporting the PDF, so that the citation matches the version being submitted.

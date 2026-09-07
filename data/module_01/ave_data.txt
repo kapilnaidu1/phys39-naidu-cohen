@@ -1,13 +1,258 @@
-Phys 39 Module 1, Part 3C and 3D raw output
-Naidu / Cohen
+Phys 39 Module 1, Parts 3C and 3D
+Raw Serial Monitor capture from code/module_01/averaging_compare.ino
+Naidu / Cohen, 2 September 2026
 
-Captured from Serial Monitor at 9600 baud while averaging_compare.ino was
-running with HUNT_MODE = false. Each cycle is 100 Ave1 points, then 100
-Ave1000 points, then one Timing line.
+Serial Monitor at 9600 baud, HUNT_MODE = false.
+Each cycle is 100 Ave1 points, then 100 Ave1000 points, then one Timing line.
 
+WORKING POINT
 The potentiometer was fixed on the boundary between ADC codes 863 and 864:
-  code 863 -> 4.217986 V
-  code 864 -> 4.222874 V
-  separation 4.888 mV, one ADC count
+    code 863 -> 4.217986 V
+    code 864 -> 4.222874 V
+    separation 4.888 mV, exactly one ADC count
 
---- PASTE THE FULL SERIAL MONITOR CAPTURE BELOW THIS LINE ---
+The sketch ran continuously for roughly 25 cycles at this setting. Reproduced
+below is the single complete cycle used for every number in section 4 of
+docs/module_notes/module_01_evidence.md, identified by the timing lines that
+bracket it. The surrounding cycles are consistent with it and are held in the
+team's working document.
+
+RESULTS DERIVED FROM THIS CYCLE
+    Ave1     : 78 readings at code 864, 22 at code 863
+               mean 4.221799 V, s = 2.035 mV
+    Ave1000  : mean 4.222477 V, s = 0.0726 mV
+    measured s1000/s1 = 0.0357   against 1/sqrt(1000) = 0.0316
+    effective bits gained = log2(2.035/0.0726) = 4.81   (ideal 4.98)
+    smallest nonzero jump, Ave1    = 4.888 mV  (one ADC count)
+    smallest nonzero jump, Ave1000 = 4.9 uV    (one count / 1000)
+
+TIMING, ELEVEN CONSECUTIVE CYCLES
+    112000, 112004, 112008, 112012, 112016, 112024,
+    112064, 112068, 112080, 112084, 112104 us
+    mean 112042 us for 1000 conversions
+    = 112.0 us per conversion = 8925 conversions per second
+
+===============================================================================
+Timing elapsed_us=112068 conversions_per_second=8923.2
+===============================================================================
+
+Ave1_Point_1 Voltage_V:4.222874
+Ave1_Point_2 Voltage_V:4.217986
+Ave1_Point_3 Voltage_V:4.222874
+Ave1_Point_4 Voltage_V:4.217986
+Ave1_Point_5 Voltage_V:4.217986
+Ave1_Point_6 Voltage_V:4.222874
+Ave1_Point_7 Voltage_V:4.217986
+Ave1_Point_8 Voltage_V:4.222874
+Ave1_Point_9 Voltage_V:4.222874
+Ave1_Point_10 Voltage_V:4.217986
+Ave1_Point_11 Voltage_V:4.222874
+Ave1_Point_12 Voltage_V:4.222874
+Ave1_Point_13 Voltage_V:4.217986
+Ave1_Point_14 Voltage_V:4.222874
+Ave1_Point_15 Voltage_V:4.222874
+Ave1_Point_16 Voltage_V:4.222874
+Ave1_Point_17 Voltage_V:4.222874
+Ave1_Point_18 Voltage_V:4.222874
+Ave1_Point_19 Voltage_V:4.222874
+Ave1_Point_20 Voltage_V:4.222874
+Ave1_Point_21 Voltage_V:4.222874
+Ave1_Point_22 Voltage_V:4.222874
+Ave1_Point_23 Voltage_V:4.222874
+Ave1_Point_24 Voltage_V:4.222874
+Ave1_Point_25 Voltage_V:4.217986
+Ave1_Point_26 Voltage_V:4.222874
+Ave1_Point_27 Voltage_V:4.222874
+Ave1_Point_28 Voltage_V:4.222874
+Ave1_Point_29 Voltage_V:4.222874
+Ave1_Point_30 Voltage_V:4.222874
+Ave1_Point_31 Voltage_V:4.222874
+Ave1_Point_32 Voltage_V:4.222874
+Ave1_Point_33 Voltage_V:4.222874
+Ave1_Point_34 Voltage_V:4.222874
+Ave1_Point_35 Voltage_V:4.222874
+Ave1_Point_36 Voltage_V:4.222874
+Ave1_Point_37 Voltage_V:4.217986
+Ave1_Point_38 Voltage_V:4.222874
+Ave1_Point_39 Voltage_V:4.217986
+Ave1_Point_40 Voltage_V:4.222874
+Ave1_Point_41 Voltage_V:4.222874
+Ave1_Point_42 Voltage_V:4.222874
+Ave1_Point_43 Voltage_V:4.222874
+Ave1_Point_44 Voltage_V:4.217986
+Ave1_Point_45 Voltage_V:4.222874
+Ave1_Point_46 Voltage_V:4.222874
+Ave1_Point_47 Voltage_V:4.222874
+Ave1_Point_48 Voltage_V:4.217986
+Ave1_Point_49 Voltage_V:4.222874
+Ave1_Point_50 Voltage_V:4.222874
+Ave1_Point_51 Voltage_V:4.222874
+Ave1_Point_52 Voltage_V:4.222874
+Ave1_Point_53 Voltage_V:4.222874
+Ave1_Point_54 Voltage_V:4.222874
+Ave1_Point_55 Voltage_V:4.222874
+Ave1_Point_56 Voltage_V:4.217986
+Ave1_Point_57 Voltage_V:4.222874
+Ave1_Point_58 Voltage_V:4.222874
+Ave1_Point_59 Voltage_V:4.217986
+Ave1_Point_60 Voltage_V:4.222874
+Ave1_Point_61 Voltage_V:4.222874
+Ave1_Point_62 Voltage_V:4.222874
+Ave1_Point_63 Voltage_V:4.222874
+Ave1_Point_64 Voltage_V:4.217986
+Ave1_Point_65 Voltage_V:4.222874
+Ave1_Point_66 Voltage_V:4.222874
+Ave1_Point_67 Voltage_V:4.222874
+Ave1_Point_68 Voltage_V:4.217986
+Ave1_Point_69 Voltage_V:4.222874
+Ave1_Point_70 Voltage_V:4.222874
+Ave1_Point_71 Voltage_V:4.222874
+Ave1_Point_72 Voltage_V:4.222874
+Ave1_Point_73 Voltage_V:4.217986
+Ave1_Point_74 Voltage_V:4.222874
+Ave1_Point_75 Voltage_V:4.222874
+Ave1_Point_76 Voltage_V:4.217986
+Ave1_Point_77 Voltage_V:4.222874
+Ave1_Point_78 Voltage_V:4.222874
+Ave1_Point_79 Voltage_V:4.222874
+Ave1_Point_80 Voltage_V:4.217986
+Ave1_Point_81 Voltage_V:4.222874
+Ave1_Point_82 Voltage_V:4.222874
+Ave1_Point_83 Voltage_V:4.217986
+Ave1_Point_84 Voltage_V:4.222874
+Ave1_Point_85 Voltage_V:4.222874
+Ave1_Point_86 Voltage_V:4.222874
+Ave1_Point_87 Voltage_V:4.222874
+Ave1_Point_88 Voltage_V:4.222874
+Ave1_Point_89 Voltage_V:4.222874
+Ave1_Point_90 Voltage_V:4.222874
+Ave1_Point_91 Voltage_V:4.222874
+Ave1_Point_92 Voltage_V:4.217986
+Ave1_Point_93 Voltage_V:4.222874
+Ave1_Point_94 Voltage_V:4.217986
+Ave1_Point_95 Voltage_V:4.222874
+Ave1_Point_96 Voltage_V:4.222874
+Ave1_Point_97 Voltage_V:4.222874
+Ave1_Point_98 Voltage_V:4.222874
+Ave1_Point_99 Voltage_V:4.217986
+Ave1_Point_100 Voltage_V:4.222874
+Ave1000_Point_1 Voltage_V:4.222527
+Ave1000_Point_2 Voltage_V:4.222474
+Ave1000_Point_3 Voltage_V:4.222527
+Ave1000_Point_4 Voltage_V:4.222326
+Ave1000_Point_5 Voltage_V:4.222478
+Ave1000_Point_6 Voltage_V:4.222429
+Ave1000_Point_7 Voltage_V:4.222464
+Ave1000_Point_8 Voltage_V:4.222424
+Ave1000_Point_9 Voltage_V:4.222361
+Ave1000_Point_10 Voltage_V:4.222234
+Ave1000_Point_11 Voltage_V:4.222415
+Ave1000_Point_12 Voltage_V:4.222375
+Ave1000_Point_13 Voltage_V:4.222394
+Ave1000_Point_14 Voltage_V:4.222454
+Ave1000_Point_15 Voltage_V:4.222346
+Ave1000_Point_16 Voltage_V:4.222444
+Ave1000_Point_17 Voltage_V:4.222404
+Ave1000_Point_18 Voltage_V:4.222390
+Ave1000_Point_19 Voltage_V:4.222400
+Ave1000_Point_20 Voltage_V:4.222341
+Ave1000_Point_21 Voltage_V:4.222420
+Ave1000_Point_22 Voltage_V:4.222547
+Ave1000_Point_23 Voltage_V:4.222410
+Ave1000_Point_24 Voltage_V:4.222380
+Ave1000_Point_25 Voltage_V:4.222454
+Ave1000_Point_26 Voltage_V:4.222429
+Ave1000_Point_27 Voltage_V:4.222566
+Ave1000_Point_28 Voltage_V:4.222497
+Ave1000_Point_29 Voltage_V:4.222390
+Ave1000_Point_30 Voltage_V:4.222449
+Ave1000_Point_31 Voltage_V:4.222394
+Ave1000_Point_32 Voltage_V:4.222400
+Ave1000_Point_33 Voltage_V:4.222483
+Ave1000_Point_34 Voltage_V:4.222404
+Ave1000_Point_35 Voltage_V:4.222527
+Ave1000_Point_36 Voltage_V:4.222404
+Ave1000_Point_37 Voltage_V:4.222507
+Ave1000_Point_38 Voltage_V:4.222380
+Ave1000_Point_39 Voltage_V:4.222497
+Ave1000_Point_40 Voltage_V:4.222458
+Ave1000_Point_41 Voltage_V:4.222439
+Ave1000_Point_42 Voltage_V:4.222507
+Ave1000_Point_43 Voltage_V:4.222507
+Ave1000_Point_44 Voltage_V:4.222404
+Ave1000_Point_45 Voltage_V:4.222410
+Ave1000_Point_46 Voltage_V:4.222488
+Ave1000_Point_47 Voltage_V:4.222410
+Ave1000_Point_48 Voltage_V:4.222478
+Ave1000_Point_49 Voltage_V:4.222527
+Ave1000_Point_50 Voltage_V:4.222556
+Ave1000_Point_51 Voltage_V:4.222561
+Ave1000_Point_52 Voltage_V:4.222512
+Ave1000_Point_53 Voltage_V:4.222566
+Ave1000_Point_54 Voltage_V:4.222493
+Ave1000_Point_55 Voltage_V:4.222571
+Ave1000_Point_56 Voltage_V:4.222326
+Ave1000_Point_57 Voltage_V:4.222527
+Ave1000_Point_58 Voltage_V:4.222468
+Ave1000_Point_59 Voltage_V:4.222458
+Ave1000_Point_60 Voltage_V:4.222522
+Ave1000_Point_61 Voltage_V:4.222434
+Ave1000_Point_62 Voltage_V:4.222483
+Ave1000_Point_63 Voltage_V:4.222522
+Ave1000_Point_64 Voltage_V:4.222512
+Ave1000_Point_65 Voltage_V:4.222537
+Ave1000_Point_66 Voltage_V:4.222394
+Ave1000_Point_67 Voltage_V:4.222429
+Ave1000_Point_68 Voltage_V:4.222449
+Ave1000_Point_69 Voltage_V:4.222542
+Ave1000_Point_70 Voltage_V:4.222595
+Ave1000_Point_71 Voltage_V:4.222458
+Ave1000_Point_72 Voltage_V:4.222420
+Ave1000_Point_73 Voltage_V:4.222527
+Ave1000_Point_74 Voltage_V:4.222478
+Ave1000_Point_75 Voltage_V:4.222590
+Ave1000_Point_76 Voltage_V:4.222483
+Ave1000_Point_77 Voltage_V:4.222566
+Ave1000_Point_78 Voltage_V:4.222537
+Ave1000_Point_79 Voltage_V:4.222551
+Ave1000_Point_80 Voltage_V:4.222561
+Ave1000_Point_81 Voltage_V:4.222497
+Ave1000_Point_82 Voltage_V:4.222561
+Ave1000_Point_83 Voltage_V:4.222566
+Ave1000_Point_84 Voltage_V:4.222581
+Ave1000_Point_85 Voltage_V:4.222527
+Ave1000_Point_86 Voltage_V:4.222474
+Ave1000_Point_87 Voltage_V:4.222522
+Ave1000_Point_88 Voltage_V:4.222566
+Ave1000_Point_89 Voltage_V:4.222507
+Ave1000_Point_90 Voltage_V:4.222600
+Ave1000_Point_91 Voltage_V:4.222483
+Ave1000_Point_92 Voltage_V:4.222488
+Ave1000_Point_93 Voltage_V:4.222464
+Ave1000_Point_94 Voltage_V:4.222478
+Ave1000_Point_95 Voltage_V:4.222581
+Ave1000_Point_96 Voltage_V:4.222600
+Ave1000_Point_97 Voltage_V:4.222571
+Ave1000_Point_98 Voltage_V:4.222561
+Ave1000_Point_99 Voltage_V:4.222522
+Ave1000_Point_100 Voltage_V:4.222517
+
+===============================================================================
+Timing elapsed_us=112104 conversions_per_second=8920.3
+===============================================================================
+
+NOTE ON THE CODE-512 OBSERVATION (section 4.5 of the evidence note)
+
+Earlier in the same session the potentiometer sat at code 512 (2.502444 V),
+inside a code window rather than on a boundary. There all 100 Ave1 readings
+returned 2.502444 V identically, giving s1 = 0, while the Ave1000 block still
+varied over four levels spaced by one count / 1000:
+
+    2.502444 V   62 points
+    2.502439 V   32 points
+    2.502434 V    4 points
+    2.502429 V    2 points
+
+    mean 2.502442 V, s1000 = 3.3 uV
+    p from the mean     = 4.6e-4
+    p from the variance = 4.5e-4

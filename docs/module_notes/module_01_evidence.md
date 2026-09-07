@@ -24,9 +24,11 @@
 | Controller | Arduino Uno |
 | Power stage | H-bridge driver and 12 V / 10 A supply |
 | Thermal load | Aluminium heat exchanger |
-| Safety cutoff | _[thermal cutout switch on the heat exchanger — confirm with the instructor]_ |
+| Safety cutoff | Bimetallic thermal cutout switch (snap-disc thermostat) bolted to the aluminium plate |
 
-Per the Module 1 safety boundary, the Arduino was powered only from USB and **the TEC power supply remained off for the entire session.** The TEC, H-bridge, heat exchanger, thermistor and cutoff were inspected but never energised.
+The safety cutoff is the silver disc with two spade terminals visible on the aluminium plate in Figure 1, immediately beside the blue mounting collar. It is wired back through the terminal block so that it sits in series with the TEC supply, and it opens the circuit if the plate temperature exceeds its trip point. The assembly is labelled **TEC 7**.
+
+Per the Module 1 safety boundary, the Arduino was powered only from USB and **the TEC power supply remained off for the entire session.** The 12 V / 10 A supply, the terminal block, the TEC, the heat exchanger, the thermistor and the cutoff were inspected but never energised.
 
 ### 1.2 Measurement circuit
 
@@ -129,7 +131,7 @@ All results in §4.2 to §4.4 come from one complete cycle at this fixed setting
 
 ![Ave1000 block only](../images/module01_plotter_ave1000.png)
 
-**Figure 7.** Averaged block alone, vertical span a few tens of microvolts. Steps are whole multiples of 4.888 µV, one ADC count divided by 1000.
+**Figure 7.** A 1000-reading averaged block alone, with the vertical axis spanning only 7 µV. Every step is a whole multiple of 4.888 µV, one ADC count divided by 1000. Note that this capture is from the **code-512 working point** rather than the code-863/864 point used for the table, because that is where the averaged block was flat enough for the plotter to autoscale down to a few microvolts and make the individual 4.888 µV steps visible. The quantitative discussion of that dataset is in §4.5.
 
 ### 4.3 Discrete voltage jumps (part b)
 
@@ -251,6 +253,10 @@ For reference, the expected values had they been measured are a period of 1.00 s
 
 **Overshoot.** Maximum reads 5.36 to 5.44 V and Minimum reads −0.12 to −0.20 V rather than a clean 5.00 V and 0 V. This is ringing on the fast switching edges captured by the peak detectors, not a supply anomaly. The flat portions of the trace sit at the expected levels.
 
+![Rise time measurement](../images/module01_scope_risetime.jpg)
+
+**Figure 10.** Rise-time measurement on the same PWM waveform: **3.238 µs**. The edge is fast but not instantaneous, and its shape is set by the ATmega328P output driver and the probe loading rather than by anything in the sketch.
+
 ### 6.3 Why the LED appears continuously lit
 
 Human flicker fusion occurs somewhere in the range of roughly 50 to 60 Hz for ordinary viewing conditions. Our measured PWM frequency of 490 Hz is eight to ten times above that, so the eye integrates over many complete cycles and perceives only the time-averaged brightness. The LED is in fact switching fully on and fully off 490 times per second the whole time, which the oscilloscope resolves without difficulty.
@@ -263,7 +269,7 @@ The fusion threshold is not a single universal frequency. It rises with luminanc
 
 - **The serial displays cannot see a 490 Hz waveform at all.** Their reporting rate is one to two orders of magnitude below the PWM frequency, so the switching is invisible to them by construction. The scope resolved individual pulses, their rising and falling edges, and the 408 µs high time directly.
 
-- The scope exposed features that exist **nowhere in the software**: the overshoot to 5.36 V and undershoot to −0.2 V on the switching edges, and the finite edge transition time. No printed value could reveal these, because the code never computes them. Conversely the serial displays showed the exact integers behind the conversion, which the scope cannot see. The two instruments answer different questions and neither substitutes for the other.
+- The scope exposed features that exist **nowhere in the software**. The overshoot to 5.36 V and undershoot to −0.2 V on the switching edges are one example. Another is the edge transition itself: a separate rise-time measurement on the same waveform gave **3.238 µs**, a quantity the sketch neither computes nor could compute, since `analogWrite` only sets a compare register and the edge shape is a property of the output driver and the probe loading. No printed value could reveal any of this. Conversely the serial displays showed the exact integers behind the conversion, which the scope cannot see. The two instruments answer different questions and neither substitutes for the other.
 
 ---
 

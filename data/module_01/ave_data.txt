@@ -1,0 +1,13 @@
+Phys 39 Module 1, Part 3C and 3D raw output
+Naidu / Cohen
+
+Captured from Serial Monitor at 9600 baud while averaging_compare.ino was
+running with HUNT_MODE = false. Each cycle is 100 Ave1 points, then 100
+Ave1000 points, then one Timing line.
+
+The potentiometer was fixed on the boundary between ADC codes 863 and 864:
+  code 863 -> 4.217986 V
+  code 864 -> 4.222874 V
+  separation 4.888 mV, one ADC count
+
+--- PASTE THE FULL SERIAL MONITOR CAPTURE BELOW THIS LINE ---

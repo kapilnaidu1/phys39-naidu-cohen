@@ -17,7 +17,7 @@ This is the commit that carries the complete Module 1 work: all five sketches, t
 
 ![Bench instrument](../images/module01_instrument.jpg)
 
-**Figure 1.** The semester temperature-control instrument. Functional blocks:
+**Figure 1.** The semester temperature-control instrument on its black baseplate, with the Tektronix TDS 1002C-EDU behind it. Reading the baseplate from left to right: the white asset label reading **TEC 7**, the brass terminal block with its red and black leads, the aluminium heat exchanger carrying the blue mounting collar and the TEC beneath it, the silver ALITOVE 12 V / 10 A switching supply along the top edge, and the breadboard and Arduino Uno on the right. Functional blocks:
 
 | Block | Component |
 |---|---|
@@ -36,7 +36,7 @@ Per the Module 1 safety boundary, the Arduino was powered only from USB and **th
 
 ![Breadboard wiring](../images/module01_breadboard.jpg)
 
-**Figure 2.** Breadboard as wired for Parts 2 to 4.
+**Figure 2.** Breadboard as wired for Parts 2 to 4, viewed from above. The potentiometer is the blue trimmer at the left of the board with the orange 5 V lead and the black ground lead on its outer terminals. The yellow LED and its 3.25 kΩ series resistor sit in the middle of the board, and the grey braided cable at the bottom is the 10X scope probe on pin 9 with its ground clip on the Arduino ground rail.
 
 | Arduino | Connection |
 |---|---|
@@ -91,11 +91,11 @@ Voltages were computed in software as V = V_ref × n / 1023, following the form 
 
 ![Serial Monitor, discrete integers](../images/module01_monitor_discrete.png)
 
-**Figure 3.** Serial Monitor showing integer output.
+**Figure 3.** Serial Monitor printing the raw conversion as `ADC:512` line after line, with the Serial Plotter open on the same stream. The value is an integer with no fractional part, and it repeats exactly while the potentiometer is untouched.
 
 ![Serial Plotter, two-level toggle](../images/module01_plotter_toggle.png)
 
-**Figure 4.** Serial Plotter at a code boundary, toggling between codes 512 and 513 with no intermediate values.
+**Figure 4.** Serial Plotter with the potentiometer parked on a code boundary. The trace sits at 512, jumps to 513, and returns. The vertical axis is fine enough to resolve tenths of a count, and no sample ever lands between the two integers. The signal is continuous; the reported value is not.
 
 The potentiometer's wiper voltage is genuinely continuous, so the discreteness is introduced by the converter and not by the signal. A 10-bit ADC produces one of exactly 1024 possible codes, numbered 0 to 1023. It reports which of 1024 equal 4.88 mV windows the input fell into, so every voltage inside a given window returns the identical integer and the information about where inside that window the voltage actually sat is discarded. This quantization error is up to ±½ count, or ±2.44 mV.
 
@@ -125,11 +125,11 @@ All results in §4.2 to §4.4 come from one complete cycle at this fixed setting
 
 ![Transition between averaging modes](../images/module01_plotter_transition.png)
 
-**Figure 5.** Serial Plotter with the transition near the centre of the graph. The unaveraged block on the left shows full-height 4.888 mV excursions between codes 863 and 864; the 1000-reading averaged block on the right is nearly flat on the same vertical scale.
+**Figure 5.** Serial Plotter at the code 863/864 working point, with the Serial Monitor visible below printing the same stream numerically (`Ave1000_Point_38 Voltage_V:4.222326`). The vertical axis runs 4.2170 V to 4.2230 V. The trace sits at 4.2228 V (code 864) and drops to 4.2180 V (code 863) in full-height single-count excursions, with no intermediate values anywhere. This figure and Figure 6 are photographs taken at the bench rather than screen captures, which is why the laptop screen shows reflections; the axis labels and the trace are still legible, and the numeric values behind them are in [`ave_data.txt`](../../data/module_01/ave_data.txt).
 
 ![Ave1 block only](../images/module01_plotter_ave1.png)
 
-**Figure 6.** Unaveraged block alone. Two discrete levels at 4.217986 V and 4.222874 V and nothing between them. The smallest discrete jump is one full ADC count.
+**Figure 6.** The same working point on a quieter stretch, showing the two-level behaviour on its own. The trace holds at 4.2228 V (code 864) and makes a single square-edged excursion to 4.2180 V (code 863). There is nothing between the two levels: the smallest jump the unaveraged reading can make is one full ADC count, 4.888 mV.
 
 ![Ave1000 block only](../images/module01_plotter_ave1000.png)
 
@@ -237,15 +237,19 @@ For reference, the expected values had they been measured are a period of 1.00 s
 
 **Figure 9.** The same pin at 80.0% duty cycle. Identical amplitude and period.
 
-| Quantity | Setting A | Setting B | Behaviour |
+Both columns below are read directly off the two captures above, Figure 8 and Figure 9, with no values carried over from any other capture.
+
+| Quantity | Setting A (Figure 8) | Setting B (Figure 9) | Behaviour |
 |---|---|---|---|
-| Maximum | 5.36 V | 5.44 V | fixed |
-| Minimum | −0.200 V | −0.120 V | fixed |
-| Amplitude (peak to peak) | 5.56 V | 5.56 V | fixed |
-| Period T | 2.040 ms | 2.036 ms | fixed |
-| Frequency f = 1/T | 490.42 Hz | 491.2 Hz | fixed |
-| Positive pulse width t_HIGH | 408.1 µs | 1.628 ms | **changes** |
+| Maximum | 5.36 V | 5.36 V | fixed |
+| Minimum | −160 mV | −40.0 mV | fixed |
+| Amplitude (peak to peak) | 5.52 V | 5.40 V | fixed |
+| Period T | 2.036 ms | 2.040 ms | fixed |
+| Frequency (scope counter) | 490.421 Hz | 490.421 Hz | fixed |
+| Positive pulse width t_HIGH | 408.1 µs | 1.632 ms | **changes** |
 | Duty cycle D = 100% × t_HIGH/T | **20.0%** | **80.0%** | **changes** |
+
+The peak-to-peak and minimum readings differ slightly between the two columns because Pk–Pk and Min are peak detectors sampling the edge ringing, and the ringing is caught at a different point in each acquisition. The Maximum, the period and the frequency, which are the quantities that describe the steady levels and the timing, agree exactly.
 
 **Which quantities change.** Only the positive pulse width and the duty cycle respond to the potentiometer. The high and low voltages, the amplitude, the period and the frequency all hold constant within measurement scatter. This is the defining property of pulse-width modulation: the pin switches fully on or fully off and nothing else, so the only free parameter is the fraction of each cycle spent high.
 
@@ -253,7 +257,7 @@ For reference, the expected values had they been measured are a period of 1.00 s
 
 **Expected duty cycle.** D_expected = 100% × (analogWrite value / 255). Setting A corresponds to an analogWrite value of about 51 and Setting B to about 204.
 
-**Overshoot.** Maximum reads 5.36 to 5.44 V and Minimum reads −0.12 to −0.20 V rather than a clean 5.00 V and 0 V. This is ringing on the fast switching edges captured by the peak detectors, not a supply anomaly. The flat portions of the trace sit at the expected levels.
+**Overshoot.** Maximum reads 5.36 V and Minimum reads −40 to −160 mV rather than a clean 5.00 V and 0 V. This is ringing on the fast switching edges captured by the peak detectors, not a supply anomaly. The flat portions of the trace sit at the expected levels.
 
 ![Rise time measurement](../images/module01_scope_risetime.jpg)
 

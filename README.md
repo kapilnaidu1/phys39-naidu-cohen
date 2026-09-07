@@ -53,6 +53,6 @@ Evidence note: [`docs/module_notes/module_01_evidence.md`](docs/module_notes/mod
 
 ### Hardware
 
-Arduino Uno powered from USB, 100 kΩ potentiometer wired as a voltage divider into A0, and an LED on pin 9 through a 2.25 kΩ series resistor.
+Arduino Uno powered from USB, 100 kΩ potentiometer wired as a voltage divider into A0, and an LED on pin 9 through a 3.25 kΩ series resistor.
 
 Per the Module 1 safety boundary, the TEC power supply remained off for the entire session.

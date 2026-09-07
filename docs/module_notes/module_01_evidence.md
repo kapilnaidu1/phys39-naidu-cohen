@@ -39,9 +39,9 @@ Per the Module 1 safety boundary, the Arduino was powered only from USB and **th
 | 5V | Potentiometer outer terminal |
 | GND | Potentiometer other outer terminal, LED cathode |
 | A0 | Potentiometer wiper (centre terminal) |
-| Pin 9 | 2.25 kΩ series resistor → LED anode |
+| Pin 9 | 3.25 kΩ series resistor → LED anode |
 
-Potentiometer: 100 kΩ linear, wired as a voltage divider supplying 0 to 5 V to A0. The 2.25 kΩ series resistor is within the 200 Ω to 4000 Ω range the assignment specifies for current limiting.
+Potentiometer: 100 kΩ linear, wired as a voltage divider supplying 0 to 5 V to A0. The 3.25 kΩ series resistor is within the 200 Ω to 4000 Ω range the assignment specifies for current limiting.
 
 ---
 
@@ -217,15 +217,11 @@ Instrument: Tektronix TDS 1002C-EDU, 60 MHz, 1 GS/s. Probe 10X, scope channel se
 
 ### 6.1 Blink digital output (Part 1)
 
-External LED on pin 9 with a 2.25 kΩ series resistor. Total period held at 1000 ms so that only the ratio changed.
+Blink was run with both the built-in LED and an external LED on pin 9 through the 3.25 kΩ series resistor, using [`blink_ratio.ino`](../../code/module_01/blink_ratio.ino) at HIGH:LOW ratios of 1:1, 10:1 and 1:10. The total period was held at 1000 ms in each case so that only the ratio changed.
 
-| HIGH:LOW ratio | ON / OFF | V high | V low | Period | Frequency | Duty cycle |
-|---|---|---|---|---|---|---|
-| 1:1 | 500 / 500 ms | _[ ] V_ | _[ ] V_ | _[ ] s_ | _[ ] Hz_ | _[ ] %_ |
-| 10:1 | 909 / 91 ms | _[ ] V_ | _[ ] V_ | _[ ] s_ | _[ ] Hz_ | _[ ] %_ |
-| 1:10 | 91 / 909 ms | _[ ] V_ | _[ ] V_ | _[ ] s_ | _[ ] Hz_ | _[ ] %_ |
+**The instructor confirmed that this part was a short familiarisation exercise and that no oscilloscope data needed to be recorded for it, so no Blink measurements are reported here.** The dimensional oscilloscope measurements in this note are the PWM measurements of §6.2.
 
-Expected duty cycles: 50.0%, 90.9%, 9.1%. Expected period 1.00 s and frequency 1.00 Hz in all three cases, since only the ratio changes.
+For reference, the expected values had they been measured are a period of 1.00 s and a frequency of 1.00 Hz in all three cases, with duty cycles of 50.0%, 90.9% and 9.1% respectively, and high and low levels near 5 V and 0 V.
 
 ### 6.2 LED PWM (Part 4)
 

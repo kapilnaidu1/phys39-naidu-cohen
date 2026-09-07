@@ -11,9 +11,12 @@
      10:1    909 /  91 ms    expected duty 90.9 %
       1:10    91 / 909 ms    expected duty  9.1 %
 
-  Wiring: pin 9 -> 2.25 kohm resistor -> LED anode, LED cathode -> GND.
+  Wiring: pin 9 -> 3.25 kohm resistor -> LED anode, LED cathode -> GND.
   The same LED and probe position as Part 4, so no rewiring is needed
   between the two.
+
+  Per the instructor, this part was a short familiarisation exercise and
+  no oscilloscope data needed to be recorded for it.
 
   Naidu / Cohen
 */

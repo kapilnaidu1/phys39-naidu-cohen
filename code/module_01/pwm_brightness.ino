@@ -12,7 +12,7 @@
 
   Wiring:
     pot : outer terminals to 5V and GND, wiper to A0
-    LED : pin 9 -> 2.25 kohm resistor -> LED anode, LED cathode -> GND
+    LED : pin 9 -> 3.25 kohm resistor -> LED anode, LED cathode -> GND
 
   Naidu / Cohen
 */

@@ -5,7 +5,9 @@
 **Date:** September 2, 2026 (data collection), _[submission date]_
 **Repository URL:** https://github.com/kapilnaidu1/phys39-naidu-cohen
 **Branch:** main
-**Pushed Git checkpoint (full commit hash):** `a4ef57f81b18333d24000e1ad54695b8305b01a4`
+**Pushed Git checkpoint (full commit hash):** `18e2a9b92277676d8acf8c45550674b80ba46250`
+
+This is the commit that carries the complete Module 1 work: all five sketches, the raw Part 3C/3D capture, and this note. The single commit after it does nothing but write this hash into these two lines, since a commit cannot contain its own hash.
 
 ---
 
@@ -277,7 +279,7 @@ The fusion threshold is not a single universal frequency. It rises with luminanc
 
 - Repository: https://github.com/kapilnaidu1/phys39-naidu-cohen
 - Branch: main
-- Full commit hash: `a4ef57f81b18333d24000e1ad54695b8305b01a4`
-- Commit message: Correct series resistor to 3.25k and note that Blink required no recorded data
+- Full commit hash: `18e2a9b92277676d8acf8c45550674b80ba46250`
+- Commit message: Add Part 3C/3D raw data and finish evidence note
 
-Note: the hash above is the commit that was pushed at the time this note was written. If figures or the raw data file are added afterwards, replace it with the hash of the final pushed commit before exporting the PDF, so that the citation matches the version being submitted.
+That commit carries everything the note cites: the five sketches under `code/module_01/`, the raw capture in `data/module_01/ave_data.txt`, and this document. Only one commit follows it, and its sole content is writing this hash into the two places it appears, since a commit cannot contain its own hash.

@@ -2,10 +2,10 @@
 
 **Assessment code:** A1
 **Team members:** Kapil Naidu and Samuel Cohen
-**Date:** September 2, 2026 (data collection), _[submission date]_
+**Date:** September 2, 2026 (data collection)
 **Repository URL:** https://github.com/kapilnaidu1/phys39-naidu-cohen
 **Branch:** main
-**Pushed Git checkpoint (full commit hash):** `18e2a9b92277676d8acf8c45550674b80ba46250`
+**Pushed Git checkpoint (full commit hash):** `8754dbc4b415d251ceaa9e3c09a6899546383dde`
 
 This is the commit that carries the complete Module 1 work: all five sketches, the raw Part 3C/3D capture, and this note. The single commit after it does nothing but write this hash into these two lines, since a commit cannot contain its own hash.
 
@@ -283,7 +283,7 @@ The fusion threshold is not a single universal frequency. It rises with luminanc
 
 - Repository: https://github.com/kapilnaidu1/phys39-naidu-cohen
 - Branch: main
-- Full commit hash: `18e2a9b92277676d8acf8c45550674b80ba46250`
-- Commit message: Add Part 3C/3D raw data and finish evidence note
+- Full commit hash: `8754dbc4b415d251ceaa9e3c09a6899546383dde`
+- Commit message: Add all ten figures and correct captions and PWM table to match them
 
-That commit carries everything the note cites: the five sketches under `code/module_01/`, the raw capture in `data/module_01/ave_data.txt`, and this document. Only one commit follows it, and its sole content is writing this hash into the two places it appears, since a commit cannot contain its own hash.
+That commit carries everything this note cites: the five sketches under `code/module_01/`, the raw capture in `data/module_01/ave_data.txt`, the ten figures in `docs/images/`, and this document. Only one commit follows it, and its sole content is writing this hash into the two places it appears, since a commit cannot contain its own hash.

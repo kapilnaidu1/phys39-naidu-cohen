@@ -12,3 +12,8 @@ build/
 # editors
 .vscode/
 *.swp
+
+# editors / tools
+.Rhistory
+.Rapp.history
+.RData

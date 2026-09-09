@@ -101,8 +101,10 @@ void loop() {
 
   float potAdc = averagePot();
 
-  // 10-bit input (0..1023) to 8-bit PWM (0..255).
-  int duty = map((long)potAdc, 0, 1023, 0, 255);
+  // 10-bit input (0..1023) to 8-bit PWM. Map onto 0..maxDuty rather than
+  // 0..255 then clipping, so the whole knob travel stays useful while the
+  // cap is in place. Raise maxDuty to 255 and this becomes the full range.
+  int duty = map((long)potAdc, 0, 1023, 0, maxDuty);
   duty = constrain(duty, 0, maxDuty);
 
   bool heat = (digitalRead(dirPin) == HIGH);

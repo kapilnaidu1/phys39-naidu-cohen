@@ -188,7 +188,14 @@ void loop() {
 
   // Extra diagnostic fields, useful for the Part 3 oscilloscope table and
   // harmless to the Python parser, which reads the four labeled fields above.
-  Serial.print("   [pin 11 = ");
+  Serial.print("   [ADC = ");
+  Serial.print(adcValue, 1);
+  Serial.print(", V = ");
+  Serial.print(volts, 3);
+  Serial.print(", R = ");
+  if (ohms < 0.0) Serial.print("out of range");
+  else { Serial.print(ohms / 1000.0, 2); Serial.print(" kOhm"); }
+  Serial.print(", pin 11 = ");
   Serial.print(dirHigh ? "5V" : "0V");
   Serial.print(", PWM on pin ");
   Serial.print(duty > 0 ? (pwmOnPin9 ? "9" : "10") : "none");

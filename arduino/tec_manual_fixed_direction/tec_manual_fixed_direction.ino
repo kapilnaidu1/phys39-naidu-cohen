@@ -177,6 +177,23 @@ void loop() {
   Serial.print(duty);
   Serial.print(", Active PWM pin: ");
   Serial.print(duty > 0 ? "10" : "none");
-  if (!armed) Serial.print("   [DISARMED, turn trim pot to zero]");
-  Serial.println();
+
+  // Raw measurement chain, in brackets so the Python parser ignores it.
+  // This is the diagnostic that tells you whether an implausible
+  // temperature is a real temperature or a wiring or constants problem.
+  // At room temperature with a 100 kOhm NTC and a 100 kOhm fixed resistor,
+  // expect roughly ADC 560, 2.75 V, 122 kOhm, 21 C. A resistance far below
+  // the thermistor's R25 means either a different sensor or a fault, not a
+  // hot plate.
+  Serial.print("   [ADC = ");
+  Serial.print(adcValue, 1);
+  Serial.print(", V = ");
+  Serial.print(volts, 3);
+  Serial.print(", R = ");
+  if (ohms < 0.0) Serial.print("out of range");
+  else { Serial.print(ohms / 1000.0, 2); Serial.print(" kOhm"); }
+  Serial.print(", pot ADC = ");
+  Serial.print(potAdc, 0);
+  if (!armed) Serial.print(", DISARMED, turn trim pot to zero");
+  Serial.println("]");
 }

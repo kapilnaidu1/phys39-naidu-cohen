@@ -1,0 +1,147 @@
+Phys 39 Module 2, Part 3 records.
+Trim pot -> PWM -> BTS7960 H-bridge -> DC motor.
+Naidu / Cohen
+
+Sketch: arduino/trimpot_hbridge/trimpot_hbridge.ino, maxDuty = 255.
+Instrument for Part 3B/3C signal check: BK Precision 2120B, dual trace,
+30 MHz analog oscilloscope. TEC module and thermal switch DISCONNECTED
+for the whole of Part 3; the load terminals drove the small DC motor only.
+
+
+1. PWM TIMEBASE (computed, not measured)
+
+    Pins 9 and 10 are both on Timer1. The Arduino core runs Timer1 in
+    phase-correct mode with prescaler 64, so
+
+        f = 16 MHz / (64 * 510) = 490.196 Hz
+        T = 2040.0 us
+
+    and one analogWrite count is
+
+        2040 us / 255 = 8.000 us exactly
+
+    which makes every predicted pulse width below an exact multiple of 8 us.
+
+    This is confirmed by the Module 1 captures of the same pin 9 output on
+    the Tektronix TDS 1002C-EDU, which does have an automatic pulse width
+    measurement:
+
+        analogWrite(51)  = 20.0%  ->  51 * 8 us = 408 us    measured 408.1 us
+        analogWrite(204) = 80.0%  -> 204 * 8 us = 1632 us   measured 1.632 ms
+
+    Both agree with 8.000 us per count to within the resolution of the
+    measurement, so the predicted widths in section 3 rest on a timebase
+    that has already been checked against a counter, not on assumption.
+
+
+2. DIRECTION SYMMETRY (Serial Monitor, pin 11 toggled at a fixed knob setting)
+
+    The point of this test is that flipping the direction input must swap
+    which pin carries PWM without changing the commanded duty. Four knob
+    settings were held while pin 11 was toggled:
+
+    ADC      duty        heat (pin 11 = 5V)        cool (pin 11 = 0V)
+    -----    ---------   -----------------------   -----------------------
+    343.2     85 / 255   pin 9 = PWM, pin 10 = 0V  pin 9 = 0V, pin 10 = PWM
+    791.8    197 / 255   pin 9 = PWM, pin 10 = 0V  pin 9 = 0V, pin 10 = PWM
+    870.0    216 / 255   pin 9 = PWM, pin 10 = 0V  pin 9 = 0V, pin 10 = PWM
+    1020.2   254 / 255   pin 9 = PWM, pin 10 = 0V  pin 9 = 0V, pin 10 = PWM
+
+    In every case the duty field was identical either side of the toggle.
+    Exactly one input carried PWM at a time; the other read 0 V, never 5 V.
+
+    Rotation, observed on the motor shaft:
+
+        HEAT / clockwise        -> shaft turned clockwise
+        COOL / counterclockwise -> shaft turned counterclockwise
+
+    so the sketch's labels match the physical sense of rotation and no
+    swap of the motor leads at the barrier strip was needed.
+
+
+3. SPEED SWEEP (Serial Monitor plateaus, one line of the capture each)
+
+    t_high is predicted from the commanded count, t_high = 8.000 us * duty.
+    There is no automatic measurement readout on the 2120B, so these are
+    the commanded values against which the trace was compared by eye.
+
+    pot ADC     duty        duty %    t_high (us)   t_low (us)   direction
+    -------     ---------   -------   -----------   ----------   ---------
+      84.8       20 / 255     7.8        160.0        1880.0      heat
+      85.1       21 / 255     8.2        168.0        1872.0      heat
+     132.6       32 / 255    12.5        256.0        1784.0      cool
+     170.1       42 / 255    16.5        336.0        1704.0      cool
+     269.0       66 / 255    25.9        528.0        1512.0      cool
+     343.5       85 / 255    33.3        680.0        1360.0      cool + heat
+     474.0      118 / 255    46.3        944.0        1096.0      cool
+     601.0      149 / 255    58.4       1192.0         848.0      cool
+     710.0      176 / 255    69.0       1408.0         632.0      cool
+     776.0      193 / 255    75.7       1544.0         496.0      cool
+     791.8      197 / 255    77.3       1576.0         464.0      cool + heat
+     870.8      216 / 255    84.7       1728.0         312.0      cool + heat
+     979.4      244 / 255    95.7       1952.0          88.0      cool
+    1021.9      254 / 255    99.6       2032.0           8.0      cool + heat
+
+    Motor behaviour across the sweep: the shaft did not move at the bottom
+    of the knob travel, started turning slowly in the low tens of counts,
+    and increased smoothly in speed to the top of the travel. Direction was
+    set only by pin 11 and was unaffected by the knob.
+
+
+4. A QUANTIZATION DETAIL WORTH RECORDING
+
+    At pot ADC = 269.0 the reported duty alternated between 66 and 67
+    between consecutive lines. This is not electrical noise. The sketch
+    averages 200 raw reads into a float, then map() takes (long)potAdc,
+    so the average is truncated to an integer BEFORE the 10-bit to 8-bit
+    scaling:
+
+        floor(268.x) -> 268 -> 268 * 255 / 1023 = 66.8 -> 66
+        floor(269.0) -> 269 -> 269 * 255 / 1023 = 67.0 -> 67
+
+    The averaging buys resolution in the printed ADC column, and then the
+    integer map() throws most of it away again at the PWM output. There is
+    a double quantization in the chain, not one.
+
+
+5. OSCILLOSCOPE OBSERVATIONS (BK 2120B, Part 3B and 3C)
+
+    This instrument is analog and has no cursor or measurement panel, so
+    every value has to come off the graticule. What the traces establish:
+
+    - The active H-bridge input is a clean two-level rectangular wave. On
+      the CRT the high plateau and the low plateau appear as two separate
+      horizontal lines, because the beam crosses the switching edges far
+      faster than it traverses the flat parts and so the edges are much
+      dimmer than the levels.
+
+    - The idle input is a single flat line with no switching on it, which
+      is the check that matters: only one side of the bridge is ever being
+      driven.
+
+    - Turning the knob down moved the trace from mostly-high with short
+      low gaps to mostly-low with short high pulses. The high fraction of
+      the period tracked the commanded duty. Reading duty off this scope
+      does not require the TIME/DIV setting at all, since
+
+          duty = (high divisions) / (period divisions)
+
+      is a ratio and the sweep rate cancels.
+
+    - Photographs of the screen were taken with the front panel in frame,
+      because on an analog scope the trace carries no information without
+      the VOLTS/DIV and TIME/DIV settings that produced it. The settings
+      are not legible enough in our photographs to quote amplitudes to
+      better than about a division, so no voltage figure is claimed here
+      from the 2120B. The amplitude verification for the H-bridge inputs
+      comes from the Module 1 Tektronix captures of the same pin 9 output
+      (5.36 V high, 490.421 Hz, duty settable to 20.0% and 80.0%).
+
+
+6. SAFETY NOTES
+
+    - Scope ground clip on Arduino GND for every capture. Never on M+ or M-.
+    - TEC module and thermal switch unplugged from the load terminals for
+      all of Part 3, so the only load was the small DC motor.
+    - Both H-bridge inputs are driven LOW in setup() before anything else,
+      so the bridge is not commanded during boot or reset.

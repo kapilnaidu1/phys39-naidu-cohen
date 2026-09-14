@@ -43,7 +43,13 @@ const int rpwmPin = 9;    // heat / clockwise
 const int lpwmPin = 10;   // cool / counterclockwise
 
 const int avgSamples = 200;   // small enough that the knob stays responsive
-const int maxDuty    = 80;    // safety cap out of 255; 80 is about 31%
+
+// Safety cap on the command, out of 255. This was 80 (about 31%) while the
+// H-bridge inputs were being checked on the scope with no load attached.
+// Raised to 255 for Part 3C, the DC motor run, with the instructor present
+// and the TEC module and thermal switch unplugged from the load terminals.
+// This is the value that produced data/module_02/part3_hbridge_motor.txt.
+const int maxDuty    = 255;
 
 const unsigned long reportIntervalMs = 300;
 unsigned long lastReportMs = 0;
@@ -103,7 +109,13 @@ void loop() {
 
   // 10-bit input (0..1023) to 8-bit PWM. Map onto 0..maxDuty rather than
   // 0..255 then clipping, so the whole knob travel stays useful while the
-  // cap is in place. Raise maxDuty to 255 and this becomes the full range.
+  // cap is in place. With maxDuty = 255 this is the full range.
+  //
+  // Note the double quantization: potAdc is a float average, but map()
+  // takes (long)potAdc, so the average is truncated to a whole ADC count
+  // before the scaling. That is why the printed duty can flip between two
+  // adjacent counts while the printed ADC average looks steady. See
+  // section 4 of data/module_02/part3_hbridge_motor.txt.
   int duty = map((long)potAdc, 0, 1023, 0, maxDuty);
   duty = constrain(duty, 0, maxDuty);
 
@@ -118,6 +130,10 @@ void loop() {
   Serial.print(duty);
   Serial.print(" of 255 (");
   Serial.print(100.0 * duty / 255.0, 1);
+  // Known cosmetic limitation, left as it ran so the archived capture and
+  // this sketch agree: these two fields report which pin WOULD carry PWM
+  // for the current direction. At duty 0 both pins are in fact held LOW by
+  // setDrive(), so the line still prints "pin 9 = PWM" while pin 9 is low.
   Serial.print("%)    pin 9 = ");
   Serial.print(heat ? "PWM" : "0V ");
   Serial.print("    pin 10 = ");

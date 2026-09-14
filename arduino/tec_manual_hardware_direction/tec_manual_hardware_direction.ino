@@ -131,6 +131,24 @@ float voltageToResistance(float volts) {
   return Rfixed * volts / (Vref - volts);
 }
 
+// A divider that is present and healthy puts A0 somewhere near mid scale.
+// This window is deliberately wide: with 100 kOhm against 100 kOhm, ADC 20
+// is about 118 C and ADC 1000 is about -40 C, so anything outside it is a
+// wiring fault rather than a temperature. Reporting a number from outside
+// the window is how a missing resistor or a sensor on the wrong pin gets
+// mistaken for a reading.
+bool adcPlausible(float adcValue) {
+  return adcValue > 20.0 && adcValue < 1000.0;
+}
+
+const char *dividerHint(float adcValue) {
+  if (adcValue <= 20.0)
+    return "A0 near 0 V: no upper resistor from 5V, or the sensor is on another pin";
+  if (adcValue >= 1000.0)
+    return "A0 near 5 V: thermistor leg open or missing to GND";
+  return "";
+}
+
 float resistanceToCelsius(float ohms) {
   if (ohms <= 0.0) return NAN;
   float invT = 1.0 / (Tnominal + KELVIN_OFFSET)
@@ -234,8 +252,10 @@ void loop() {
 
   // Measurement line format required for the rest of the module. Heat/Cool
   // is 1 for observed heating and 0 for observed cooling.
+  bool ok = adcPlausible(adcValue);
+
   Serial.print("Temperature (C): ");
-  if (isnan(celsius)) Serial.print("---"); else Serial.print(celsius, 2);
+  if (!ok || isnan(celsius)) Serial.print("---"); else Serial.print(celsius, 2);
   Serial.print(", Time (s): ");
   Serial.print(now / 1000.0, 2);
   Serial.print(", PWM: ");
@@ -259,5 +279,6 @@ void loop() {
   Serial.print(", ");
   Serial.print(heating ? "heating" : "cooling");
   if (!armed) Serial.print(", DISARMED");
+  if (!ok) { Serial.print(", "); Serial.print(dividerHint(adcValue)); }
   Serial.println("]");
 }

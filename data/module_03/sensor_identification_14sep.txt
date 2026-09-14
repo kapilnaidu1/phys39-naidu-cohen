@@ -1,0 +1,82 @@
+Phys 39 Module 3. Identifying the TEC plate thermistor.
+Naidu / Cohen. 14 September 2026, TEC power OFF throughout.
+
+THE SYMPTOM
+
+On first running tec_manual_fixed_direction with the TEC plate thermistor on
+A0, the sketch reported temperatures around 67 C rising to 83 C, at PWM 0,
+with the heat exchanger running and no current in the TEC.
+
+Two things showed immediately that this was not a temperature.
+
+  1. It rose about 15 C in a minute with the actuator unpowered. An
+     unpowered TEC does not drive its plate in any direction.
+
+  2. Consecutive reports repeated the identical value, 82.64, then stepped
+     to 82.27 and back. Real thermal drift does not quantize. A repeated
+     value that steps in fixed jumps is the signature of an ADC operating
+     with almost no resolution left.
+
+THE RAW CHAIN
+
+Adding the raw fields to the serial line gave the measurement directly,
+rather than by inference:
+
+  Temperature (C): 82.64, Time (s): 61.00, PWM: 0, Active PWM pin: none
+      [ADC = 80.0, V = 0.391, R = 8.48 kOhm, pot ADC = 0]
+
+Steady to one ADC count over many reports. That steadiness matters: an
+intermittent connection, which is what bit us in Module 2, could not hold a
+single count. The 8.48 kOhm is a real resistance.
+
+WHAT 8.48 kOhm MEANS
+
+Read through candidate sensor models:
+
+  model                          resistance 8.48 kOhm implies
+  ----------------------------   ----------------------------
+  100 kOhm, B = 4540  (Module 2)            82.7 C
+   10 kOhm, B = 3435                        29.3 C
+   10 kOhm, B = 3950                        28.8 C
+   10 kOhm, B = 3892                        28.8 C
+
+The plate was at room temperature to the touch, so the 100 kOhm model is
+excluded and the sensor is a 10 kOhm part.
+
+Worth noting for the write-up: the three 10 kOhm candidates agree to within
+half a degree here. That is not luck. All beta models are pinned at the
+25 C anchor, so near 25 C the choice of B barely matters. The exact B value
+only becomes important far from the anchor, which is the same point Module 2
+made about extrapolating B25/100 down to 15 C.
+
+WHY THE UPPER LEG SHOULD ALSO CHANGE
+
+Getting Rnominal and Beta right fixes the reported number but not the
+resolution. The divider is still badly out of balance:
+
+  upper leg    operating point    sensitivity    resolution
+  ---------    ---------------    -----------    ----------------
+  100 kOhm     ADC  80, 0.391 V   13.5 mV/K      0.361 C per count
+   10 kOhm     ADC 469, 2.294 V   46.6 mV/K      0.105 C per count
+
+The 0.361 C figure is exactly the 82.64 to 82.27 step we observed, which
+confirms the model of what is happening.
+
+A divider is most sensitive when the two legs are comparable, which is why
+Module 2 sat near ADC 512 with 100 kOhm against 100 kOhm. Putting a 10 kOhm
+resistor in the upper leg restores that condition and buys a factor of 3.4
+in temperature resolution for the price of one resistor.
+
+ACTION TAKEN IN THE CODE
+
+All three Module 3 sketches now carry a single SENSOR_IS_10K switch that
+selects Rnominal, Beta and a printed sensor name, plus an Rfixed constant
+with a comment stating that it is physical and must match the resistor
+actually installed. Each sketch prints the active sensor profile at startup,
+so every serial log says which calibration produced it.
+
+STILL TO CONFIRM
+
+  - the part number of the plate thermistor, and its B value from the
+    datasheet rather than our assumed 3435 K
+  - whether to physically swap the upper leg to 10 kOhm

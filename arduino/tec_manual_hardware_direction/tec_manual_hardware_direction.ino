@@ -42,14 +42,43 @@ const bool PIN9_IS_HEAT = true;   // placeholder, confirm on the bench
 
 // ---- thermistor ------------------------------------------------------
 
+// ---- WHICH SENSOR IS ON A0, AND WHAT IS IN THE UPPER LEG -------------
+//
+// Module 2 used a 100 kOhm breadboard thermistor. The sensor embedded in the
+// TEC plate is a DIFFERENT part. Measured at the bench on 14 September, with
+// the TEC unpowered: the divider sat at ADC 80.0, 0.391 V, so the lower leg
+// was 8.48 kOhm, steady to one ADC count. A 100 kOhm NTC only falls to
+// 8.5 kOhm at about 83 C, and the plate was not hot, so the plate sensor is
+// a 10 kOhm part.
+//
+// Set SENSOR_IS_10K to match the sensor actually wired to A0.
+#define SENSOR_IS_10K 1
+
+#if SENSOR_IS_10K
+  const float Rnominal = 10000.0;    // ohms at 25 C
+  const float Beta     = 3435.0;     // kelvin. CONFIRM against the part number.
+  const char  sensorName[] = "10 kOhm plate thermistor";
+#else
+  const float Rnominal = 100000.0;   // ohms at 25 C
+  const float Beta     = 4540.0;     // TDK/EPCOS B57861S0104F040V24
+  const char  sensorName[] = "100 kOhm breadboard thermistor";
+#endif
+
+// Rfixed is PHYSICAL. It must match the resistor actually installed in the
+// upper leg, or every resistance and temperature this sketch prints is wrong.
+//
+// With a 10 kOhm sensor under a 100 kOhm upper leg the divider sits near ADC
+// 80, where one ADC count is worth 0.36 C. That is why consecutive reports
+// repeat the same value and then jump. Swapping the upper leg to 10 kOhm
+// moves the operating point to ADC 469, near mid scale, where one count is
+// worth 0.105 C. A factor of 3.4 in resolution for the price of one resistor.
+const float Rfixed = 100000.0;       // change to 10000.0 when the resistor is swapped
+
 const int   thermistorPin = A0;
-const float Vref          = 5.0;
-const float Rfixed        = 100000.0;
-const float Rnominal      = 100000.0;
-const float Tnominal      = 25.0;
-const float Beta          = 4540.0;
+const float Vref          = 5.0;     // volts
+const float Tnominal      = 25.0;    // deg C
 const float KELVIN_OFFSET = 273.15;
-const int   sampleCount   = 500;
+const int   sampleCount   = 500;     // assignment requires 100 to 1000
 
 // ---- actuator --------------------------------------------------------
 
@@ -135,6 +164,15 @@ void setup() {
   delay(200);
   Serial.println();
   Serial.println("Phys 39 Module 3 Part 3: manual TEC, hardware direction switch. Naidu / Cohen");
+  Serial.print("Sensor: ");
+  Serial.print(sensorName);
+  Serial.print(", R25 = ");
+  Serial.print(Rnominal / 1000.0, 1);
+  Serial.print(" kOhm, Beta = ");
+  Serial.print(Beta, 0);
+  Serial.print(" K, upper leg = ");
+  Serial.print(Rfixed / 1000.0, 1);
+  Serial.println(" kOhm");
   Serial.print("Calibration in use: PWM on pin 9 = ");
   Serial.println(PIN9_IS_HEAT ? "HEAT" : "COOL");
   Serial.print("Max duty ");

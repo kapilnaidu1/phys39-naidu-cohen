@@ -1,120 +1,86 @@
-Phys 39 Module 3. Identifying the thermistor channel on A0.
+Phys 39 Module 3. The 83 C that was not a temperature.
 Naidu / Cohen. 14 September 2026, TEC power OFF throughout.
 
-STATUS: UNRESOLVED. Two candidate wirings fit the measurement equally well.
-The test that separates them is at the end of this file and takes 20 seconds.
+RESOLVED: the thermistor was not connected. A0 was floating.
 
 
-THE SYMPTOM
+WHAT HAPPENED
 
-Running tec_manual_fixed_direction with the Module 3 wiring, the sketch
-reported about 67 C rising to 83 C, at PWM 0, with the heat exchanger
-running and no current in the TEC.
-
-Two things showed immediately that this was not a temperature.
-
-  1. It rose about 15 C in a minute with the actuator unpowered. An
-     unpowered TEC does not drive its plate in any direction.
-
-  2. Consecutive reports repeated the identical value 82.64, then stepped to
-     82.27 and back. Real thermal drift does not quantize. A value that
-     repeats and then moves in fixed jumps is an ADC running out of
-     resolution, not a plate changing temperature.
-
-
-THE RAW MEASUREMENT
-
-Printing the raw chain gave the number directly instead of by inference:
+Running tec_manual_fixed_direction with the Module 3 wiring in progress, the
+sketch reported about 67 C rising to 83 C, at PWM 0, with no current in the
+TEC. Printing the raw chain gave:
 
   Temperature (C): 82.64, Time (s): 61.00, PWM: 0, Active PWM pin: none
       [ADC = 80.0, V = 0.391, R = 8.48 kOhm, pot ADC = 0]
 
-Steady to one ADC count over many consecutive reports. That steadiness is
-itself evidence: the intermittent contact that bit us in Module 2 could
-never hold a single count. So 0.391 V at the A0 node is a real, stable
-measurement. The question is only what is on either side of that node.
+steady to one ADC count over many consecutive reports.
+
+The thermistor had not been wired to A0 yet.
 
 
-THE AMBIGUITY
+WHY THIS IS WORTH RECORDING RATHER THAN DELETING
 
-The sketch computes resistance assuming the thermistor is the LOWER leg:
+An unconnected analog input does not read zero and does not look broken. It
+returned a rock-steady 80.0 after 500-sample averaging, which is exactly the
+signature we would accept as a good measurement from a real sensor. The
+averaging, which is there to improve precision, made the artefact look more
+trustworthy than a noisy one would have.
 
-    Rth = Rfixed * V / (Vref - V)
+Everything downstream was arithmetic performed faithfully on nothing:
+0.391 V became 8.48 kOhm through the divider inversion, and 8.48 kOhm became
+82.64 C through the beta model. Neither step was wrong. The chain was
+correct and the input was meaningless.
 
-That equation is only true if the thermistor really is the lower leg. Drop
-that assumption and 0.391 V has two explanations, and both fit.
+Two false diagnoses were produced before the connection was checked:
 
-  CASE A. A 10 kOhm NTC as the lower leg, 100 kOhm in the upper leg.
-          Lower leg = 100k * 0.391 / (5 - 0.391) = 8.48 kOhm.
-          For a 10 kOhm part that is about 29 C.
-          Implies the plate sensor is a different part from Module 2.
+  1. That the TEC plate carried a 10 kOhm sensor rather than the 100 kOhm
+     part from Module 2, since 8.48 kOhm is about 29 C for a 10 kOhm NTC.
 
-  CASE B. The Module 2 100 kOhm NTC as the UPPER leg, with a 10 kOhm
-          resistor as the lower leg, so A0 reads across the RESISTOR and
-          not across the sensor. Then
-              V = Vref * Rlow / (Rlow + Rth)
-              Rth = 10k * (5 / 0.391 - 1) = 117.9 kOhm
-          For the 100 kOhm TDK part that is 21.8 C, which is just room
-          temperature. Nothing is wrong with the sensor at all; the divider
-          is upside down and the resistor is a tenth of the intended value.
+  2. That the divider was inverted, with the 100 kOhm thermistor in the
+     upper leg over a 10 kOhm lower leg, since that also gives exactly
+     0.391 V and puts the sensor at 21.8 C, room temperature.
 
-Both give exactly ADC 80. One measurement at one temperature cannot choose
-between them, which is the real lesson here: a single number read through an
-assumed model cannot test that model.
-
-Recorded honestly: the first pass through this concluded case A and said so.
-That was too quick. Case B was not considered, and it is the more mundane
-explanation, which usually means the more likely one.
+Both were self-consistent. Both were arithmetic on a floating pin.
 
 
-THE TEST THAT SEPARATES THEM
+THE SAME MISTAKE TWICE IN THIS COURSE
 
-Warm the thermistor between finger and thumb and watch the ADC field in the
-bracket. An NTC always falls in resistance when warmed. Which leg it sits in
-decides which way that moves the divider.
+Module 2 lost time to a loose thermistor lead while three physical
+explanations were proposed and refuted in turn: mains pickup, hand
+capacitance, and convection. None of them could have found a bad contact.
 
-  Case A, thermistor is the lower leg:
-      warming lowers the lower leg -> V falls -> ADC FALLS
-      predicted about 80 -> 72 for a 3 K rise
+Module 3 lost time to an unconnected thermistor while two wiring theories
+were proposed. Neither of them could have found an absent sensor.
 
-  Case B, thermistor is the upper leg:
-      warming lowers the upper leg -> V rises -> ADC RISES
-      predicted about 80 -> 92 for a 3 K rise
+The pattern is identical. In both cases the reasoning moved to the model
+before the connection was verified, and in both cases the model was not the
+problem. The order that would have worked, both times:
 
-Read the SIGN, not the size. Both are a few counts per degree.
-
-This is exactly the orientation check from Module 2 Part 1, which is there
-precisely because the sign of the response is what tells you the sensor is
-in the leg you think it is in.
-
-Second, independent check: read the colour bands on the resistor.
-    100 kOhm = brown, black, yellow
-     10 kOhm = brown, black, orange
-They differ by one band. Or measure the thermistor directly with a
-multimeter, power off and one lead lifted: about 120 kOhm means the Module 2
-part, about 12 kOhm means a 10 kOhm part.
+  1. Is the sensor connected?
+  2. Does it respond, with the right sign, when disturbed?
+  3. Only then, is the model right?
 
 
-WHAT TO SET AFTERWARDS
+THE TEN-SECOND TEST THAT CATCHES ALL THREE FAILURES
 
-  Case A confirmed:  SENSOR_IS_10K 1   Rfixed = 100000.0
-                     and get the real B value from the part number, since
-                     3435 K was an assumption
-  Case B confirmed:  rewire so the thermistor sits between A0 and GND, as
-                     the assignment specifies, then SENSOR_IS_10K 0 and
-                     Rfixed = the measured resistor value
+Warm the thermistor between finger and thumb and watch the ADC field.
 
-Either way the divider should end up with both legs comparable. At ADC 80
-one count is worth 0.361 C, which is exactly the 82.64 to 82.27 step in the
-capture above. Near mid scale one count is worth about 0.1 C. A divider is
-most sensitive when the two legs are similar in value, which is why Module 2
-sat near ADC 512 with 100 kOhm against 100 kOhm.
+  ADC does not move          -> the sensor is not in the circuit
+  ADC moves the wrong way    -> the legs are swapped
+  ADC falls as it warms      -> correct: NTC as the lower leg
+
+That single test would have caught the Module 2 loose lead, the Module 3
+missing connection, and an inverted divider. It costs nothing and it is now
+written into the header of all three Module 3 sketches.
 
 
-WHY THIS IS A SAFETY ITEM AND NOT JUST AN ACCURACY ONE
+EXPECTED VALUES ONCE IT IS WIRED
 
-The reported temperature is the primary indication that the TEC plate is not
-running away. The thermal switch is a backstop, not a gauge. Applying
-current while the temperature channel is misconfigured means losing the
-instrument that would show a problem developing, and in case B the sign of
-the response is inverted, so a heating plate would read as cooling.
+    5V --- 100 kOhm --- A0 --- thermistor --- GND
+
+  ADC about 560, 2.75 V, about 120 kOhm, about 21 C at room temperature,
+  and the ADC must fall when the thermistor is warmed.
+
+If the values come back far from that, diagnose then, with a divider that
+actually exists. The two hypotheses above are still available and still
+distinguishable by the sign of the response.

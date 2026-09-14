@@ -52,36 +52,21 @@ const bool PIN9_IS_HEAT = true;   // placeholder, confirm and record
 
 // ---- thermistor, unchanged from Module 2 -----------------------------
 
-// ---- UNRESOLVED: WHICH SENSOR, AND WHICH LEG IS IT IN ----------------
+// ---- THERMISTOR CHANNEL ----------------------------------------------
 //
-// On 14 September the divider sat at ADC 80.0, 0.391 V with the TEC
-// unpowered, and the sketch reported about 83 C. That is not a temperature.
-// TWO different wirings produce exactly that voltage, and one measurement
-// cannot tell them apart:
+// Wire it exactly as the assignment specifies, with the thermistor as the
+// LOWER leg, because voltageToResistance() below inverts the divider on
+// that assumption:
 //
-//   A) a 10 kOhm NTC as the LOWER leg under a 100 kOhm upper leg.
-//      Lower leg = 8.48 kOhm, which for a 10 kOhm part is about 29 C.
-//        -> SENSOR_IS_10K 1   and   Rfixed = 100000.0
+//     5V --- Rfixed --- A0 --- thermistor --- GND
 //
-//   B) the Module 2 100 kOhm NTC as the UPPER leg, over a 10 kOhm lower
-//      leg, so A0 reads across the 10 kOhm instead of across the sensor.
-//      Thermistor = 117.9 kOhm, which for the 100 kOhm part is 21.8 C,
-//      which is simply room temperature.
-//        -> SENSOR_IS_10K 0   and   Rfixed = 10000.0
+// Expected at room temperature with the Module 2 100 kOhm parts:
+//     ADC about 560, 2.75 V, 120 kOhm, 21 C
 //
-// THE TEST THAT SEPARATES THEM, with no instrument beyond this sketch.
-// Warm the thermistor between finger and thumb and watch the ADC field:
-//
-//      ADC goes DOWN  ->  the thermistor is the LOWER leg  ->  case A
-//      ADC goes UP    ->  the thermistor is the UPPER leg  ->  case B
-//
-// The predicted size is a few counts per degree either way, so the SIGN is
-// what you read, not the magnitude. This is the same orientation check as
-// Module 2 Part 1, and the reason that check exists.
-//
-// Until the test is done, this stays on the part we can actually identify,
-// the 100 kOhm TDK from Module 2, so nothing here asserts a sensor we have
-// not confirmed.
+// If the plate thermistor turns out to be a 10 kOhm part rather than the
+// 100 kOhm breadboard part, set SENSOR_IS_10K to 1 and take B from the part
+// number rather than assuming it. Decide that by reading the values back,
+// not in advance.
 #define SENSOR_IS_10K 0
 
 #if SENSOR_IS_10K
@@ -90,24 +75,33 @@ const bool PIN9_IS_HEAT = true;   // placeholder, confirm and record
   const char  sensorName[] = "10 kOhm plate thermistor";
 #else
   const float Rnominal = 100000.0;   // ohms at 25 C
-  const float Beta     = 4540.0;     // TDK/EPCOS B57861S0104F040V24
-  const char  sensorName[] = "100 kOhm breadboard thermistor";
+  const float Beta     = 4540.0;     // TDK/EPCOS B57861S0104F040V24, B25/100
+  const char  sensorName[] = "100 kOhm thermistor, TDK B57861S0104F040V24";
 #endif
 
-// Rfixed is PHYSICAL. It must match the resistor actually installed in the
-// leg that is NOT the thermistor, and voltageToResistance() below assumes
-// the thermistor is the LOWER leg. If the pinch test shows case B, the
-// divider is upside down relative to the assignment: either rewire it so
-// the thermistor sits between A0 and GND, which is the better fix, or
-// change the inversion in voltageToResistance().
+// Rfixed is PHYSICAL. It must match the resistor actually in the upper leg.
+// 100 kOhm is brown-black-yellow, 10 kOhm is brown-black-orange.
+const float Rfixed = 100000.0;
+
+// TWO CHECKS BEFORE BELIEVING ANY TEMPERATURE THIS SKETCH PRINTS
 //
-// Read the colour bands to confirm the value. 100 kOhm is brown-black-yellow,
-// 10 kOhm is brown-black-orange. They differ by one band.
+// 1. Is the sensor actually connected? A floating analog input still
+//    returns numbers. On 14 September this sketch reported a rock-steady
+//    ADC 80.0, 0.391 V and a confident 83 C with the thermistor not yet
+//    wired at all. A floating pin is not zero and not obviously broken; it
+//    is a plausible-looking constant, which is worse. Two separate wiring
+//    theories were built on that reading before anyone checked whether
+//    there was a sensor on the end of it.
 //
-// Whatever the outcome, a divider is most sensitive when the two legs are
-// comparable. At ADC 80 one count is worth 0.36 C, which is why reports
-// repeat and then jump. Near mid scale one count is worth about 0.1 C.
-const float Rfixed = 10000.0;        // MEASURE THIS, do not assume it
+// 2. Does it respond with the right SIGN? Warm the thermistor between
+//    finger and thumb and watch the ADC field. With the thermistor as the
+//    lower leg the ADC must FALL as it warms, because an NTC loses
+//    resistance. If the ADC rises, the two legs are swapped. If nothing
+//    moves at all, the sensor is not in the circuit.
+//
+// Do check 2 every time the divider is rebuilt. It costs ten seconds and it
+// is the only cheap test that distinguishes a working channel from a
+// convincing artefact.
 
 const int   thermistorPin = A0;
 const float Vref          = 5.0;     // volts

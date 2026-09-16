@@ -299,6 +299,8 @@ void loop() {
   Serial.print(", R = ");
   if (ohms < 0.0) Serial.print("out of range");
   else { Serial.print(ohms / 1000.0, 2); Serial.print(" kOhm"); }
+  Serial.print(", pot ADC = ");
+  Serial.print(potAdc, 0);
   Serial.print(", pin 11 = ");
   Serial.print(dirHigh ? "5V" : "0V");
   Serial.print(", PWM on pin ");

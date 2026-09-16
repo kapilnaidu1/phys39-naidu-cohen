@@ -108,6 +108,23 @@ const int maxDuty    = 64;    // low-power cap, about 25%. Raise only with appro
 const int armBelowAdc = 10;
 bool armed = false;
 
+// The pot must read below the threshold for this many consecutive reports.
+// A single-sample test is defeated by an intermittent pot connection: if the
+// pot's 5V leg loses contact the wiper is pulled to ground through the
+// element and A1 reads exactly 0 whatever the knob position, which arms the
+// output with the knob still turned up. This stops a one-report dropout.
+// It does NOT make an intermittent pot safe, because a dropout lasting
+// longer than the hold is indistinguishable from a knob at zero. Fix the
+// contact.
+const int armConfirmReports = 4;        // 4 x 500 ms = 2 s held at zero
+int armZeroStreak = 0;
+
+// Intermittent-contact detector, diagnostic only. A trim pot cannot be
+// turned across most of its travel inside one report, so a jump this large
+// between consecutive reports is electrical rather than mechanical.
+const int potJumpWarnCounts = 300;
+float prevPotAdc = -1.0;
+
 const unsigned long reportIntervalMs = 500;
 unsigned long lastReportMs = 0;
 
@@ -224,9 +241,25 @@ void loop() {
   float ohms     = voltageToResistance(volts);
   float celsius  = resistanceToCelsius(ohms);
 
-  if (!armed && potAdc < armBelowAdc) {
-    armed = true;
-    Serial.println("ARMED: trim pot seen at zero. Output now follows the knob.");
+  if (prevPotAdc >= 0.0 && fabs(potAdc - prevPotAdc) > potJumpWarnCounts) {
+    Serial.print("# POT JUMP: ");
+    Serial.print(prevPotAdc, 0);
+    Serial.print(" -> ");
+    Serial.print(potAdc, 0);
+    Serial.println(" in one report. Check the trim pot contacts.");
+  }
+  prevPotAdc = potAdc;
+
+  if (!armed) {
+    if (potAdc < armBelowAdc) armZeroStreak++;
+    else                      armZeroStreak = 0;
+
+    if (armZeroStreak >= armConfirmReports) {
+      armed = true;
+      Serial.print("ARMED: trim pot held at zero for ");
+      Serial.print(armConfirmReports * reportIntervalMs / 1000.0, 1);
+      Serial.println(" s. Output now follows the knob.");
+    }
   }
 
   int duty = 0;

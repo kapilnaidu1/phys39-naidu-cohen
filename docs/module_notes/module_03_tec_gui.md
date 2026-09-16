@@ -80,3 +80,105 @@ Sensitivity at that operating point: with a 100 kOhm upper leg and the
 thermistor near 83 kOhm, dV/dT is about 61.8 mV/K, so one ADC count is about
 0.079 C. The observed spread of about 1.5 counts is therefore about 0.12 C,
 which is the quantization floor rather than sensor noise.
+
+---
+
+## 4. Build order and test gates
+
+The circuit is built in five stages, and **each stage is verified before the
+next one is added**. A fault can then only ever be in the thing just added,
+which is the difference between a five minute fix and an afternoon. Build
+everything first and any one of forty connections can be the problem.
+
+Work with the 12 V supply unplugged from the wall for stages 1 to 4.
+
+### Stage 1: power rails
+
+| From | To |
+|---|---|
+| Arduino `5V` | breadboard `+` rail |
+| Arduino `GND` | breadboard `-` rail |
+
+**The rails are split in the middle.** On a full size breadboard the `+` rail
+on one half is a separate conductor from the `+` rail on the other half, and
+the same for `-`. If any component sits in the far half, jumper `+` to `+` and
+`-` to `-` across the break.
+
+**Gate 1.** DMM between `+` and `-`, measured at **all four rail ends**. Every
+one must read about 5.00 V. A rail that reads 0 V at one end and 5 V at the
+other is the split rail.
+
+### Stage 2: trim pot on A1
+
+| From | To |
+|---|---|
+| `+` rail | one outer pot pin |
+| `-` rail | other outer pot pin |
+| pot wiper, the middle pin | Arduino `A1` |
+
+Each of the three pins in its own breadboard row. No resistor: the pot is
+already a divider. Which outer pin takes `5V` only decides which way the screw
+increases the reading.
+
+**Gate 2.** Upload, open Serial Monitor at 9600, turn the screw end to end.
+`pot ADC` must sweep smoothly from near 0 to near 1023. Partial range or no
+response means one of the three connections is wrong.
+
+### Stage 3: thermistor divider on A0
+
+```
++ rail ── 20a [100 kOhm] 25a
+                          25b [thermistor] 30a ── 30b ── - rail
+                          25c ──────────────────────────► A0
+```
+
+| From | To |
+|---|---|
+| `+` rail | `20a` |
+| 100 kOhm resistor | `20b` to `25a` |
+| thermistor | `25b` to `30a` |
+| `30b` | `-` rail |
+| `25c` | Arduino `A0` |
+
+Row 25 must hold three things: the resistor's lower leg, the thermistor's upper
+leg, and the wire to `A0`. Those five holes are one node, and it is the whole
+circuit. Two rows five apart are not the same node, so an off by one row error
+here is invisible in a photograph and fatal to the measurement.
+
+**Gate 3.** Two conditions, both required:
+
+1. At rest, ADC near 551 and a temperature near room temperature
+2. Pinch the thermistor: ADC falls, reported temperature rises
+
+Condition 2 is the orientation test. If warming it sends the ADC up, the
+resistor and thermistor are in each other's positions. Condition 1 without
+condition 2 is not a pass, because the conversion chain produces a plausible
+looking temperature from a reading that carries no sensor information.
+
+### Stage 4: H-bridge logic, no actuator power
+
+| From | To |
+|---|---|
+| Arduino pin 9 | `RPWM` |
+| Arduino pin 10 | `LPWM` |
+| `+` rail | `R_EN`, `L_EN`, logic `VCC` |
+| `-` rail | logic `GND` |
+| pin 11 | SPDT direction switch common, Part 3 onward |
+
+`R_IS` and `L_IS` stay unconnected. The 12 V supply is still unplugged.
+
+**Gate 4.** `PWM: 0` at rest with the pot at zero. Turn the pot up and the
+commanded duty must rise while `Active PWM pin` names one pin and only one.
+Exactly one of `RPWM` and `LPWM` ever carries the pulse train; the other sits
+at 0 V, never at 5 V, because holding it high inverts the duty and a commanded
+zero would mean full drive.
+
+### Stage 5: TEC power
+
+Only after gates 1 to 4 pass. Fill in the Part 1 checklist in section 1 first,
+including the instructor check, then plug in the 12 V supply.
+
+**Gate 5.** At low duty, the plate temperature moves and keeps moving in one
+direction for long enough to clear the sensor's thermal lag. Record which
+Arduino pin was carrying the pulse train while the plate warmed, and set
+`PIN9_IS_HEAT` from that observation.

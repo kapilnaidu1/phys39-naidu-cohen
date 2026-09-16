@@ -19,16 +19,16 @@ Python:
 
 | Item | Value or observation |
 |---|---|
-| Arduino board and port | Arduino Uno, ATmega328P, over USB. Port: *to record* |
+| Arduino board and port | **Elegoo UNO R3**, ATmega328P, 16 MHz crystal, over USB. Pin compatible with the Uno and the same timer hardware, so the Module 1 PWM timebase results carry over. Port: *to record* |
 | Thermistor pin | `A0`, divider midpoint. `5V` - 100.0 kOhm - `A0` - thermistor - `GND`, thermistor as the LOWER leg |
 | H-bridge control pins | pin 9 to `RPWM`, pin 10 to `LPWM`, `R_EN` and `L_EN` and logic `VCC` to `5V`, logic `GND` to Arduino `GND`. Pin 11 is the SPDT direction input from Part 3 onward |
 | PWM starts at zero? | **Yes.** `setup()` drives both bridge inputs LOW before anything else, so the bridge is not commanded during boot or reset. Both manual sketches then start **disarmed** and hold duty at 0 until the trim pot has been seen below ADC 10, so a knob left up from the previous run cannot deliver drive at power-on. `tec_python_control` starts at PWM 0 and returns to 0 on any command it cannot parse |
 | Module 2 motor test completed with TEC disconnected? | **Yes.** Session S4, 9 September 2026. TEC module and thermal switch were unplugged from the load terminals for all of Module 2 Part 3; the only load driven was a small DC motor. Record: [`data/module_02/part3_hbridge_motor.txt`](../../data/module_02/part3_hbridge_motor.txt) |
 | High-current leads are 18 AWG? | *to record* |
 | Prepared TEC and thermal-switch wiring inspected? | *to record, with who inspected it* |
-| Heat exchanger connected to 12 V and operating? | *to record, confirm airflow or pump flow before the TEC is energised* |
-| Power supply voltage | ALITOVE ALT-1210T, nominal 12 V, 10 A. Measured at the barrier strip: *to record* |
-| Power supply current limit | *to record. If the supply has no adjustable limit, state that and give the fixed rating* |
+| Heat exchanger connected to 12 V and operating? | Liquid loop: an ID-COOLING radiator with two fans, feeding a coolant block on the underside of the plate. *To record: fans turning AND pump circulating, both confirmed before the TEC is energised.* Fan rotation alone does not prove the pump is running |
+| Power supply voltage | ALITOVE ALT-1210T, label reads DC 12 V 10 A 120 W, AC input 100 to 120 V. Measured at the barrier strip: *to record*. Note the panel carries a **second** enclosed supply as well, so record which one feeds the H-bridge `B+` and `B-` |
+| Power supply current limit | **None adjustable.** The ALT-1210T is a fixed-output enclosed supply rated 10 A, 120 W. Its only front adjustment is an output voltage trim. The current ceiling is therefore the supply's own 10 A limit, not a bench setting |
 | Thermal cutoff identified? | Thermal switch is mounted on the aluminium plate and wired in series with the TEC. Rating and open temperature: *to record from the body marking* |
 | Instructor check complete? | *to record, with name and time* |
 

@@ -4,8 +4,8 @@
 
 Sketches referenced rather than pasted, as the assignment asks:
 
-- [`arduino/module_02/thermistor_serial/thermistor_serial.ino`](../../arduino/module_02/thermistor_serial/thermistor_serial.ino) — Parts 1 and 2
-- [`arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino) — Part 3
+- [`arduino/module_02/thermistor_serial/thermistor_serial.ino`](../../arduino/module_02/thermistor_serial/thermistor_serial.ino), Parts 1 and 2
+- [`arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino), Part 3
 
 Raw records:
 
@@ -73,8 +73,8 @@ Worked example, taking the t = 156.00 s line above:
 ```
 n̄   = 450.3 counts
 V   = 5.00 × 450.3 / 1023            = 2.201 V
-Rth = 100.0 k × 2.201 / (5.00−2.201) = 78.64 kOhm
-T   = [1/298.15 + (1/4540)·ln(0.7864)]⁻¹ − 273.15 = 29.8 °C
+Rth = 100.0 k × 2.201 / (5.00 - 2.201) = 78.64 kOhm
+T   = [1/298.15 + (1/4540)·ln(0.7864)]^-1 - 273.15 = 29.8 °C
 ```
 
 ## 4. Thermistor constants used in the sketch
@@ -192,18 +192,18 @@ inputs asserted.
 Tektronix measurements of the same pin 9: 408.1 µs at 20% and 1.632 ms at 80%
 are exactly 51 × 8 µs and 204 × 8 µs.
 
-## 8. M+ and M− oscilloscope comparison, both directions
+## 8. M+ and M- oscilloscope comparison, both directions
 
 **Probe grounding.** Both oscilloscope probe ground clips were connected to
 **Arduino GND**, and to nothing else, for every capture in Module 2. A ground
-clip is earth-referenced, and `M+` and `M−` are both driven H-bridge outputs
+clip is earth-referenced, and `M+` and `M-` are both driven H-bridge outputs
 rather than ground points, so clipping a ground lead to either one can short
-the bridge. `M+` and `M−` were measured with the probe **tip**, each relative
+the bridge. `M+` and `M-` were measured with the probe **tip**, each relative
 to Arduino GND, on two channels simultaneously.
 
 **Load and power state.** The TEC module and thermal switch were
 **disconnected** from the load terminals for all of Module 2. The only load on
-`M+`/`M−` was the small DC motor. Captures were taken at low PWM.
+`M+`/`M-` was the small DC motor. Captures were taken at low PWM.
 
 **Instrument.** BK Precision 2120B, dual-trace 30 MHz analogue oscilloscope.
 It has no cursors and no measurement panel, so every value has to be counted
@@ -266,7 +266,7 @@ the rotation is easier to resolve as a sweeping flag than as a moving shaft.
 
 ## Safety record for Module 2
 
-- Every scope probe ground clip on Arduino `GND`, never on `M+` or `M−`.
+- Every scope probe ground clip on Arduino `GND`, never on `M+` or `M-`.
 - TEC module and thermal switch disconnected from the load terminals for the
   whole of Module 2. The only load driven was the small DC motor.
 - `setup()` drives both H-bridge inputs LOW before anything else, so the

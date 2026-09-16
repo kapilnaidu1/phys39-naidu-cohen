@@ -159,7 +159,7 @@ Two small notes. The 0.1% residual between 4.888 mV and ΔV_ADC = 4.883 mV is pu
 
 **Measured 0.0357 against a prediction of 0.0316: 13% high.** Averaging 1000 readings reduced the noise-limited voltage resolution by a factor of 28 where the independent-noise model predicts 31.6.
 
-**How s₁ arises.** The unaveraged block contained 78 readings at code 864 and 22 at code 863. For a two-level toggle with fraction p on the upper code, s₁ = ΔV × √(p(1−p)) = 4.888 mV × √(0.78 × 0.22) = 2.02 mV, against the 2.035 mV computed directly from the 100 values. The single-reading fluctuation is therefore entirely accounted for by the code toggling, with no additional noise source needed.
+**How s₁ arises.** The unaveraged block contained 78 readings at code 864 and 22 at code 863. For a two-level toggle with fraction p on the upper code, s₁ = ΔV × √(p(1-p)) = 4.888 mV × √(0.78 × 0.22) = 2.02 mV, against the 2.035 mV computed directly from the 100 values. The single-reading fluctuation is therefore entirely accounted for by the code toggling, with no additional noise source needed.
 
 **Effective bits gained.** The ideal figure is
 
@@ -173,7 +173,7 @@ so the averaging delivered about 4.8 of the ideal 5.0 effective bits.
 
 **Why the measured ratio sits above the prediction.** Three effects are visible in this dataset.
 
-The clearest is **drift**. The two blocks were taken about five seconds apart, and their means differ by 4.222477 − 4.221799 = **0.68 mV**, which is 0.14 of an ADC count. That shift is far larger than s₁₀₀₀ = 0.073 mV, so the input was demonstrably not constant across the measurement. Any drift within the averaged block inflates s₁₀₀₀ without being noise that averaging can remove.
+The clearest is **drift**. The two blocks were taken about five seconds apart, and their means differ by 4.222477 - 4.221799 = **0.68 mV**, which is 0.14 of an ADC count. That shift is far larger than s₁₀₀₀ = 0.073 mV, so the input was demonstrably not constant across the measurement. Any drift within the averaged block inflates s₁₀₀₀ without being noise that averaging can remove.
 
 **Correlated pickup** contributes as well. The 1/√N law assumes independent fluctuations, but consecutive `analogRead()` calls inside the averaging loop are only about 112 µs apart, so 1000 of them span 0.112 s and sample only about seven cycles of 60 Hz mains hum. Any hum component is therefore heavily correlated within a single average rather than random, and averages down more slowly than √N.
 
@@ -242,14 +242,14 @@ Both columns below are read directly off the two captures above, Figure 8 and Fi
 | Quantity | Setting A (Figure 8) | Setting B (Figure 9) | Behaviour |
 |---|---|---|---|
 | Maximum | 5.36 V | 5.36 V | fixed |
-| Minimum | −160 mV | −40.0 mV | fixed |
+| Minimum | -160 mV | -40.0 mV | fixed |
 | Amplitude (peak to peak) | 5.52 V | 5.40 V | fixed |
 | Period T | 2.036 ms | 2.040 ms | fixed |
 | Frequency (scope counter) | 490.421 Hz | 490.421 Hz | fixed |
 | Positive pulse width t_HIGH | 408.1 µs | 1.632 ms | **changes** |
 | Duty cycle D = 100% × t_HIGH/T | **20.0%** | **80.0%** | **changes** |
 
-The peak-to-peak and minimum readings differ slightly between the two columns because Pk–Pk and Min are peak detectors sampling the edge ringing, and the ringing is caught at a different point in each acquisition. The Maximum, the period and the frequency, which are the quantities that describe the steady levels and the timing, agree exactly.
+The peak-to-peak and minimum readings differ slightly between the two columns because Pk-Pk and Min are peak detectors sampling the edge ringing, and the ringing is caught at a different point in each acquisition. The Maximum, the period and the frequency, which are the quantities that describe the steady levels and the timing, agree exactly.
 
 **Which quantities change.** Only the positive pulse width and the duty cycle respond to the potentiometer. The high and low voltages, the amplitude, the period and the frequency all hold constant within measurement scatter. This is the defining property of pulse-width modulation: the pin switches fully on or fully off and nothing else, so the only free parameter is the fraction of each cycle spent high.
 
@@ -257,7 +257,7 @@ The peak-to-peak and minimum readings differ slightly between the two columns be
 
 **Expected duty cycle.** D_expected = 100% × (analogWrite value / 255). Setting A corresponds to an analogWrite value of about 51 and Setting B to about 204.
 
-**Overshoot.** Maximum reads 5.36 V and Minimum reads −40 to −160 mV rather than a clean 5.00 V and 0 V. This is ringing on the fast switching edges captured by the peak detectors, not a supply anomaly. The flat portions of the trace sit at the expected levels.
+**Overshoot.** Maximum reads 5.36 V and Minimum reads -40 to -160 mV rather than a clean 5.00 V and 0 V. This is ringing on the fast switching edges captured by the peak detectors, not a supply anomaly. The flat portions of the trace sit at the expected levels.
 
 ![Rise time measurement](../images/module01_scope_risetime.jpg)
 
@@ -275,7 +275,7 @@ The fusion threshold is not a single universal frequency. It rises with luminanc
 
 - **The serial displays cannot see a 490 Hz waveform at all.** Their reporting rate is one to two orders of magnitude below the PWM frequency, so the switching is invisible to them by construction. The scope resolved individual pulses, their rising and falling edges, and the 408 µs high time directly.
 
-- The scope exposed features that exist **nowhere in the software**. The overshoot to 5.36 V and undershoot to −0.2 V on the switching edges are one example. Another is the edge transition itself: a separate rise-time measurement on the same waveform gave **3.238 µs**, a quantity the sketch neither computes nor could compute, since `analogWrite` only sets a compare register and the edge shape is a property of the output driver and the probe loading. No printed value could reveal any of this. Conversely the serial displays showed the exact integers behind the conversion, which the scope cannot see. The two instruments answer different questions and neither substitutes for the other.
+- The scope exposed features that exist **nowhere in the software**. The overshoot to 5.36 V and undershoot to -0.2 V on the switching edges are one example. Another is the edge transition itself: a separate rise-time measurement on the same waveform gave **3.238 µs**, a quantity the sketch neither computes nor could compute, since `analogWrite` only sets a compare register and the edge shape is a property of the output driver and the probe loading. No printed value could reveal any of this. Conversely the serial displays showed the exact integers behind the conversion, which the scope cannot see. The two instruments answer different questions and neither substitutes for the other.
 
 ---
 

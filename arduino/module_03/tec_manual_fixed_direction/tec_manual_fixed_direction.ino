@@ -115,6 +115,20 @@ const int maxDuty = 64;
 const int armBelowAdc = 10;
 bool armed = false;
 
+// The pot must read below the threshold for this many consecutive reports,
+// not just one, before the output arms.
+//
+// A single-sample test is defeated by an intermittent connection. If the
+// pot's 5V leg loses contact, the wiper is pulled to ground through the
+// element and A1 reads exactly 0 whatever the knob position. One such
+// dropout satisfies a single-sample test, so the sketch arms while the knob
+// is still turned up, and full commanded duty appears the moment the contact
+// returns. Requiring several consecutive reports means a brief dropout
+// cannot arm the output, because the reading returns to its real value on
+// the next pass.
+const int armConfirmReports = 4;        // 4 x 500 ms = 2 s held at zero
+int armZeroStreak = 0;
+
 const unsigned long reportIntervalMs = 500;
 unsigned long lastReportMs = 0;
 
@@ -223,11 +237,19 @@ void loop() {
   float ohms     = voltageToResistance(volts);
   float celsius  = resistanceToCelsius(ohms);
 
-  // Arm once the knob has been turned down. It never disarms after that,
-  // so the interlock protects the power-on transient, not later operation.
-  if (!armed && potAdc < armBelowAdc) {
-    armed = true;
-    Serial.println("ARMED: trim pot seen at zero. Output now follows the knob.");
+  // Arm once the knob has been HELD down for armConfirmReports in a row.
+  // It never disarms after that, so the interlock protects the power-on
+  // transient, not later operation.
+  if (!armed) {
+    if (potAdc < armBelowAdc) armZeroStreak++;
+    else                      armZeroStreak = 0;
+
+    if (armZeroStreak >= armConfirmReports) {
+      armed = true;
+      Serial.print("ARMED: trim pot held at zero for ");
+      Serial.print(armConfirmReports * reportIntervalMs / 1000.0, 1);
+      Serial.println(" s. Output now follows the knob.");
+    }
   }
 
   int duty = 0;

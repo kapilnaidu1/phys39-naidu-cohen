@@ -7,5 +7,5 @@ part3_hbridge_motor.txt
     read off the Serial Monitor with the predicted pulse widths, a note
     on the double quantization in the ADC-to-PWM chain, and what the
     BK Precision 2120B analog oscilloscope traces do and do not
-    establish. Produced by arduino/trimpot_hbridge/trimpot_hbridge.ino
+    establish. Produced by arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino
     with maxDuty = 255.

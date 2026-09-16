@@ -4,8 +4,8 @@
 
 Sketches referenced rather than pasted, as the assignment asks:
 
-- [`arduino/thermistor_serial/thermistor_serial.ino`](../../arduino/thermistor_serial/thermistor_serial.ino) — Parts 1 and 2
-- [`arduino/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/trimpot_hbridge/trimpot_hbridge.ino) — Part 3
+- [`arduino/module_02/thermistor_serial/thermistor_serial.ino`](../../arduino/module_02/thermistor_serial/thermistor_serial.ino) — Parts 1 and 2
+- [`arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino) — Part 3
 
 Raw records:
 
@@ -139,7 +139,7 @@ of numbers in Serial Monitor does not show and a plot does.
 
 ## 6. Trim pot to PWM signal path
 
-Code: [`arduino/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/trimpot_hbridge/trimpot_hbridge.ino)
+Code: [`arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino`](../../arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino)
 
 ```
 trim-pot voltage -> analogRead(A1) × 200, averaged -> map to 0..255

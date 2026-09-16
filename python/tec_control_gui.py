@@ -29,7 +29,7 @@ THIS IS STILL MANUAL, OPEN-LOOP CONTROL
     the instrument state. Closing that loop is a later module.
 
 PAIR IT WITH
-    arduino/tec_python_control/tec_python_control.ino
+    arduino/module_03/tec_python_control/tec_python_control.ino
 
     The manual sketches will not obey these commands, which is expected:
     they take their orders from the trim pot and the slide switch.

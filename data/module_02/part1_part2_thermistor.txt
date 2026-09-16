@@ -2,7 +2,7 @@ Phys 39 Module 2, Parts 1 and 2 records.
 Thermistor divider, serial output and Serial Plotter.
 Naidu / Cohen. Session S4, Wednesday 9 September 2026.
 
-Sketch: arduino/thermistor_serial/thermistor_serial.ino
+Sketch: arduino/module_02/thermistor_serial/thermistor_serial.ino
   PLOTTER_MODE = false for Part 1 (labeled human-readable lines)
   PLOTTER_MODE = true  for Part 2 (one bare number per line)
 Every report averages 500 raw analogRead samples, inside the 100 to 1000

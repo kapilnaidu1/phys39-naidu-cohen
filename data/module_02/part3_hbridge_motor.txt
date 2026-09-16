@@ -2,7 +2,7 @@ Phys 39 Module 2, Part 3 records.
 Trim pot -> PWM -> BTS7960 H-bridge -> DC motor.
 Naidu / Cohen
 
-Sketch: arduino/trimpot_hbridge/trimpot_hbridge.ino, maxDuty = 255.
+Sketch: arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino, maxDuty = 255.
 Instrument for Part 3B/3C signal check: BK Precision 2120B, dual trace,
 30 MHz analog oscilloscope. TEC module and thermal switch DISCONNECTED
 for the whole of Part 3; the load terminals drove the small DC motor only.

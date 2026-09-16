@@ -13,7 +13,7 @@ a BTS7960 H-bridge, first by hand and later under Python control.
 ## Repository layout
 
 ```
-arduino/                  authoritative Arduino sketches, one folder per sketch
+arduino/module_0N/        authoritative Arduino sketches, grouped by module
 code/module_01/           Module 1 sketches, kept at their original paths
 data/module_0N/           raw captures, one folder per module
 docs/module_notes/        written evidence notes
@@ -23,8 +23,12 @@ python/                   Python programs for Module 3 onward
 requirements.txt          Python dependencies
 ```
 
-Each folder under `arduino/` has the same name as the `.ino` inside it, which
-the Arduino IDE requires.
+Each sketch folder has the same name as the `.ino` inside it, which the Arduino
+IDE requires. Grouping those folders under a module directory is fine; the IDE
+only cares about the sketch's immediate parent.
+
+The Module 1 sketches stay at `code/module_01/` because the submitted A1 PDF
+cites those paths.
 
 ---
 
@@ -63,11 +67,11 @@ time constant about 15 s in air.
 
 | Sketch | Module and part | Input | Output | Pair with |
 |---|---|---|---|---|
-| [`thermistor_serial`](arduino/thermistor_serial/thermistor_serial.ino) | 2, Parts 1 and 2 | `A0` thermistor | labeled line, or one bare number per line for Serial Plotter | Serial Monitor or Serial Plotter |
-| [`trimpot_hbridge`](arduino/trimpot_hbridge/trimpot_hbridge.ino) | 2, Part 3 | `A1` pot, pin 11 direction | PWM on pin 9 or 10 | Serial Monitor |
-| [`tec_manual_fixed_direction`](arduino/tec_manual_fixed_direction/tec_manual_fixed_direction.ino) | 3, Part 2 | `A0`, `A1` | PWM on pin 10 only, pin 9 held LOW | Serial Monitor |
-| [`tec_manual_hardware_direction`](arduino/tec_manual_hardware_direction/tec_manual_hardware_direction.ino) | 3, Part 3 | `A0`, `A1`, pin 11 switch | PWM on pin 9 or 10 | Serial Monitor |
-| [`tec_python_control`](arduino/tec_python_control/tec_python_control.ino) | 3, Part 6 | `A0` and serial commands | PWM on pin 9 or 10 | [`tec_control_gui.py`](python/tec_control_gui.py) |
+| [`thermistor_serial`](arduino/module_02/thermistor_serial/thermistor_serial.ino) | 2, Parts 1 and 2 | `A0` thermistor | labeled line, or one bare number per line for Serial Plotter | Serial Monitor or Serial Plotter |
+| [`trimpot_hbridge`](arduino/module_02/trimpot_hbridge/trimpot_hbridge.ino) | 2, Part 3 | `A1` pot, pin 11 direction | PWM on pin 9 or 10 | Serial Monitor |
+| [`tec_manual_fixed_direction`](arduino/module_03/tec_manual_fixed_direction/tec_manual_fixed_direction.ino) | 3, Part 2 | `A0`, `A1` | PWM on pin 10 only, pin 9 held LOW | Serial Monitor |
+| [`tec_manual_hardware_direction`](arduino/module_03/tec_manual_hardware_direction/tec_manual_hardware_direction.ino) | 3, Part 3 | `A0`, `A1`, pin 11 switch | PWM on pin 9 or 10 | Serial Monitor |
+| [`tec_python_control`](arduino/module_03/tec_python_control/tec_python_control.ino) | 3, Part 6 | `A0` and serial commands | PWM on pin 9 or 10 | [`tec_control_gui.py`](python/tec_control_gui.py) |
 
 `thermistor_serial` has a `PLOTTER_MODE` flag: `false` prints the labeled line
 for Serial Monitor, `true` prints one bare number per line for Serial Plotter.

@@ -88,7 +88,7 @@ for the whole of Part 3; the load terminals drove the small DC motor only.
     set only by pin 11 and was unaffected by the knob.
 
 
-4. A QUANTIZATION DETAIL WORTH RECORDING
+4. DOUBLE QUANTIZATION IN THE ADC-TO-PWM CHAIN
 
     At pot ADC = 269.0 the reported duty alternated between 66 and 67
     between consecutive lines. This is not electrical noise. The sketch

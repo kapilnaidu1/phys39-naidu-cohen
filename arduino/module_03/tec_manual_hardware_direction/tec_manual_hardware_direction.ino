@@ -12,7 +12,7 @@
     10   LPWM on the H-bridge
     11   SPDT direction switch, common terminal. Outer terminals to 5V and GND.
 
-  THE ONE THING TO SET BEFORE THIS SKETCH IS HONEST
+  SET THE DIRECTION CALIBRATION BEFORE USING THIS SKETCH
 
     PIN9_IS_HEAT below must be set from the Part 2 experiment, not from a pin
     number. The assignment is explicit: Heat/Cool: 1 must mean OBSERVED
@@ -29,8 +29,7 @@
       plate temperature FALLS with PWM on pin 10  ->  pin 10 is cool
                                                   ->  set PIN9_IS_HEAT = true
 
-    Until that observation is made and recorded, leave the placeholder value
-    and treat the Heat/Cool field as unverified.
+    Until that observation is made, the Heat/Cool field is unverified.
 */
 
 #include <math.h>
@@ -73,25 +72,22 @@ const bool PIN9_IS_HEAT = true;   // placeholder, confirm on the bench
 // 100 kOhm is brown-black-yellow, 10 kOhm is brown-black-orange.
 const float Rfixed = 100000.0;
 
-// TWO CHECKS BEFORE BELIEVING ANY TEMPERATURE THIS SKETCH PRINTS
+// VALIDATING THE TEMPERATURE CHANNEL
 //
-// 1. Is the sensor actually connected? A floating analog input still
-//    returns numbers. On 14 September this sketch reported a rock-steady
-//    ADC 80.0, 0.391 V and a confident 83 C with the thermistor not yet
-//    wired at all. A floating pin is not zero and not obviously broken; it
-//    is a plausible-looking constant, which is worse. Two separate wiring
-//    theories were built on that reading before anyone checked whether
-//    there was a sensor on the end of it.
+// An unconnected analog input still returns numbers, and 500-sample
+// averaging makes whatever it returns look steady. A plausible constant is
+// harder to spot than an obviously broken one, so the channel is checked by
+// its RESPONSE rather than by the value it reports.
 //
-// 2. Does it respond with the right SIGN? Warm the thermistor between
-//    finger and thumb and watch the ADC field. With the thermistor as the
-//    lower leg the ADC must FALL as it warms, because an NTC loses
-//    resistance. If the ADC rises, the two legs are swapped. If nothing
-//    moves at all, the sensor is not in the circuit.
+// Warm the thermistor between finger and thumb and watch the ADC field:
 //
-// Do check 2 every time the divider is rebuilt. It costs ten seconds and it
-// is the only cheap test that distinguishes a working channel from a
-// convincing artefact.
+//      ADC falls      -> correct. An NTC as the lower leg loses resistance
+//      ADC rises      -> the two divider legs are swapped
+//      ADC does not move -> the sensor is not in the circuit
+//
+// Run this check every time the divider is rebuilt. The plausibility window
+// below catches a divider that is absent or shorted, but only the sign of
+// the response confirms the sensor is the one being measured.
 
 const int   thermistorPin = A0;
 const float Vref          = 5.0;     // volts
@@ -131,12 +127,10 @@ float voltageToResistance(float volts) {
   return Rfixed * volts / (Vref - volts);
 }
 
-// A divider that is present and healthy puts A0 somewhere near mid scale.
-// This window is deliberately wide: with 100 kOhm against 100 kOhm, ADC 20
-// is about 118 C and ADC 1000 is about -40 C, so anything outside it is a
-// wiring fault rather than a temperature. Reporting a number from outside
-// the window is how a missing resistor or a sensor on the wrong pin gets
-// mistaken for a reading.
+// A healthy divider puts A0 near mid scale. This window is deliberately
+// wide: with 100 kOhm against 100 kOhm, ADC 20 is about 118 C and ADC 1000
+// is about -40 C, so a reading outside it indicates a wiring fault rather
+// than a temperature.
 bool adcPlausible(float adcValue) {
   return adcValue > 20.0 && adcValue < 1000.0;
 }

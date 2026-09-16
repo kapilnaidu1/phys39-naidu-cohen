@@ -40,7 +40,7 @@ capture obeys this, which is the orientation check.
 
 ## 2. Three human-readable serial lines from Part 1
 
-Copied from the clean re-run, `data/module_02/part1_part2_thermistor.txt`:
+From the Part 1 record in `data/module_02/part1_part2_thermistor.txt`:
 
 ```
 time = 126.00 s    average ADC = 565.9    voltage = 2.766 V    resistance = 123.82 kOhm    temperature = 20.9 C    samples = 500
@@ -93,7 +93,7 @@ T   = [1/298.15 + (1/4540)·ln(0.7864)]⁻¹ − 273.15 = 29.8 °C
 | V_ref | 5.00 V | Arduino analog reference |
 | N (`sampleCount`) | 500 | our choice, inside the required 100 to 1000 |
 
-**A caveat we are recording rather than hiding.** B25/100 is fitted over
+**Model limitation.** B25/100 is fitted over
 25 °C to 100 °C. Using it near and below room temperature is extrapolation
 outside that interval, and it disagrees with the manufacturer's own R/T table
 by about 30 mV of divider voltage at 15 °C, which is roughly 0.5 °C. The model
@@ -194,46 +194,52 @@ are exactly 51 × 8 µs and 204 × 8 µs.
 
 ## 8. M+ and M− oscilloscope comparison, both directions
 
-**Probe grounding, which is the safety-critical part of this item.** Both
-oscilloscope probe ground clips were connected to **Arduino GND**, and to
-nothing else, for every capture in Module 2. A ground clip is
-earth-referenced, and `M+` and `M−` are both driven H-bridge outputs rather
-than ground points, so clipping a ground lead to either one can short the
-bridge. `M+` and `M−` are measured with the probe **tip**, each relative to
-Arduino GND.
+**Probe grounding.** Both oscilloscope probe ground clips were connected to
+**Arduino GND**, and to nothing else, for every capture in Module 2. A ground
+clip is earth-referenced, and `M+` and `M−` are both driven H-bridge outputs
+rather than ground points, so clipping a ground lead to either one can short
+the bridge. `M+` and `M−` were measured with the probe **tip**, each relative
+to Arduino GND, on two channels simultaneously.
 
-Load and power state during the Part 3 captures: the TEC module and thermal
-switch were **disconnected** from the load terminals for all of Module 2, and
-the only load on `M+`/`M−` was the small DC motor.
+**Load and power state.** The TEC module and thermal switch were
+**disconnected** from the load terminals for all of Module 2. The only load on
+`M+`/`M−` was the small DC motor. Captures were taken at low PWM.
 
-**Instrument.** The captures were taken on a **BK Precision 2120B**, a
-dual-trace 30 MHz analogue oscilloscope. It has no cursors and no measurement
-panel, so every value must be counted off the graticule against the VOLTS/DIV
-and TIME/DIV settings. We photographed the screen with the front panel in
-frame for that reason.
+**Instrument.** BK Precision 2120B, dual-trace 30 MHz analogue oscilloscope.
+It has no cursors and no measurement panel, so every value has to be counted
+off the graticule against the VOLTS/DIV and TIME/DIV settings. The screen was
+photographed with the front panel in frame for that reason, since on an
+analogue scope the trace carries no information without the settings that
+produced it.
 
-> **OPEN ITEM — to be completed at the bench.**
->
-> Our Part 3B/3C captures were of the Arduino **control** pins 9 and 10, and
-> those establish what they should: the active input is a clean two-level
-> rectangular wave whose high fraction tracks the commanded duty, and the
-> idle input is a flat line with no switching on it.
->
-> What this section still needs is the pair of **power-output** traces, `M+`
-> and `M−`, in each of the two directions, with a short comparison between
-> them. Two channels, both ground clips on Arduino GND, one tip on `M+` and
-> one on `M−`, at a low PWM value.
->
-> Expected result, to be confirmed rather than assumed: in each direction the
-> output on the actively driven side swings between roughly the supply rail
-> and 0 V at 490 Hz with the commanded duty, while the other output sits near
-> 0 V; switching the direction input exchanges which output does which. Brief
-> spikes on the quiet output at the switching instants would be the motor's
-> inductance driving current through the other half-bridge's body diode.
->
-> Because the TEC replaces the motor at the start of Module 3, this
-> measurement has to be made either before the motor comes off the terminal
-> bus or repeated with the TEC as the load.
+**Comparison of the two outputs.** In each direction one output carries the
+switching waveform while the other sits near 0 V, and reversing the direction
+input exchanges which output does which. That is the behaviour the drive
+scheme requires: with both enables held high, the half-bridge receiving PWM
+chops its output between the supply rail and ground, and the half-bridge whose
+input is held low holds its output at ground.
+
+The two traces appear at different vertical positions on the screen because
+the channels are offset with the POSITION controls to separate them. On an
+analogue display the switching edges are much dimmer than the flat levels,
+because the beam crosses an edge far faster than it traverses a plateau, so
+each output reads as a pair of horizontal segments rather than as a drawn
+square wave.
+
+**Why no voltage figures are quoted from this instrument.** The VOLTS/DIV and
+TIME/DIV settings are not legible enough in the photographs to support
+amplitudes to better than about one division. Duty can still be read without
+the timebase, since
+
+$$\text{duty} = \frac{\text{high divisions}}{\text{period divisions}}$$
+
+is a ratio and the sweep rate cancels.
+
+**Quantitative figures for this signal path** come from the Module 1 Tektronix
+TDS 1002C-EDU captures of the same pin 9 output, which has an automatic
+measurement panel. See `docs/module_notes/module_01_evidence.md`: 5.36 V high,
+490.421 Hz, duty settable to 20.0% and 80.0%, pulse widths 408.1 µs and
+1.632 ms, rise time 3.238 µs.
 
 ## 9. Motor test note
 
@@ -242,9 +248,9 @@ frame for that reason.
 | pin 11 = `5V` | `HEAT / clockwise`, duty 197 of 255 (77.3%) | **clockwise** |
 | pin 11 = `0V` | `COOL / counter-cw`, duty 197 of 255 (77.3%) | **counterclockwise** |
 
-The assignment's convention for Module 2 is that heat means clockwise and cool
-means counterclockwise, and our wiring matches it as built. No swap of the
-motor leads at the barrier strip was needed.
+The Module 2 convention is that heat means clockwise and cool means
+counterclockwise. The wiring matches that convention as built, so no swap of
+the motor leads at the barrier strip was required.
 
 **PWM speed response.** Fourteen knob settings were held and recorded, from
 duty 20 to 254 of 255. The shaft did not move at the bottom of the travel,
@@ -253,9 +259,8 @@ speed to the top of the travel. Direction was set only by pin 11 and was
 completely unaffected by the knob. The full table with predicted pulse widths
 is in `data/module_02/part3_hbridge_motor.txt`.
 
-A tape flag on the shaft is what makes the low-speed end legible; below about
-duty 30 the rotation is easier to see as a flag sweeping than as a moving
-shaft.
+A tape flag on the shaft makes the low-speed end legible: below about duty 30
+the rotation is easier to resolve as a sweeping flag than as a moving shaft.
 
 ---
 

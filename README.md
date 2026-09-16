@@ -222,24 +222,26 @@ refuse to report a temperature when the divider reading falls outside ADC 20 to
 
 ---
 
-## What we tested ourselves
+## Verification performed
 
-- Every measured number in the Module 1 and Module 2 tables was read off our
-  own bench, not calculated and assumed.
+- Every value in the Module 1 and Module 2 result tables was measured on the
+  bench rather than calculated and assumed.
 - Both Module 2 sketches compile with `--warnings all` and produce no warnings
   from our own files.
-- The Module 3 measurement chain was checked against the expected
-  room-temperature operating point, ADC near mid-scale, and confirmed by the
-  sign of the response when the thermistor is warmed.
-- Both Python programs compile and their line parser tolerates the extra
+- The Module 3 thermistor channel was checked against its expected
+  room-temperature operating point, near mid scale, and confirmed by the sign
+  of its response to warming.
+- Both Python programs compile, and the line parser tolerates the additional
   bracketed diagnostics the manual sketches print.
 
-## What we do not fully understand yet
+## Open questions
 
-- The exact B value of the thermistor embedded in the TEC plate, if it is a
-  different part from the 100 kΩ breadboard sensor. Near 25 °C the choice
-  barely matters, which is precisely why it is easy to leave unresolved.
-- How much of the Module 2 beta-model disagreement with the manufacturer's R/T
-  table, about 0.5 °C at 15 °C and 35 °C, would survive a Steinhart-Hart fit.
-- The size of the TEC's thermal lag, which we have not yet measured and which
-  sets how long to wait before believing a direction test.
+- The B value of the thermistor embedded in the TEC plate, if it is a
+  different part from the 100 kΩ breadboard sensor. Near 25 °C all candidate
+  beta profiles agree to within half a degree, so the reading is usable while
+  this is outstanding.
+- How much of the Module 2 beta-model disagreement with the manufacturer's
+  R/T table, about 0.5 °C at 15 °C and 35 °C, a Steinhart-Hart fit would
+  remove.
+- The TEC's thermal time constant, which sets how long a direction test must
+  run before its sign is reliable. Not yet measured.

@@ -13,9 +13,8 @@ range the assignment requires.
 PART 1. HUMAN-READABLE SERIAL MONITOR LINES
 ================================================================
 
-These are excerpts, not the complete captures. The full runs were read off
-Serial Monitor at the bench; what is preserved here is the part that carries
-the physics.
+Excerpts from two captures. Capture B is the authoritative Part 1 record;
+see the data validity section at the end of this file.
 
 --- Capture A, first run, warming by finger contact -------------
 183 labeled lines at 0.5 s intervals from t = 16.50 s to t = 107.50 s.
@@ -36,10 +35,10 @@ time = 63.00 s    average ADC = 545.0    voltage = 2.664 V    resistance = 114.0
 time = 63.50 s    average ADC = 532.0    voltage = 2.600 V    resistance = 108.36 kOhm    temperature = 23.4 C    samples = 500
 
 An 8.5 C step inside one 0.5 s report is far faster than the sensor's own
-15 s time constant in air, so this is not the thermistor cooling. It is a
-mechanical event: the loose lead discussed below.
+15 s time constant in air, so it is not thermal. See the data validity
+section at the end of this file.
 
---- Capture B, clean re-run after the loose lead was fixed ------
+--- Capture B, authoritative Part 1 record ----------------------
 150 labeled lines at 0.5 s intervals from t = 125.50 s to t = 200.00 s.
 This is the authoritative Part 1 record.
 
@@ -115,15 +114,15 @@ purely to keep this file compact; the sketch emitted one per line.
 33.65 33.87 34.13 34.54 34.10 34.40 34.75 34.20 34.46 34.90
 35.05 34.56 34.87 35.18 34.63 34.97 35.35
 
-Worth noting against the label: nobody touched the thermistor during this
-run, and it still drifted upward by about 2.5 C. That is the thermistor
-equilibrating with the bench and with its own self-heating, and it is a
-reminder that "steady" over 60 s is not the same as "in equilibrium".
+The thermistor was untouched during this run and still drifted upward by
+about 2.5 C, from the sensor equilibrating with the bench and with its own
+self-heating. Steady over 60 s is not the same as thermally equilibrated.
 
 --- Batch 3. Wet-finger cooling test, 353 values ---------------
 This is the run that contains both directions, a warm rise to about 35 C
 and a decay to about 25.6 C after a slightly moistened finger was applied.
-It also contains the artifacts that led us to find the fault.
+It also contains the contact-fault signature described at the end of this
+file.
 
 31.37 31.72 31.47 31.33 31.69 31.49 31.32 31.22 31.51 31.35
 31.14 31.48 31.23 31.09 30.99 31.26 31.14 31.19 31.06 31.11
@@ -164,27 +163,30 @@ It also contains the artifacts that led us to find the fault.
 
 
 ================================================================
-THE FAULT WE FOUND, AND WHY IT MATTERS
+DATA VALIDITY: CAPTURE A AND BATCH 3
 ================================================================
 
-Batch 3 contains jumps that no thermal process can produce. The clearest are
+Capture A and Batch 3 contain steps that no thermal process can produce:
 
     35.18 -> 33.01 -> 29.43      a 5.75 C fall across two reports
     25.57 -> 29.90 -> 26.35      a 4.3 C spike and immediate return
     27.80 -> 32.23 -> 33.12      a 4.4 C step up
 
-Each 0.5 s report already averages 500 ADC samples, so electrical noise
-cannot survive into the printed value at this amplitude. The thermistor's
-own cooling time constant in air is about 15 s, so the sensor physically
-cannot change by 4 C in half a second. A step that fast has to be a change
-in the CIRCUIT, not in the temperature.
+Each 0.5 s report averages 500 ADC samples, so electrical noise cannot
+survive into the printed value at this amplitude, and the thermistor's own
+cooling time constant in air is about 15 s, so the sensor cannot physically
+change by 4 C in half a second. A step that fast is a change in the circuit,
+not in the temperature.
 
-It was a loose thermistor lead. Reseating it dropped the scatter on a quiet
-baseline by a factor of about four and removed the jumps entirely, which is
-what Capture B above shows.
+The cause was intermittent contact at a thermistor lead. Reseating it reduced
+the scatter on a quiet baseline by a factor of about four and removed the
+steps, which is what Capture B and the Part 1 record above show.
 
-The lesson we are recording because it cost us the most time: before
-modelling noise, check the connections. Several plausible physical
-explanations were considered first, mains pickup, hand capacitance, and
-convection, and each was consistent with some of the data and refuted by the
-rest. None of them would ever have found a bad contact.
+Capture A and Batch 3 are retained because they document the range of the
+instrument's response and the signature of a contact fault. Capture B is the
+authoritative Part 1 record and the quantitative claims in the C2 note are
+taken from it.
+
+A step faster than the sensor's own time constant is the diagnostic to apply
+to any future capture: it separates an electrical or mechanical fault from a
+thermal one without any further measurement.

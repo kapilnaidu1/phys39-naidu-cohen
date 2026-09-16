@@ -140,6 +140,21 @@ int armZeroStreak = 0;
 const int potJumpWarnCounts = 300;
 float prevPotAdc = -1.0;
 
+// Rate-of-change guard on the temperature channel.
+//
+// The sensor's own cooling time constant in air is about 15 s, and it was
+// measured at 15.1 s on this bench from the decay of a finger touch. A step
+// larger than maxStepC inside one 500 ms report is therefore not a
+// temperature at all: it is a contact opening or closing somewhere in the
+// divider. The ADC window guard alone does not catch these, because a bad
+// contact can land anywhere inside ADC 20 to 1000 and produce a number like
+// 86 C that is arithmetically valid and physically impossible.
+//
+// 5 C per report passes a firm finger on the sensor, which reaches about
+// 2 C per report, and rejects the contact artefacts.
+const float maxStepC = 5.0;
+float prevCelsius = NAN;
+
 const unsigned long reportIntervalMs = 500;
 unsigned long lastReportMs = 0;
 
@@ -282,6 +297,20 @@ void loop() {
 
   // Measurement line format required by the assignment.
   bool ok = adcPlausible(adcValue);
+
+  // Reject a step the sensor physically cannot make in one report.
+  if (ok && !isnan(celsius) && !isnan(prevCelsius) &&
+      fabs(celsius - prevCelsius) > maxStepC) {
+    Serial.print("# TEMPERATURE STEP: ");
+    Serial.print(prevCelsius, 2);
+    Serial.print(" -> ");
+    Serial.print(celsius, 2);
+    Serial.print(" C in one report, limit ");
+    Serial.print(maxStepC, 1);
+    Serial.println(" C. Too fast for the sensor. Check the A0 contacts.");
+    ok = false;
+  }
+  if (ok) prevCelsius = celsius;
 
   Serial.print("Temperature (C): ");
   if (!ok || isnan(celsius)) Serial.print("---"); else Serial.print(celsius, 2);

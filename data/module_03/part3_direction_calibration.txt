@@ -1,0 +1,142 @@
+Phys 39 Module 3, Part 3: direction calibration
+Naidu / Cohen, 16 September 2026
+
+Sketch:  arduino/module_03/tec_manual_hardware_direction
+Board:   Elegoo UNO R3 on /dev/cu.usbmodem1101, 9600 baud
+Supply:  ALITOVE ALT-1210T, 12 V, connected and on for both runs
+Duty:    40 of 255 in both directions
+Ambient: about 23.0 C (rest readings this session ran 22.68 to 23.36 C)
+
+PROVENANCE. These are the report lines visible in the bench screenshots
+taken during the run, transcribed here. They are contiguous within each
+block but each block is a window out of a longer run, and the full serial
+capture was not saved to disk. If the run is repeated, save the complete
+capture and replace this file. The windows are enough to fix the sign of
+the calibration, which is what Part 3 requires, and the reasoning is set
+out at the bottom.
+
+The sketch was running with PIN9_IS_HEAT = false at the time of capture,
+so the Heat/Cool field and the heating/cooling word already reflect the
+calibration being confirmed here. The physical facts are the pin 11 level,
+the named PWM pin, and the temperature column.
+
+
+=====================================================================
+RUN A. pin 11 = 0 V, PWM on pin 10. Plate temperature RISES.
+=====================================================================
+
+Temperature (C): 30.55, Time (s): 73.00, PWM: 40, Heat/Cool: 1 [ADC = 440.7, V = 2.154, R = 75.69 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 30.67, Time (s): 73.50, PWM: 40, Heat/Cool: 1 [ADC = 439.3, V = 2.147, R = 75.27 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 30.77, Time (s): 74.00, PWM: 40, Heat/Cool: 1 [ADC = 438.1, V = 2.141, R = 74.91 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 30.87, Time (s): 74.50, PWM: 40, Heat/Cool: 1 [ADC = 436.9, V = 2.135, R = 74.53 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 30.98, Time (s): 75.00, PWM: 40, Heat/Cool: 1 [ADC = 435.5, V = 2.128, R = 74.12 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 31.08, Time (s): 75.50, PWM: 40, Heat/Cool: 1 [ADC = 434.3, V = 2.123, R = 73.77 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 31.17, Time (s): 76.00, PWM: 40, Heat/Cool: 1 [ADC = 433.1, V = 2.117, R = 73.43 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+Temperature (C): 31.28, Time (s): 76.50, PWM: 40, Heat/Cool: 1 [ADC = 431.9, V = 2.111, R = 73.06 kOhm, pin 11 = 0V, PWM on pin 10, heating]
+
+Rate: (31.28 - 30.55) / (76.50 - 73.00) = +0.209 C/s = +12.5 C/min
+
+
+=====================================================================
+RUN B. pin 11 = 5 V, PWM on pin 9. Plate temperature FALLS.
+=====================================================================
+
+First window, plate about 8 C above ambient.
+
+Temperature (C): 31.91, Time (s): 109.00, PWM: 40, Heat/Cool: 0 [ADC = 424.2, V = 2.073, R = 70.83 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.75, Time (s): 109.50, PWM: 40, Heat/Cool: 0 [ADC = 426.1, V = 2.083, R = 71.40 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.61, Time (s): 110.00, PWM: 40, Heat/Cool: 0 [ADC = 427.8, V = 2.091, R = 71.87 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.45, Time (s): 110.50, PWM: 40, Heat/Cool: 0 [ADC = 429.7, V = 2.100, R = 72.43 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.31, Time (s): 111.00, PWM: 40, Heat/Cool: 0 [ADC = 431.4, V = 2.109, R = 72.92 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.18, Time (s): 111.50, PWM: 40, Heat/Cool: 0 [ADC = 433.1, V = 2.117, R = 73.42 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 31.04, Time (s): 112.00, PWM: 40, Heat/Cool: 0 [ADC = 434.7, V = 2.125, R = 73.90 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 30.89, Time (s): 112.50, PWM: 40, Heat/Cool: 0 [ADC = 436.6, V = 2.134, R = 74.45 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 30.76, Time (s): 113.00, PWM: 40, Heat/Cool: 0 [ADC = 438.2, V = 2.142, R = 74.94 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+
+Rate: (30.76 - 31.91) / (113.00 - 109.00) = -0.288 C/s = -17.3 C/min
+
+Second window, same run 35 s later, plate now close to ambient.
+
+Temperature (C): 24.60, Time (s): 148.00, PWM: 40, Heat/Cool: 0 [ADC = 516.8, V = 2.526, R = 102.08 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.56, Time (s): 148.50, PWM: 40, Heat/Cool: 0 [ADC = 517.2, V = 2.528, R = 102.27 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.49, Time (s): 149.00, PWM: 40, Heat/Cool: 0 [ADC = 518.2, V = 2.533, R = 102.64 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.43, Time (s): 149.50, PWM: 40, Heat/Cool: 0 [ADC = 519.0, V = 2.537, R = 102.98 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.37, Time (s): 150.00, PWM: 40, Heat/Cool: 0 [ADC = 519.7, V = 2.540, R = 103.27 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.31, Time (s): 150.50, PWM: 40, Heat/Cool: 0 [ADC = 520.6, V = 2.544, R = 103.61 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.26, Time (s): 151.00, PWM: 40, Heat/Cool: 0 [ADC = 521.2, V = 2.548, R = 103.88 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.20, Time (s): 151.50, PWM: 40, Heat/Cool: 0 [ADC = 522.0, V = 2.551, R = 104.19 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+Temperature (C): 24.13, Time (s): 152.00, PWM: 40, Heat/Cool: 0 [ADC = 522.8, V = 2.555, R = 104.53 kOhm, pin 11 = 5V, PWM on pin 9, cooling]
+
+Rate: (24.13 - 24.60) / (152.00 - 148.00) = -0.118 C/s = -7.1 C/min
+
+
+=====================================================================
+WHY THESE TWO RUNS FIX THE CALIBRATION
+=====================================================================
+
+Result
+
+    pin 11 = 0 V  ->  PWM on pin 10  ->  plate rises  ->  pin 10 is HEAT
+    pin 11 = 5 V  ->  PWM on pin  9  ->  plate falls  ->  pin  9 is COOL
+
+    therefore PIN9_IS_HEAT = false
+
+The rule used
+
+    Passive physics only ever moves the plate TOWARD room temperature.
+    Motion away from ambient, or motion toward ambient much faster than
+    passive decay allows, is the Peltier working and nothing else. Motion
+    toward ambient at roughly the passive rate proves nothing, because an
+    unpowered plate does exactly that.
+
+Run A, the heating direction
+
+    The plate climbed from 30.55 to 31.28 C in a 23 C room. Passive loss
+    at that point pulls DOWN at about 8 / 146 = 0.055 C/s, so the drive is
+    supplying 0.209 + 0.055 = 0.26 C/s and beating passive loss roughly
+    fourfold. Nothing but active heating raises a plate above ambient.
+
+Run B, the cooling direction
+
+    The first window falls at 0.288 C/s against a passive rate of about
+    0.057 C/s, a factor of 5.
+
+    The second window is the stronger evidence. At 24.4 C the plate is only
+    1.4 C above ambient, so passive decay has almost nothing left to give:
+    1.4 / 146 = 0.009 C/s. The measured fall is 0.118 C/s, about 12x
+    faster. Extrapolating, the plate crosses 23 C roughly 10 s after this
+    window ends.
+
+    That the ratio GROWS as ambient is approached, 5x at 31 C and 12x at
+    24 C, is the expected shape: passive loss dies off with the gradient
+    while the Peltier keeps pumping at constant duty.
+
+Sensor mounting, settled as a side effect
+
+    The two runs give OPPOSITE signs in the two switch positions. A
+    thermistor mounted on the wrong face of the Peltier would have moved
+    the same way in both, since that face heats whichever direction the
+    current takes relative to the face being controlled. It did not, so
+    the sensor reads the controlled face.
+
+Passive time constant used above
+
+    tau = 146 s, from an undriven decay earlier in the session: the plate
+    at 9.1 C above ambient fell at 0.0625 C/s, so tau = 9.1 / 0.0625.
+    This is the plate on its coolant loop. It is not the 15 s figure from
+    the datasheet, which is the bare sensor in air.
+
+What is NOT evidence
+
+    An apparent rise from 23.4 to 32.3 C in about 7 s appears earlier in
+    the session logs. Those reports read PWM: 0 and DISARMED, so no drive
+    was commanded, and the decay afterwards had a 15 s time constant,
+    matching a bare sensor in air. That was a finger on the thermistor.
+    It is recorded here so it is not mistaken for a drive run.
+
+Conversion chain cross-check
+
+    Every R field above agrees with the beta model to better than
+    0.03 kOhm at both ends of both runs, using Rnominal = 100 kOhm,
+    Beta = 4540 K, Rfixed = 100 kOhm. The temperature column is therefore
+    not being produced by a mis-set constant.

@@ -30,10 +30,21 @@
   "# ", so the Python parser can show them in the terminal without mistaking
   them for measurements.
 
-  SET THIS FROM THE PART 2 AND 3 EXPERIMENT
-    PIN9_IS_HEAT must carry the mapping you verified on the bench. HEAT must
-    command the direction that was OBSERVED to raise the plate temperature.
-    A pin number is not evidence.
+  DIRECTION CALIBRATION, MEASURED 16 SEPTEMBER 2026
+    PIN9_IS_HEAT carries the mapping verified on the bench. HEAT commands the
+    direction that was OBSERVED to raise the plate temperature. A pin number
+    is not evidence.
+
+      PWM on pin 10 raised the plate at +0.209 C/s at duty 40   -> HEAT
+      PWM on pin 9  lowered the plate at -0.118 C/s at duty 40  -> COOL
+
+    so PIN9_IS_HEAT = false. The cooling figure was taken at 24.4 C, only
+    1.4 C above ambient, where passive decay contributes 0.009 C/s, so the
+    plate was falling about 12x faster than it can unaided. The two signs are
+    opposite in the two directions, which also rules out the thermistor being
+    on the wrong face of the Peltier.
+
+    Evidence: data/module_03/part3_direction_calibration.txt
 
   SAFETY
     PWM starts at zero on reset and stays there until a valid command
@@ -45,10 +56,12 @@
 
 #include <math.h>
 
-// ---- SET FROM THE BENCH EXPERIMENT -----------------------------------
+// ---- MEASURED ON THE BENCH, 16 SEPTEMBER 2026 ------------------------
 // true  = PWM on pin 9 heats the plate, pin 10 cools it
 // false = PWM on pin 9 cools the plate, pin 10 heats it
-const bool PIN9_IS_HEAT = true;   // placeholder, confirm and record
+//
+// Observed: PWM on pin 10 raised the plate, PWM on pin 9 lowered it.
+const bool PIN9_IS_HEAT = false;
 
 // ---- thermistor, unchanged from Module 2 -----------------------------
 

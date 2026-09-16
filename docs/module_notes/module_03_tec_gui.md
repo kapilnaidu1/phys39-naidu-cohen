@@ -47,8 +47,8 @@ referenced, so grounding either one can short the bridge.
 | Part | Program | Written | Bench evidence in the repository |
 |---|---|---|---|
 | 1, wiring and checklist | n/a | table above, partly filled | pending the rows marked *to record* |
-| 2, manual drive, fixed direction | `tec_manual_fixed_direction` | yes, `maxDuty = 64`, about 25% | temperature channel confirmed at its expected operating point and by the sign of its response. No logged drive run yet |
-| 3, hardware direction switch | `tec_manual_hardware_direction` | yes | pending. `PIN9_IS_HEAT` is still a placeholder and must be set from the observed direction of heat flow, not from a pin number |
+| 2, manual drive, fixed direction | `tec_manual_fixed_direction` | yes, `maxDuty = 64`, about 25% | temperature channel confirmed at its expected operating point and by the sign of its response. Drive itself was confirmed under the Part 3 sketch, section 5 |
+| 3, hardware direction switch | `tec_manual_hardware_direction` | yes | **direction calibration measured, 16 Sept 2026.** `PIN9_IS_HEAT = false`, both directions driven at duty 40 with 12 V on. Section 5, raw excerpts in [`data/module_03/part3_direction_calibration.txt`](../../data/module_03/part3_direction_calibration.txt) |
 | 4, strip chart, display only | `tec_temperature_strip_chart.py` | yes, compiles | pending. No CSV in `data/module_03/` yet |
 | 5, control GUI | `tec_control_gui.py` | yes, compiles | pending |
 | 6, serial command interface | `tec_python_control` | yes | pending |
@@ -56,11 +56,9 @@ referenced, so grounding either one can short the bridge.
 | 8, cleanup and C3 | n/a | repository layout done, this note started | pending completion of the rows above |
 
 **Direction calibration.** The `Heat/Cool` field reports observed physics, not
-which pin carries the pulse train. The mapping is fixed by one bench
-experiment: command a low duty in one direction, watch the plate temperature
-for long enough to clear the sensor's own lag, and set `PIN9_IS_HEAT` from
-which way it moved. Until that is done the field is unverified in both the
-hardware-direction sketch and the Python control sketch.
+which pin carries the pulse train. That mapping has now been measured and
+`PIN9_IS_HEAT = false` is set in both the hardware-direction sketch and the
+Python control sketch. Section 5 records the runs and the reasoning.
 
 ## 3. Temperature channel verification
 
@@ -200,3 +198,66 @@ including the instructor check, then plug in the 12 V supply.
 direction for long enough to clear the sensor's thermal lag. Record which
 Arduino pin was carrying the pulse train while the plate warmed, and set
 `PIN9_IS_HEAT` from that observation.
+
+**Gate 5 passed, 16 September 2026.** Both directions at duty 40. Section 5.
+
+---
+
+## 5. Direction calibration, measured
+
+| Switch | Pin driven | Plate | Rate at duty 40 |
+|---|---|---|---|
+| pin 11 = 0 V | **10** | rises | **+0.209 C/s** |
+| pin 11 = 5 V | **9** | falls | **-0.118 C/s** |
+
+So pin 10 is heat, pin 9 is cool, and **`PIN9_IS_HEAT = false`**.
+
+### Why these runs are conclusive and the earlier ones were not
+
+Passive physics only ever moves the plate **toward** room temperature. So
+motion away from ambient, or motion toward ambient far faster than passive
+decay allows, is the Peltier working and nothing else. Motion toward ambient
+at roughly the passive rate proves nothing, because an unpowered plate does
+exactly that. Several earlier runs in this session were of that second kind
+and were correctly treated as carrying no direction information.
+
+The plate's own passive time constant, measured from an undriven decay
+earlier in the session, is **tau = 146 s**: at 9.1 C above ambient it fell at
+0.0625 C/s. That is the plate on its coolant loop, not the 15 s figure from
+the datasheet, which describes the bare sensor in air.
+
+**Heating run.** The plate climbed from 30.55 to 31.28 C in a 23 C room.
+Passive loss there pulls down at about 0.055 C/s, so the drive supplies
+0.26 C/s and beats passive loss fourfold. Nothing but active heating raises a
+plate above ambient.
+
+**Cooling run.** Two windows, and the second is the stronger one. At 24.4 C
+the plate sits only 1.4 C above ambient, so passive decay has almost nothing
+left to give: 1.4 / 146 = 0.009 C/s. The measured fall was 0.118 C/s, about
+**12x faster than it can fall unaided**. The ratio grows as ambient is
+approached, 5x at 31 C and 12x at 24 C, which is the expected shape: passive
+loss dies off with the gradient while the Peltier keeps pumping at fixed
+duty.
+
+### Sensor mounting, settled as a side effect
+
+The two runs give **opposite** signs in the two switch positions. A
+thermistor mounted on the wrong face of the Peltier would have moved the same
+way in both cases, because that face heats regardless of which direction the
+current takes relative to the controlled face. It did not, so the sensor
+reads the face being controlled. That was the other live explanation for a
+label disagreeing with the reading and it is now closed.
+
+### What is not evidence
+
+An apparent rise from 23.4 to 32.3 C in about 7 s appears earlier in the
+session logs. Those reports read `PWM: 0` and `DISARMED`, so no drive was
+commanded, and the decay afterwards had a 15 s time constant, matching a bare
+sensor in air. That was a finger on the thermistor, not plate drive, and it
+is recorded so it is not mistaken for a heating run.
+
+### Conversion chain cross-check
+
+Every `R` field in both runs agrees with the beta model to better than
+0.03 kOhm, using `Rnominal = 100 kOhm`, `Beta = 4540 K`, `Rfixed = 100 kOhm`.
+The temperature column is therefore not the product of a mis-set constant.

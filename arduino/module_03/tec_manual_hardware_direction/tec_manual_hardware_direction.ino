@@ -12,32 +12,50 @@
     10   LPWM on the H-bridge
     11   SPDT direction switch, common terminal. Outer terminals to 5V and GND.
 
-  SET THE DIRECTION CALIBRATION BEFORE USING THIS SKETCH
+  DIRECTION CALIBRATION, MEASURED 16 SEPTEMBER 2026
 
-    PIN9_IS_HEAT below must be set from the Part 2 experiment, not from a pin
-    number. The assignment is explicit: Heat/Cool: 1 must mean OBSERVED
-    heating and Heat/Cool: 0 must mean OBSERVED cooling, at the thermistor
-    embedded in the TEC plate.
+    PIN9_IS_HEAT carries a physical claim, not a pin number. Heat/Cool: 1
+    means OBSERVED heating and Heat/Cool: 0 means OBSERVED cooling, at the
+    thermistor on the TEC plate. Both directions were driven at duty 40 with
+    the 12 V supply on and the result is recorded below.
 
-    Procedure. Run tec_manual_fixed_direction (PWM on pin 10, pin 9 LOW), let
-    the plate settle, apply low power, and watch the reported temperature for
-    long enough to be sure of the sign. The TEC plate has real thermal mass
-    and the thermistor has a time constant of roughly 15 s, so give it time.
+      pin 11 = 0 V  ->  PWM on pin 10  ->  plate ROSE at +0.209 C/s  -> HEAT
+      pin 11 = 5 V  ->  PWM on pin 9   ->  plate FELL at -0.118 C/s  -> COOL
 
-      plate temperature RISES with PWM on pin 10  ->  pin 10 is heat
-                                                  ->  set PIN9_IS_HEAT = false
-      plate temperature FALLS with PWM on pin 10  ->  pin 10 is cool
-                                                  ->  set PIN9_IS_HEAT = true
+      therefore PIN9_IS_HEAT = false
 
-    Until that observation is made, the Heat/Cool field is unverified.
+    Why those two runs are conclusive rather than merely consistent. Passive
+    physics can only ever move the plate TOWARD room temperature, so motion
+    away from ambient is the TEC working and nothing else:
+
+      The heating run climbed away from a 23 C room, which passive loss
+      cannot do in any circumstance.
+
+      The cooling run was still falling at 0.118 C/s when the plate had come
+      down to 24.4 C, only 1.4 C above ambient. Passive decay there is
+      1.4 / 146 = 0.009 C/s, so the plate was falling about 12x faster than
+      it can fall on its own.
+
+      The two signs are OPPOSITE in the two switch positions. A thermistor
+      mounted on the wrong face of the Peltier would have given the same sign
+      both ways, so this also establishes that the sensor reads the face
+      being controlled.
+
+    An earlier apparent 23 to 32 C rise in the logs is NOT evidence: those
+    reports read PWM: 0 and DISARMED, and decayed back with a 15 s time
+    constant, which is a finger on the sensor rather than plate drive.
+
+    Raw excerpts: data/module_03/part3_direction_calibration.txt
 */
 
 #include <math.h>
 
-// ---- SET THIS FROM THE PART 2 EXPERIMENT -----------------------------
+// ---- MEASURED ON THE BENCH, 16 SEPTEMBER 2026 ------------------------
 // true  = PWM on pin 9 heats the plate, pin 10 cools it
 // false = PWM on pin 9 cools the plate, pin 10 heats it
-const bool PIN9_IS_HEAT = true;   // placeholder, confirm on the bench
+//
+// Observed: PWM on pin 10 raised the plate, PWM on pin 9 lowered it.
+const bool PIN9_IS_HEAT = false;
 
 // ---- thermistor ------------------------------------------------------
 

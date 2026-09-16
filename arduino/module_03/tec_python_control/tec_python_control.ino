@@ -124,9 +124,23 @@ const int   sampleCount   = 500;     // assignment requires 100 to 1000
 const int rpwmPin = 9;
 const int lpwmPin = 10;
 
-// The command range is 0 to 255, as the assignment specifies. Lower this for
-// a first power-on if the instructor wants the command ceiling reduced.
-const int maxDuty = 255;
+// The COMMAND range is 0 to 255, as the assignment specifies, and parsing
+// accepts that whole range. maxDuty is a separate OUTPUT ceiling applied in
+// applyDrive(), so the instrument can accept a legal command and still
+// refuse to deliver more current than the bench has been proven safe at.
+//
+// Set to 64 for first power-on, the same ceiling both manual sketches used.
+// Reason: duty 63 was measured at +25.7 C/min on this plate, so duty 255 is
+// roughly four times that command and would pass 80 C from room temperature
+// in under a minute, with the thermal switch as the only thing in the way.
+//
+// Raise to 255 for the graded run, but only after the A0, A1 and pin 11
+// contacts are fixed, so the temperature channel cannot drop out while the
+// plate is under full command.
+//
+// A cap is never applied silently: setup() announces it and every
+// acknowledgement above the ceiling says it was capped.
+const int maxDuty = 64;
 
 // Commanded state. Both start at the safe value.
 int  commandedPwm     = 0;
@@ -301,7 +315,17 @@ void handleLine() {
     Serial.print("  (PWM on pin ");
     if (commandedPwm == 0) Serial.print("none");
     else Serial.print((commandedHeating == PIN9_IS_HEAT) ? "9" : "10");
-    Serial.println(")");
+    Serial.print(")");
+
+    // Never cap silently. If the GUI says 200 and the plate behaves like 64,
+    // the operator has to be told, or the instrument is lying about what it
+    // is doing.
+    if (commandedPwm > maxDuty) {
+      Serial.print("  CAPPED: driving ");
+      Serial.print(maxDuty);
+      Serial.print(", the maxDuty output ceiling");
+    }
+    Serial.println();
   } else {
     Serial.print("# malformed command: \"");
     Serial.print(echo);
@@ -359,6 +383,13 @@ void setup() {
   Serial.println(PIN9_IS_HEAT ? "HEAT" : "COOL");
   Serial.println("# Commands: SET PWM <0-255> DIR <HEAT|COOL>");
   Serial.println("# PWM starts at 0 and stays there until a valid command arrives.");
+  if (maxDuty < 255) {
+    Serial.print("# OUTPUT CEILING: commands above ");
+    Serial.print(maxDuty);
+    Serial.print(" are accepted but driven at ");
+    Serial.print(maxDuty);
+    Serial.println(". Raise maxDuty for the graded run.");
+  }
   Serial.println();
 
   applyDrive();     // explicitly assert the zero-PWM state

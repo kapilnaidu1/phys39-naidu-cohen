@@ -19,7 +19,7 @@ Python:
 
 | Item | Value or observation |
 |---|---|
-| Arduino board and port | **Elegoo UNO R3**, ATmega328P, 16 MHz crystal, over USB. Pin compatible with the Uno and the same timer hardware, so the Module 1 PWM timebase results carry over. Port: *to record* |
+| Arduino board and port | **Elegoo UNO R3**, ATmega328P, 16 MHz crystal, over USB. Pin compatible with the Uno and the same timer hardware, so the Module 1 PWM timebase results carry over. Port: **`/dev/cu.usbmodem1101`**, which is the default already set in both Python programs |
 | Thermistor pin | `A0`, divider midpoint. `5V` - 100.0 kOhm - `A0` - thermistor - `GND`, thermistor as the LOWER leg |
 | H-bridge control pins | pin 9 to `RPWM`, pin 10 to `LPWM`, `R_EN` and `L_EN` and logic `VCC` to `5V`, logic `GND` to Arduino `GND`. Pin 11 is the SPDT direction input from Part 3 onward |
 | PWM starts at zero? | **Yes.** `setup()` drives both bridge inputs LOW before anything else, so the bridge is not commanded during boot or reset. Both manual sketches then start **disarmed** and hold duty at 0 until the trim pot has been seen below ADC 10, so a knob left up from the previous run cannot deliver drive at power-on. `tec_python_control` starts at PWM 0 and returns to 0 on any command it cannot parse |
@@ -64,11 +64,29 @@ hardware-direction sketch and the Python control sketch.
 
 ## 3. Temperature channel verification
 
-At room temperature the divider sat at ADC 465.4, which is 2.275 V, giving
-83.45 kOhm and 28.6 C. That is near mid scale, which is where a 100 kOhm
-thermistor against a 100.0 kOhm upper leg should sit, and warming the sensor
-moved the ADC down and the reported temperature up, the expected direction for
-an NTC in the lower leg.
+Gate 3 passed after the divider was rebuilt. Steady reading at ambient:
+
+```
+Temperature (C): 22.68, Time (s): 273.00, PWM: 0, Active PWM pin: none
+    [ADC = 542.0, V = 2.649, R = 112.68 kOhm, pot ADC = 0]
+```
+
+ADC 542 is close to mid scale, which is where a 100 kOhm thermistor against a
+100.0 kOhm upper leg belongs. The measured 112.68 kOhm agrees with the
+datasheet beta curve for the TDK part at 22.68 C to better than 0.1 kOhm, which
+independently confirms the sensor identity: it is the 100 kOhm
+B57861S0104F040V24, not a higher value part, so `Rnominal = 100000` and
+`Beta = 4540` are correct as written.
+
+An earlier session reported 457 kOhm and -2.06 C from this same channel. The
+conversion arithmetic was correct and the reading was stable to under one ADC
+count, but the divider was miswired, so the number described the circuit rather
+than the plate. A stable, low-noise, internally consistent reading is not
+evidence that a sensor is connected correctly. The orientation and operating
+point checks below are what establish that.
+
+Warming the sensor moves the ADC down and the reported temperature up, the
+expected direction for an NTC in the lower leg.
 
 All three Module 3 sketches refuse to report a temperature when the averaged
 divider reading falls outside ADC 20 to 1000. They print `---` and the likely

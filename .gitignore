@@ -17,3 +17,6 @@ build/
 .Rhistory
 .Rapp.history
 .RData
+
+# Demo-mode output from python/demo_source.py. Synthetic, never evidence.
+*_DEMO.csv

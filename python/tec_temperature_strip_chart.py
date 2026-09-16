@@ -44,6 +44,8 @@ import serial
 import serial.tools.list_ports
 from PySide6 import QtCore, QtWidgets
 
+import demo_source
+
 # =====================================================================
 # CONFIGURATION. Everything you are likely to change lives here.
 # =====================================================================
@@ -69,6 +71,12 @@ TEMP_MIN = 10.0
 TEMP_MAX = 45.0
 
 # The raw data file required for C3. Columns carry units in their names.
+# Run from a synthetic thermal model instead of the Arduino, so the plot, the
+# parser and the CSV writer can be developed while the bench is busy. Also
+# settable from the command line with --demo. Demo output is written to a
+# separate CSV so it can never be mistaken for measured data.
+DEMO_MODE = False
+
 CSV_FILENAME = "data/module_03/tec_run.csv"
 
 
@@ -79,6 +87,8 @@ CSV_FILENAME = "data/module_03/tec_run.csv"
 # One regular expression per field, joined in order. Writing it this way
 # means any extra text the Arduino adds after Heat/Cool, such as a
 # diagnostic in brackets, is simply ignored instead of breaking the parse.
+DEMO_CSV_FILENAME = CSV_FILENAME.replace(".csv", "_DEMO.csv")
+
 LINE_PATTERN = re.compile(
     r"Temperature \(C\):\s*(-?\d+(?:\.\d+)?|-+)\s*,\s*"
     r"Time \(s\):\s*(-?\d+(?:\.\d+)?)\s*,\s*"
@@ -111,6 +121,10 @@ def parse_measurement(line):
         int(match.group(3)),     # pwm
         int(match.group(4)),     # heat_cool
     )
+
+def is_measurement_line(line):
+    """True if the line has the measurement format, usable reading or not."""
+    return LINE_PATTERN.search(line) is not None
 
 
 # =====================================================================
@@ -217,14 +231,20 @@ class StripChartWindow(QtWidgets.QMainWindow):
         # ---- the CSV file --------------------------------------------
         # Opened once and flushed after every row, so a crash or an
         # unplugged cable cannot cost more than the last measurement.
-        self.csv_file = open(CSV_FILENAME, "w", newline="")
+        self.csv_path = DEMO_CSV_FILENAME if DEMO_MODE else CSV_FILENAME
+        self.csv_file = open(self.csv_path, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(["time_s", "temperature_C", "pwm", "heat_cool"])
         self.csv_file.flush()
-        print(f"Writing measurements to {CSV_FILENAME}")
+        print(f"Writing measurements to {self.csv_path}")
 
         # ---- the serial reader ---------------------------------------
-        self.reader = SerialReader(SERIAL_PORT, BAUD_RATE)
+        if DEMO_MODE:
+            print("DEMO MODE: synthetic data from a thermal model, "
+                  "not a measurement.")
+            self.reader = demo_source.make_demo_reader(QtCore)()
+        else:
+            self.reader = SerialReader(SERIAL_PORT, BAUD_RATE)
         self.reader.line_received.connect(self.on_line)
         self.reader.error.connect(self.on_serial_error)
         self.reader.start()
@@ -238,15 +258,35 @@ class StripChartWindow(QtWidgets.QMainWindow):
 
     # ---- one line has arrived from the Arduino ------------------------
     def on_line(self, line):
-        # Required: show the complete received line, because Serial Monitor
-        # cannot be open while this program owns the port.
-        print(line)
-
         measurement = parse_measurement(line)
+
         if measurement is None:
-            return      # a comment, a heading, or noise
+            # Not a usable measurement. Two different cases, and they must
+            # not be treated the same way.
+            if is_measurement_line(line):
+                # The format matched but the temperature field was "---",
+                # which the sketch prints when the divider reading is
+                # impossible. Say so in one short line rather than echoing
+                # the whole thing, and do not plot or log it.
+                print("   (divider reading unusable, nothing logged)")
+            else:
+                # A heading, or one of the sketch's own notices such as
+                # ARMED, POT JUMP or TEMPERATURE STEP. These are passed
+                # through, because silently dropping a safety notice is
+                # worse than a little extra text, and they are not
+                # measurement lines.
+                text = line.strip()
+                if text:
+                    print(text)
+            return
 
         time_s, temperature_c, pwm, heat_cool = measurement
+        direction = "heating" if heat_cool == 1 else "cooling"
+
+        # The assignment asks for exactly these four values in the terminal,
+        # extracted from the line rather than echoed with it.
+        print(f"t = {time_s:8.2f} s    T = {temperature_c:6.2f} C    "
+              f"PWM = {pwm:3d}    {direction}")
 
         # Store for plotting, then drop anything older than the window.
         self.times.append(time_s)
@@ -293,11 +333,15 @@ class StripChartWindow(QtWidgets.QMainWindow):
         self.timer.stop()
         self.reader.stop()
         self.csv_file.close()
-        print(f"\nClosed. Data saved in {CSV_FILENAME}")
+        print(f"\nClosed. Data saved in {self.csv_path}")
         super().closeEvent(event)
 
 
 def main():
+    global DEMO_MODE
+    if "--demo" in sys.argv:
+        DEMO_MODE = True
+
     app = QtWidgets.QApplication(sys.argv)
     window = StripChartWindow()
     window.show()

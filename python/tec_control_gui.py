@@ -61,6 +61,8 @@ import serial
 import serial.tools.list_ports
 from PySide6 import QtCore, QtWidgets
 
+import demo_source
+
 # =====================================================================
 # CONFIGURATION
 # =====================================================================
@@ -82,6 +84,12 @@ PWM_MAX = 255
 # this the serial port would receive a hundred commands per drag.
 SEND_DEBOUNCE_MS = 60
 
+# Run from a synthetic thermal model instead of the Arduino, so the plot, the
+# parser and the CSV writer can be developed while the bench is busy. Also
+# settable from the command line with --demo. Demo output is written to a
+# separate CSV so it can never be mistaken for measured data.
+DEMO_MODE = False
+
 CSV_FILENAME = "data/module_03/tec_control_run.csv"
 
 HEAT_COLOR = "#d62728"       # solid red while heating
@@ -91,6 +99,8 @@ COOL_COLOR = "#1f77b4"       # solid blue while cooling
 # =====================================================================
 # PARSING
 # =====================================================================
+
+DEMO_CSV_FILENAME = CSV_FILENAME.replace(".csv", "_DEMO.csv")
 
 LINE_PATTERN = re.compile(
     r"Temperature \(C\):\s*(-?\d+(?:\.\d+)?|-+)\s*,\s*"
@@ -118,6 +128,10 @@ def parse_measurement(line):
         int(match.group(3)),
         int(match.group(4)),
     )
+
+def is_measurement_line(line):
+    """True if the line has the measurement format, usable reading or not."""
+    return LINE_PATTERN.search(line) is not None
 
 
 # =====================================================================
@@ -224,14 +238,20 @@ class ControlWindow(QtWidgets.QMainWindow):
         self._build_ui()
 
         # ---- CSV ------------------------------------------------------
-        self.csv_file = open(CSV_FILENAME, "w", newline="")
+        self.csv_path = DEMO_CSV_FILENAME if DEMO_MODE else CSV_FILENAME
+        self.csv_file = open(self.csv_path, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(["time_s", "temperature_C", "pwm", "heat_cool"])
         self.csv_file.flush()
-        print(f"Writing measurements to {CSV_FILENAME}")
+        print(f"Writing measurements to {self.csv_path}")
 
         # ---- serial ---------------------------------------------------
-        self.link = SerialLink(SERIAL_PORT, BAUD_RATE)
+        if DEMO_MODE:
+            print("DEMO MODE: synthetic data from a thermal model, "
+                  "not a measurement.")
+            self.link = demo_source.make_demo_reader(QtCore)()
+        else:
+            self.link = SerialLink(SERIAL_PORT, BAUD_RATE)
         self.link.line_received.connect(self.on_line)
         self.link.error.connect(self.on_serial_error)
         self.link.start()
@@ -419,15 +439,35 @@ class ControlWindow(QtWidgets.QMainWindow):
     # INCOMING DATA
     # -----------------------------------------------------------------
     def on_line(self, line):
-        # Required: the complete received line, since Serial Monitor cannot
-        # be open while this program owns the port.
-        print(line)
-
         measurement = parse_measurement(line)
+
         if measurement is None:
+            # Not a usable measurement. Two different cases, and they must
+            # not be treated the same way.
+            if is_measurement_line(line):
+                # The format matched but the temperature field was "---",
+                # which the sketch prints when the divider reading is
+                # impossible. Say so in one short line rather than echoing
+                # the whole thing, and do not plot or log it.
+                print("   (divider reading unusable, nothing logged)")
+            else:
+                # A heading, or one of the sketch's own notices such as
+                # ARMED, POT JUMP or TEMPERATURE STEP. These are passed
+                # through, because silently dropping a safety notice is
+                # worse than a little extra text, and they are not
+                # measurement lines.
+                text = line.strip()
+                if text:
+                    print(text)
             return
 
         time_s, temperature_c, pwm, heat_cool = measurement
+        direction = "heating" if heat_cool == 1 else "cooling"
+
+        # The assignment asks for exactly these four values in the terminal,
+        # extracted from the line rather than echoed with it.
+        print(f"t = {time_s:8.2f} s    T = {temperature_c:6.2f} C    "
+              f"PWM = {pwm:3d}    {direction}")
 
         self.times.append(time_s)
         self.temperatures.append(temperature_c)
@@ -494,11 +534,15 @@ class ControlWindow(QtWidgets.QMainWindow):
         self.send_timer.stop()
         self.link.stop()
         self.csv_file.close()
-        print(f"\nClosed. PWM commanded to 0. Data saved in {CSV_FILENAME}")
+        print(f"\nClosed. PWM commanded to 0. Data saved in {self.csv_path}")
         super().closeEvent(event)
 
 
 def main():
+    global DEMO_MODE
+    if "--demo" in sys.argv:
+        DEMO_MODE = True
+
     app = QtWidgets.QApplication(sys.argv)
     window = ControlWindow()
     window.show()

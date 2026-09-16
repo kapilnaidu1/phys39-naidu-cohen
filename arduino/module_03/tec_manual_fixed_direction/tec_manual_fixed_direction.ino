@@ -129,6 +129,17 @@ bool armed = false;
 const int armConfirmReports = 4;        // 4 x 500 ms = 2 s held at zero
 int armZeroStreak = 0;
 
+// Intermittent-contact detector, diagnostic only.
+//
+// This does NOT make an intermittent pot safe. A sustained dropout is
+// indistinguishable from a knob genuinely at zero by value alone, so no
+// amount of filtering substitutes for a connection that holds. What this
+// does is put the fault in the serial log where it can be seen: a trim pot
+// cannot be turned across most of its travel inside one 500 ms report, so a
+// jump this large between consecutive reports is electrical, not mechanical.
+const int potJumpWarnCounts = 300;
+float prevPotAdc = -1.0;
+
 const unsigned long reportIntervalMs = 500;
 unsigned long lastReportMs = 0;
 
@@ -236,6 +247,16 @@ void loop() {
   float volts    = adcToVoltage(adcValue);
   float ohms     = voltageToResistance(volts);
   float celsius  = resistanceToCelsius(ohms);
+
+  // Flag a jump too fast to be a hand on the screw.
+  if (prevPotAdc >= 0.0 && fabs(potAdc - prevPotAdc) > potJumpWarnCounts) {
+    Serial.print("# POT JUMP: ");
+    Serial.print(prevPotAdc, 0);
+    Serial.print(" -> ");
+    Serial.print(potAdc, 0);
+    Serial.println(" in one report. Check the trim pot contacts.");
+  }
+  prevPotAdc = potAdc;
 
   // Arm once the knob has been HELD down for armConfirmReports in a row.
   // It never disarms after that, so the interlock protects the power-on

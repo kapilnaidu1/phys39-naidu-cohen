@@ -49,10 +49,10 @@ referenced, so grounding either one can short the bridge.
 | 1, wiring and checklist | n/a | table above, partly filled | pending the rows marked *to record* |
 | 2, manual drive, fixed direction | `tec_manual_fixed_direction` | yes, `maxDuty = 64`, about 25% | temperature channel confirmed at its expected operating point and by the sign of its response. Drive itself was confirmed under the Part 3 sketch, section 5 |
 | 3, hardware direction switch | `tec_manual_hardware_direction` | yes | **direction calibration measured, 16 Sept 2026.** `PIN9_IS_HEAT = false`, both directions driven at duty 40 with 12 V on. Section 5, raw excerpts in [`data/module_03/part3_direction_calibration.txt`](../../data/module_03/part3_direction_calibration.txt) |
-| 4, strip chart, display only | `tec_temperature_strip_chart.py` | yes, compiles | pending. No CSV in `data/module_03/` yet |
-| 5, control GUI | `tec_control_gui.py` | yes, compiles | pending |
-| 6, serial command interface | `tec_python_control` | yes | pending |
-| 7, heating and cooling test | Parts 5 and 6 together | n/a | pending. This is the run another person has to be able to reproduce |
+| 4, strip chart, display only | `tec_temperature_strip_chart.py` | yes | **run 23 Sept.** 391 rows, 195 s, 0.50 s cadence, no gaps. `part4_baseline_21C_nodrive.csv`. Baseline only: the trim pot never armed, so PWM is 0 throughout |
+| 5, control GUI | `tec_control_gui.py` | yes | **run 23 Sept.** Slider and HEAT/COOL drove the plate over a 23 C range. Section 6 |
+| 6, serial command interface | `tec_python_control` | yes | **run 23 Sept.** Parsed and executed commands from the GUI for the whole cycle |
+| 7, heating and cooling test | Parts 5 and 6 together | n/a | **done 23 Sept.** 9.5 to 32.5 C, both legs clear of ambient. [`part7_heat_cool_cycle_gui.txt`](../../data/module_03/part7_heat_cool_cycle_gui.txt). Direction labels in that run are inverted, section 6 |
 | 8, cleanup and C3 | n/a | repository layout done, this note started | pending completion of the rows above |
 
 **Direction calibration.** The `Heat/Cool` field reports observed physics, not
@@ -279,3 +279,67 @@ is recorded so it is not mistaken for a heating run.
 Every `R` field in both runs agrees with the beta model to better than
 0.03 kOhm, using `Rnominal = 100 kOhm`, `Beta = 4540 K`, `Rfixed = 100 kOhm`.
 The temperature column is therefore not the product of a mis-set constant.
+
+---
+
+## 6. Parts 5 to 7: the heating and cooling cycle, and an inverted label
+
+Full record: [`data/module_03/part7_heat_cool_cycle_gui.txt`](../../data/module_03/part7_heat_cool_cycle_gui.txt).
+Data: `data/module_03/tec_control_run.csv`.
+
+| commanded | duty | plate |
+|---|---|---|
+| HEAT, t = 14 to 32 s | 159 | fell 15.5 to **9.5 C**, -0.33 C/s |
+| COOL, t = 33 to 50 s | 159 | rose 9.5 to **30 C**, +1.21 C/s |
+
+23 C of swing about a 21.5 C ambient: 12 C below it and 11 C above it. Both
+legs move the plate away from room temperature, which passive physics cannot
+do, so both are the Peltier working.
+
+### Why HEAT cooled and COOL heated
+
+The board was running an older copy of `tec_python_control` with
+`PIN9_IS_HEAT = true`. The repository copy has `false`. The sketch picks the
+driven pin with one line:
+
+```cpp
+pwmOnPin9 = (commandedHeating == PIN9_IS_HEAT);
+```
+
+With `true`, commanding HEAT selects pin 9, and pin 9 is the **cooling**
+direction, measured three separate times (16 Sept at duty 40, 23 Sept at
+duty 28 crossing 2.85 C below ambient, and this run at duty 159 crossing
+12 C below). So HEAT drove the cooling side.
+
+**Every component behaved correctly.** The GUI sent what the button said.
+The sketch parsed it, drove exactly one bridge input, and reported the
+direction it had been commanded. The plate responded strongly and
+repeatably. One boolean was wrong, and that single constant inverted the
+instrument's whole vocabulary: the button, the printed word, and the
+`Heat/Cool` column all lied together, and agreed with each other while doing
+it.
+
+A self-consistent instrument is not a correct one. Nothing internal can
+catch this, because every part is faithfully passing on the same wrong
+premise. Only comparing a label against the physical world finds it, which
+is why `Heat/Cool` is defined as **observed** heating rather than as a pin
+number.
+
+### Rate asymmetry
+
+Heating ran **3.7x faster** than cooling, +1.21 against -0.33 C/s. That is
+expected: on the heating leg the module delivers pumped heat plus its own
+Joule heating, while on the cooling leg the Joule heating opposes the
+pumping. A Peltier is always a better heater than a cooler, and this run
+measures that directly.
+
+### Two things the run exposed
+
+**Overshoot.** Duty went to 0 at t = 51 and the plate carried on to 32.5 C
+before turning over. Commanding zero stops adding heat; it does not stop the
+temperature.
+
+**No output ceiling.** Duty reached 159, so that copy also had
+`maxDuty = 255`. At +1.21 C/s the plate would pass 80 C inside a minute of
+continuous heating. The run was stopped by hand. The repository copy is now
+capped at 64 and announces the cap at boot, and any unattended run needs it.

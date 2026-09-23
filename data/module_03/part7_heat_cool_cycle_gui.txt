@@ -1,0 +1,93 @@
+Phys 39 Module 3, Parts 5 to 7: heating and cooling cycle under Python control
+Naidu / Cohen, 23 September 2026
+
+Programs: python/tec_control_gui.py driving arduino/module_03/tec_python_control
+Data:     data/module_03/tec_control_run.csv
+Ambient:  about 21.5 C
+
+READ THE DIRECTION LABELS IN THIS RUN AS INVERTED. See the section below.
+The temperature column, the duty column and the times are all correct.
+
+WHAT WAS COMMANDED AND WHAT THE PLATE DID
+
+    t = 0                  plate at about 15 C, left cold by the previous
+                           cooling run
+    t = 6.5                commanded HEAT, duty 60
+    t = 13.5               duty raised to 159
+    t = 14 to 32           plate FELL 15.5 -> 9.5 C      = -0.33 C/s
+    t = 32                 commanded COOL, duty 159
+    t = 33 to 50           plate ROSE 9.5 -> 30 C        = +1.21 C/s
+    t = 51                 duty to 0
+    t = 51 to 54           plate coasted on to 32.5 C, then began falling
+
+    Total swing 9.5 to 32.5 C, that is 23 C, with ambient at about 21.5 C.
+    The plate was driven 12 C below ambient and 11 C above it. Passive
+    physics can only move a plate toward room temperature, so both legs are
+    unambiguously the Peltier doing work.
+
+WHY "HEAT" COOLED AND "COOL" HEATED
+
+    The sketch running on the board during this run was an older copy of
+    tec_python_control carrying PIN9_IS_HEAT = true. The repository copy has
+    PIN9_IS_HEAT = false.
+
+    The sketch selects the driven pin with one line:
+
+        pwmOnPin9 = (commandedHeating == PIN9_IS_HEAT);
+
+    With PIN9_IS_HEAT = true:
+
+        command HEAT -> pwmOnPin9 = (true  == true)  = true  -> pin 9
+        command COOL -> pwmOnPin9 = (false == true)  = false -> pin 10
+
+    and pin 9 is the COOLING direction, measured three times independently:
+
+        16 Sept, duty 40, pin 9   -> plate fell
+        23 Sept, duty 28, pin 9   -> plate fell 2.85 C below ambient
+        23 Sept, duty 159, pin 9  -> plate fell 12 C below ambient (this run)
+
+    So commanding HEAT drove the cooling direction. With the repository value
+    PIN9_IS_HEAT = false the assignments reverse and HEAT drives pin 10,
+    which is the heating direction, and every label is then truthful.
+
+    THE POINT WORTH KEEPING. Every part of this instrument worked correctly
+    during this run. The GUI sent what the button said. The sketch parsed it
+    correctly, drove exactly one bridge input, and reported the direction it
+    had been commanded. The plate responded strongly and reproducibly. One
+    boolean was wrong, and that single constant inverted the entire
+    vocabulary of the instrument: the button, the printed word, and the
+    Heat/Cool column in the CSV all lied together and agreed with each other
+    while doing it.
+
+    A self-consistent instrument is not a correct one. The only thing that
+    catches this is comparing a label against the physical world, which is
+    why Heat/Cool is defined as OBSERVED heating rather than as a pin number.
+
+RATE ASYMMETRY, WORTH REPORTING
+
+    heating  +1.21 C/s
+    cooling  -0.33 C/s        a factor of 3.7
+
+    Expected for a Peltier. On the heating side the module delivers pumped
+    heat PLUS its own Joule heating. On the cooling side the Joule heating
+    works against the pumping. The same device is therefore always a better
+    heater than it is a cooler, and this run measures that asymmetry directly.
+
+SAFETY OBSERVATION
+
+    Duty reached 159, so the copy on the board also had maxDuty = 255 rather
+    than the 64 now set in the repository. At +1.21 C/s the plate would pass
+    80 C in under a minute of continuous heating. The run was stopped by hand
+    at 32.5 C. The output ceiling exists for exactly this case and should be
+    in place before any unattended run.
+
+    Note also the 3 C of overshoot after duty went to 0 at t = 51. The plate
+    kept rising to 32.5 C. Commanding zero does not stop the temperature, it
+    only stops adding to it.
+
+RESPONSE TIME
+
+    The plate reacted within about 3 s of each command at duty 159. An
+    earlier run at duty 28 showed no visible response for 35 s. Response
+    time is a strong function of drive level, so the lag seen at low duty
+    must not be taken as a fixed property of the apparatus.

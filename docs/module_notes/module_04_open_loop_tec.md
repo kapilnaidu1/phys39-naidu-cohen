@@ -98,8 +98,8 @@ Four reasons, roughly in order of importance:
 | H-bridge outputs checked with TEC power off in Module 3 | yes, Module 3 Part 7 test 2, checked by the instructor. Captures not retained |
 | Sketch uploaded, GUI started, PWM begins at 0 | *to record* |
 | Displayed temperature plausible | *to record* |
-| High-current path drawn in notebook | *to record* |
-| **Instructor approval before actuator power** | *to record, with name and time* |
+| High-current path drawn in notebook | yes, drawn and shown at the inspection, 23 Sept |
+| **Instructor approval before actuator power** | **APPROVED 23 September 2026.** Instructor inspected the completed high-current wiring and approved actuator power. *Name and time to fill in.* |
 
 Carried over from Module 3 and still open:
 

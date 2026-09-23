@@ -1,0 +1,123 @@
+Phys 39 Module 3, Part 7: full-drive heating and cooling, 70 C swing
+Naidu / Cohen, 23 September 2026
+
+Programs: python/tec_control_gui.py driving arduino/module_03/tec_python_control
+Data:     data/module_03/part7_full_drive_70C_swing.csv   (917 rows, 458.5 s)
+Ambient:  about 21.5 C
+Checked at the bench by the instructor.
+
+This is the run that satisfies Part 7. It supersedes the earlier attempt in
+part7_heat_cool_cycle_gui.txt, which was taken at a quarter of the commanded
+drive. See the last section.
+
+AS WITH EVERY RUN SO FAR, THE DIRECTION LABELS ARE INVERTED. The board was
+carrying a copy of the sketch with PIN9_IS_HEAT = true. The temperature, time
+and duty columns are correct.
+
+RESULT
+
+    minimum   -16.00 C   at t = 411.5 s
+    maximum   +54.10 C   at t = 450.0 s
+    swing      70.10 C
+
+    That is 37.5 C BELOW ambient and 32.6 C ABOVE it. Both extremes are far
+    outside anything passive heat flow can produce, since passive physics
+    only ever moves the plate toward room temperature. The whole 70 C range
+    is the Peltier doing work.
+
+WHAT WAS COMMANDED
+
+    t =   0.5 to  25      duty 0, plate at 26.2 C, left warm by the previous run
+    t =  25.5 to 278      "HEAT", duty 48       26.11 -> 19.78 C
+    t = 278   to 281      duty 0
+    t = 281   to 411.5    "HEAT", duty 96 -> 254 19.07 -> -16.00 C
+    t = 411.5 to 450      "COOL", duty about 250 -16.00 -> +54.10 C
+
+    Commanded HEAT, plate fell to -16. Commanded COOL, plate rose to +54.
+    Inverted, consistently, in both directions.
+
+RATES
+
+    cooling leg, duty 96 to 254
+
+        t 281.0 -> 320.0     19.07 ->   8.94    -0.260 C/s
+        t 320.0 -> 360.0      8.94 ->  -7.19    -0.403 C/s
+        t 360.0 -> 411.5     -7.19 -> -16.00    -0.171 C/s
+        whole leg                              -0.269 C/s
+
+        The middle interval is the fastest, not the first. Duty was still
+        being raised through the early part of the leg, and the last interval
+        slows because the plate is approaching the cold limit of the module,
+        where the temperature difference across it is largest and it can pump
+        least.
+
+    heating leg, duty about 250
+
+        t 411.5 -> 425.0    -16.00 ->  15.17    +2.309 C/s
+        t 425.0 -> 440.0     15.17 ->  42.21    +1.803 C/s
+        t 440.0 -> 450.0     42.21 ->  54.10    +1.189 C/s
+        whole leg                               +1.821 C/s
+
+    HEATING IS 6.8 TIMES FASTER THAN COOLING, +1.82 against -0.269 C/s.
+
+    This is the expected Peltier asymmetry and this run measures it much
+    better than the earlier one did, which showed a factor of 3.7 at partial
+    drive. On the heating leg the module delivers pumped heat PLUS its own
+    I-squared-R heating. On the cooling leg that same Joule heating opposes
+    the pumping, and it grows as the square of the current while the pumping
+    grows only linearly. So the asymmetry gets WORSE at higher drive, which
+    is why the factor rose from 3.7 to 6.8 when duty went from 159 to 250.
+
+    That is the practical argument for not running a Peltier cooler flat out.
+    Past a certain current the extra Joule heating costs more than the extra
+    pumping gains, and the cold side stops improving.
+
+SENSOR RANGE AT THE COLD END
+
+    At -16 C the thermistor is about 1.13 MOhm, putting the divider at 4.60 V
+    and ADC 940. That is inside the sketch's plausibility window of 20 to
+    1000, so the reading is valid, but it is close to the top.
+
+    Sensitivity there is about 25.6 mV/K, so one ADC count is 0.19 C, against
+    0.079 C per count at room temperature. The cold end of this run is about
+    2.4x coarser than the middle of the range. Still well inside what the
+    measurement needs, but worth knowing that the -16.00 figure carries more
+    quantization uncertainty than the +54.10 figure does.
+
+WHY THE EARLIER PART 7 RUN LOOKED LIKE A FAULT
+
+    The previous attempt reached only +27 C and -10 C from ambient and was
+    read at the bench as a hardware problem: a sagging supply, or a heat
+    exchanger that was not circulating.
+
+    It was neither. The sketch had maxDuty = 64, and applyDrive() clamps the
+    commanded duty to it:
+
+        int duty = constrain(commandedPwm, 0, maxDuty);
+
+    The GUI said 255. The bridge received 64. The plate was giving an honest
+    response to a quarter of the commanded drive, and the curve was correct
+    in every respect except that the number on the screen was not the number
+    being delivered.
+
+    Two things were announced and neither was noticed: the boot banner
+    printed the ceiling, and every acknowledgement above it printed CAPPED.
+    Both went to the terminal. Nobody reads a banner they have seen twenty
+    times.
+
+    THE LESSON, which is the one worth writing down. A safety limit that the
+    operator has forgotten about does not present itself as a safety limit.
+    It presents as a broken instrument, and it sends you looking at the
+    supply, the wiring and the heat exchanger, none of which had anything
+    wrong with them. An output limit is only safe if it is impossible to
+    forget, which means it belongs where the operator is already looking.
+
+    Fixed two ways. maxDuty is now 255, so commanded and delivered duty are
+    the same number. And the GUI now puts CAPPED and OUTPUT CEILING on the
+    window in orange rather than only in the terminal, so if a ceiling is
+    ever set again it contradicts the PWM readout right next to it.
+
+    Safety now rests on the thermal switch in series with the module, on the
+    temperature channel, and on not leaving a full-drive heating run
+    unattended. At +1.82 C/s that last one is not optional: this plate covers
+    70 C in under 40 seconds.

@@ -52,7 +52,7 @@ referenced, so grounding either one can short the bridge.
 | 4, strip chart, display only | `tec_temperature_strip_chart.py` | yes | **run 23 Sept.** 391 rows, 195 s, 0.50 s cadence, no gaps. `part4_baseline_21C_nodrive.csv`. Baseline only: the trim pot never armed, so PWM is 0 throughout |
 | 5, control GUI | `tec_control_gui.py` | yes | **run 23 Sept.** Slider and HEAT/COOL drove the plate over a 23 C range. Section 6 |
 | 6, serial command interface | `tec_python_control` | yes | **run 23 Sept.** Parsed and executed commands from the GUI for the whole cycle |
-| 7, heating and cooling test | Parts 5 and 6 together | n/a | **done 23 Sept.** 9.5 to 32.5 C, both legs clear of ambient. [`part7_heat_cool_cycle_gui.txt`](../../data/module_03/part7_heat_cool_cycle_gui.txt). Direction labels in that run are inverted, section 6 |
+| 7, heating and cooling test | Parts 5 and 6 together | n/a | **done 23 Sept, checked at the bench by the instructor.** Full drive, **-16.0 to +54.1 C, a 70.1 C swing**, 37.5 C below ambient and 32.6 C above. [`part7_full_drive_70C_swing.txt`](../../data/module_03/part7_full_drive_70C_swing.txt) and its CSV. Earlier partial-drive attempt kept at [`part7_heat_cool_cycle_gui.txt`](../../data/module_03/part7_heat_cool_cycle_gui.txt). Direction labels inverted in both, section 6 |
 | 8, cleanup and C3 | n/a | repository layout done, this note started | pending completion of the rows above |
 
 **Direction calibration.** The `Heat/Cool` field reports observed physics, not
@@ -343,3 +343,75 @@ temperature.
 `maxDuty = 255`. At +1.21 C/s the plate would pass 80 C inside a minute of
 continuous heating. The run was stopped by hand. The repository copy is now
 capped at 64 and announces the cap at boot, and any unattended run needs it.
+
+---
+
+## 7. Part 7 at full drive: a 70 C swing
+
+Full record: [`data/module_03/part7_full_drive_70C_swing.txt`](../../data/module_03/part7_full_drive_70C_swing.txt).
+Data: `data/module_03/part7_full_drive_70C_swing.csv`, 917 rows over 458.5 s.
+Checked at the bench by the instructor.
+
+| | |
+|---|---|
+| minimum | **-16.00 C** at t = 411.5 s |
+| maximum | **+54.10 C** at t = 450.0 s |
+| swing | **70.10 C** |
+| relative to ambient | 37.5 C below, 32.6 C above |
+
+Both extremes are far outside anything passive heat flow can reach, since
+passive physics only moves the plate toward room temperature. The entire
+70 C range is the module doing work.
+
+### Rate asymmetry, measured properly
+
+| leg | duty | rate |
+|---|---|---|
+| cooling | 96 to 254 | **-0.269 C/s** |
+| heating | about 250 | **+1.821 C/s** |
+
+Heating is **6.8x faster** than cooling. The earlier partial-drive run put
+that factor at 3.7, and the difference between the two figures is itself the
+result. Joule heating grows as the square of the current while the pumping
+grows only linearly, so the asymmetry gets worse the harder the module is
+driven. That is the argument against running a Peltier cooler flat out: past
+some current the extra Joule heating costs more than the extra pumping gains.
+
+### Sensor range at the cold end
+
+At -16 C the thermistor is about 1.13 MOhm, so the divider sits at 4.60 V
+and ADC 940, inside the plausibility window of 20 to 1000 but near the top.
+Sensitivity there is 25.6 mV/K, which is **0.19 C per ADC count** against
+0.079 C per count at room temperature. The -16.00 figure therefore carries
+about 2.4x the quantization uncertainty of the +54.10 figure.
+
+### The partial-drive run that looked like a hardware fault
+
+The first Part 7 attempt reached only +27 C and -10 C from ambient and was
+read at the bench as a sagging supply or a dead pump. It was neither. The
+sketch had `maxDuty = 64` and `applyDrive()` clamps to it:
+
+```cpp
+int duty = constrain(commandedPwm, 0, maxDuty);
+```
+
+The GUI said 255. The bridge got 64. The curve was an honest response to a
+quarter of the commanded drive, and the only thing wrong was that the number
+on the screen was not the number being delivered.
+
+The ceiling was announced twice, in the boot banner and in a `CAPPED` notice
+on every command above it. Both went to the terminal, and both were missed.
+
+**A safety limit the operator has forgotten does not look like a safety
+limit. It looks like a broken instrument,** and it sends you inspecting a
+supply, wiring and a heat exchanger that were fine all along. An output
+limit is only safe if it cannot be forgotten, which means it has to appear
+where the operator is already looking.
+
+Fixed both ways: `maxDuty` is now 255, so commanded and delivered duty are
+the same number, and the GUI now shows `CAPPED` and `OUTPUT CEILING` on the
+window in orange beside the PWM readout rather than only in the terminal.
+
+Safety now rests on the series thermal switch, on the temperature channel,
+and on not leaving a full-drive heating run unattended. At +1.82 C/s that
+last one is not optional.

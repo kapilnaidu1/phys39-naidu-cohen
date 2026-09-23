@@ -1,0 +1,168 @@
+Phys 39 Module 4, Part 1: software temperature limit, shutdown demonstration
+Naidu / Cohen, 23 September 2026
+
+Sketch:   arduino/module_04/tec_open_loop_safety/tec_open_loop_safety.ino
+Limit:    temperatureLimitC = 60.0 C (compiled in)
+Hardware: thermal switch near 70 C, in series with the TEC, unaffected by
+          any of this and remaining the independent final protection
+
+TEC POWER OFF FOR THE WHOLE TEST. Nothing was heated. The limit was
+temporarily lowered below room temperature with the TEST LIMIT command, as
+the assignment directs, rather than driving the apparatus up to 60 C.
+
+Room temperature during the test: 21.4 C in run A, 24.27 C in run B.
+
+-----------------------------------------------------------------------
+SKETCH IDENTITY CONFIRMED FROM THE BOOT BANNER
+-----------------------------------------------------------------------
+
+    # Commands: SET PWM <0-255> DIR <HEAT|COOL>
+    #           TEST LIMIT <degC>   (lowers the limit, for the shutdown test)
+    #           CLEAR SAFETY        (releases the latch, restores the limit)
+    # PWM starts at 0 and stays there until a valid command arrives.
+    # SOFTWARE TEMPERATURE LIMIT: 60.0 C. Above it, both H-bridge outputs are driven LOW and latched.
+    # Hardware thermal switch near 70 C remains the independent final protection.
+
+-----------------------------------------------------------------------
+RUN A: THE PWM 40 -> 0 TRANSITION AT THE TRIP
+-----------------------------------------------------------------------
+
+    # OK: PWM 40 DIR HEAT  (PWM on pin 10)
+    Temperature (C): 21.39, Time (s): 134.15, PWM: 40, Heat/Cool: 1
+    Temperature (C): 21.40, Time (s): 138.22, PWM: 40, Heat/Cool: 1
+
+    ... TEST LIMIT 20 sent ...
+
+    Temperature (C): 21.60, Time (s): 203.40, PWM: 0, Heat/Cool: 1
+    # SAFETY SHUTDOWN ACTIVE: measured temperature above the software limit. Limit 20.0 C. Outputs LOW. Send: CLEAR SAFETY
+    Temperature (C): 21.75, Time (s): 203.92, PWM: 0, Heat/Cool: 1
+    # SAFETY SHUTDOWN ACTIVE: ...
+
+    HEAT selected pin 10, which is correct for PIN9_IS_HEAT = false.
+    PWM went from 40 to 0 at the trip and stayed there.
+
+-----------------------------------------------------------------------
+RUN B: THE FULL COMMAND SEQUENCE
+-----------------------------------------------------------------------
+
+t = 4.45    SET PWM 60 DIR COOL
+
+    # OK: PWM 60 DIR COOL  (PWM on pin 9)
+    Temperature (C): 24.27, Time (s): 4.96, PWM: 60, Heat/Cool: 0
+
+    COOL selected pin 9, the calibrated cooling direction. Heat/Cool went
+    to 0. Drive is accepted normally while the instrument is healthy.
+
+t = 19.20   CLEAR SAFETY, sent while NOT latched
+
+    # SAFETY CLEARED. Limit restored to 60.0 C. PWM is 0; re-command drive when ready.
+    Temperature (C): 24.27, Time (s): 19.73, PWM: 0, Heat/Cool: 0
+
+    Note what this did: PWM dropped 60 -> 0 even though nothing had
+    tripped. That is deliberate. A clear never resumes or preserves drive,
+    because the operator should re-command deliberately after any safety
+    interaction rather than having current reappear as a side effect.
+
+t = 28.89   TEST LIMIT 20
+
+    # TEST LIMIT IN FORCE: 20.0 C. This is a test setting, not the real limit.
+    # Send CLEAR SAFETY to restore it.
+
+    # *** SAFETY SHUTDOWN: measured temperature above the software limit
+    # Both H-bridge outputs driven LOW. PWM commands are refused.
+    # Reporting continues. Clear with RESET or: CLEAR SAFETY
+
+    Temperature (C): 24.27, Time (s): 29.43, PWM: 0, Heat/Cool: 0
+    # SAFETY SHUTDOWN ACTIVE: measured temperature above the software limit. Limit 20.0 C. Outputs LOW. Send: CLEAR SAFETY
+
+    The trip landed between the report at t = 28.89 and the next at
+    t = 29.43, so it is resolved to within one 0.5 s reporting interval.
+    The check itself runs every pass through loop(), roughly 20 Hz, so the
+    actual response was far faster than the log can show. The reporting
+    cadence is the limit on what is observable here, not the interlock.
+
+t = 29.4 to 39.3   LATCHED
+
+    Every single report carried the SAFETY SHUTDOWN ACTIVE line alongside a
+    normal measurement line. PWM read 0 on all of them.
+
+t = 34.09   SET PWM ... sent while latched
+
+    # REFUSED, safety shutdown is latched: measured temperature above the software limit
+    # Send CLEAR SAFETY first. PWM stays at 0.
+
+    The latch holds against a drive command, and says so. It does not
+    silently accept the command and quietly deliver zero, which would leave
+    the GUI displaying a PWM the hardware was not producing.
+
+t = 39.27   CLEAR SAFETY
+
+    # SAFETY CLEARED. Limit restored to 60.0 C. PWM is 0; re-command drive when ready.
+    Temperature (C): 24.27, Time (s): 39.82, PWM: 0, Heat/Cool: 0
+
+    Limit back to the compiled-in 60.0 C, latch released, shutdown lines
+    stop, PWM remains 0.
+
+-----------------------------------------------------------------------
+AGAINST THE ASSIGNMENT'S FIVE REQUIREMENTS
+-----------------------------------------------------------------------
+
+    named constant for the limit       temperatureLimitC = 60.0
+    checked every loop                 checkTemperatureLimit(), called
+                                       before the reporting gate, ~20 Hz
+    both PWM outputs to zero           tripSafety() zeroes the command,
+                                       applyDrive() returns early with
+                                       digitalWrite LOW on pins 9 and 10
+    serial data keeps printing         measurement lines continued without
+                                       a gap through the entire shutdown
+    reports clearly when active        three-line banner at the trip, then
+                                       SAFETY SHUTDOWN ACTIVE on every
+                                       subsequent report
+
+-----------------------------------------------------------------------
+AN UNPLANNED TRIP, EARLIER THE SAME DAY
+-----------------------------------------------------------------------
+
+Before this test, on the first boot of the new sketch, the interlock fired
+on a fault nobody staged:
+
+    # temperature channel not usable, ADC = 0.0: A0 near 0 V: no upper resistor from 5V, or the sensor is on another pin
+    # *** SAFETY SHUTDOWN: thermistor reading unusable, cannot verify temperature
+    # Both H-bridge outputs driven LOW. PWM commands are refused.
+
+The 100 kOhm upper leg of the divider had come loose. A0 read exactly 0.0
+averaged over 500 samples, which is not a floating input (that gives
+drifting noise in the hundreds) but an input actively held at ground, so
+the thermistor-to-GND leg was intact and the 5 V leg was open. Reseating
+the resistor fixed it.
+
+This is the second trip condition, the one the assignment does not require:
+five consecutive unusable readings also latch the shutdown, because an
+instrument that cannot measure temperature should not be driving a heater.
+Without it the sketch would have sat printing "---" while happily accepting
+full duty.
+
+Worth more than the staged test, arguably. A safety system that catches a
+fault you did not plan is being tested by the apparatus rather than by the
+operator.
+
+-----------------------------------------------------------------------
+ONE THING TO WATCH BEFORE THE CALIBRATION RUNS
+-----------------------------------------------------------------------
+
+Throughout run B the temperature read 24.27 C on EVERY line, over 80
+consecutive reports and 41 seconds, with no variation in the last digit.
+
+Earlier the same session the same channel wandered normally: 21.50, 21.51,
+21.47, 21.55, then 21.60, 21.75, 21.81, 21.77.
+
+A 500-sample average landing on exactly the same hundredth 80 times running
+is not what this channel did an hour earlier. It does not affect this test,
+which is about interlock logic rather than measurement accuracy, but Module
+4 is entirely a steady-state temperature measurement and a stuck channel
+would quietly ruin it.
+
+CHECK BEFORE TAKING CALIBRATION DATA: warm the thermistor between finger
+and thumb and confirm the reading rises, then let go and confirm it falls.
+That is the response check from the sketch header, and it is the only thing
+that distinguishes a genuinely stable reading from a frozen one.

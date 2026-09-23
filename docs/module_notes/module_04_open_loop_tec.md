@@ -159,7 +159,19 @@ Procedure, with **TEC power off**:
 6. Send `CLEAR SAFETY`, confirm the limit returns to 60.0 C and PWM stays 0
 7. Show the instructor
 
-*Transcript to record into `data/module_04/part1_safety_shutdown_test.txt`.*
+**Done 23 September.** Transcript:
+[`data/module_04/part1_safety_shutdown_test.txt`](../../data/module_04/part1_safety_shutdown_test.txt).
+
+All five requirements demonstrated. `TEST LIMIT 20` tripped within one 0.5 s
+reporting interval, PWM went 40 to 0, measurement lines continued without a
+gap, a drive command sent while latched was refused out loud, and
+`CLEAR SAFETY` restored the 60.0 C limit with PWM left at 0.
+
+The interlock also fired **unplanned** earlier the same day, on the first
+boot of the new sketch: the divider's 100 kOhm upper leg had come loose, A0
+read exactly 0.0, and the second trip condition caught it. A safety system
+catching a fault nobody staged is better evidence than one catching a staged
+fault.
 
 ### Run configuration
 
@@ -260,6 +272,13 @@ referring to the apparatus rather than the code:
 
 ## 5. Open items
 
+- **Check the temperature channel responds before taking calibration data.**
+  Through the safety test the reading sat at exactly 24.27 C for 80
+  consecutive reports over 41 s, with no variation in the last digit, on a
+  channel that wandered normally an hour earlier. Warm the thermistor between
+  finger and thumb: the reading must rise, then fall when released. Module 4
+  is entirely a steady-state temperature measurement and a frozen channel
+  would look exactly like excellent data.
 - Every `*to record*` row above
 - Whether the pump is actually circulating
 - Scope captures were not retained for Module 3 Part 7 test 2

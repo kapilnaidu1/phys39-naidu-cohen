@@ -238,6 +238,9 @@ class ControlWindow(QtWidgets.QMainWindow):
         self._build_ui()
 
         # ---- CSV ------------------------------------------------------
+        # Set before the reader starts. See on_line() for why.
+        self._closing = False
+
         self.csv_path = DEMO_CSV_FILENAME if DEMO_MODE else CSV_FILENAME
         self.csv_file = open(self.csv_path, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
@@ -439,6 +442,13 @@ class ControlWindow(QtWidgets.QMainWindow):
     # INCOMING DATA
     # -----------------------------------------------------------------
     def on_line(self, line):
+        # Late signal arriving after shutdown began. Qt delivers queued
+        # line_received signals after closeEvent returns, so without this
+        # the CSV write below raises on a closed file and prints a traceback
+        # after the clean shutdown message.
+        if self._closing:
+            return
+
         measurement = parse_measurement(line)
 
         if measurement is None:
@@ -529,6 +539,10 @@ class ControlWindow(QtWidgets.QMainWindow):
         self.commanded_pwm = 0
         self.send_command()
         time.sleep(0.15)      # let the bytes leave before the port closes
+
+        # Flag AFTER the stop command is sent, so the zero command still goes
+        # out, but before the file closes, so late lines are dropped.
+        self._closing = True
 
         self.redraw_timer.stop()
         self.send_timer.stop()

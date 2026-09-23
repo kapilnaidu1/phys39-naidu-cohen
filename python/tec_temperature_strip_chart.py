@@ -286,6 +286,14 @@ class StripChartWindow(QtWidgets.QMainWindow):
         # ---- the CSV file --------------------------------------------
         # Opened once and flushed after every row, so a crash or an
         # unplugged cable cannot cost more than the last measurement.
+        # Set before the reader starts. Qt delivers already-queued
+        # line_received signals after closeEvent returns, so on_line can be
+        # called once or twice more after the file is closed. Without this
+        # flag that raises "I/O operation on closed file" and prints a
+        # traceback after the clean shutdown message, which looks like the
+        # run failed when in fact every row was already flushed to disk.
+        self._closing = False
+
         self.csv_path = DEMO_CSV_FILENAME if DEMO_MODE else CSV_FILENAME
         self.csv_file = open(self.csv_path, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
@@ -313,6 +321,11 @@ class StripChartWindow(QtWidgets.QMainWindow):
 
     # ---- one line has arrived from the Arduino ------------------------
     def on_line(self, line):
+        # Late signal arriving after shutdown began. Drop it rather than
+        # writing to a closed file.
+        if self._closing:
+            return
+
         measurement = parse_measurement(line)
 
         if measurement is None:
@@ -385,6 +398,9 @@ class StripChartWindow(QtWidgets.QMainWindow):
 
     # ---- shutdown ----------------------------------------------------
     def closeEvent(self, event):
+        # Flag first, so any line that arrives during the shutdown below is
+        # dropped instead of being written to a file that is about to close.
+        self._closing = True
         self.timer.stop()
         self.reader.stop()
         self.csv_file.close()

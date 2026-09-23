@@ -73,8 +73,18 @@ BAUD_RATE = 9600
 WINDOW_SECONDS = 120.0       # visible history on both strip charts
 UPDATE_INTERVAL_MS = 200     # plot redraw period
 
-TEMP_MIN = 10.0              # Celsius axis limits, None for autoscale
-TEMP_MAX = 45.0
+# Celsius axis limits, None for autoscale.
+#
+# Widened from 10 to 45 after the first full-drive run. At maxDuty 64 the
+# plate stayed inside that window; at 255 it does not. A fixed axis that the
+# trace runs off the top of does not just look wrong, it hides the part of
+# the curve that matters, and the operator cannot tell a plate still climbing
+# from one that has levelled off at the frame edge.
+#
+# -10 to 90 covers what this plate can reach in either direction at full
+# command, with the thermal switch well inside the frame.
+TEMP_MIN = -10.0
+TEMP_MAX = 90.0
 
 PWM_MIN = 0                  # the command range the Arduino accepts
 PWM_MAX = 255
@@ -132,6 +142,57 @@ def parse_measurement(line):
 def is_measurement_line(line):
     """True if the line has the measurement format, usable reading or not."""
     return LINE_PATTERN.search(line) is not None
+
+
+def resolve_port():
+    """Return the serial port to open, preferring SERIAL_PORT above.
+
+    Same logic as the Part 4 strip chart, and here for the same reason.
+    macOS renames the Arduino's device node when the cable moves to a
+    different physical USB socket, so /dev/cu.usbmodem1101 becomes
+    usbmodem1201. Hard-coding one name means a working bench stops working
+    because someone tidied a cable, and the error it raises, "No such file
+    or directory", reads like a missing program rather than a moved plug.
+
+    The configured name is therefore a preference, not a requirement. If it
+    is present it is used. If it is absent but exactly one USB serial device
+    is attached, that one is used and the substitution is ANNOUNCED. A
+    program that silently drives a different instrument than the one it was
+    told to drive is worse than one that refuses to start.
+    """
+    ports = list(serial.tools.list_ports.comports())
+    names = [p.device for p in ports]
+
+    if SERIAL_PORT in names:
+        return SERIAL_PORT
+
+    # Built-in Bluetooth and debug nodes are always present and are never the
+    # Arduino, so match on USB serial adapter names instead.
+    candidates = [n for n in names
+                  if "usbmodem" in n or "usbserial" in n or n.startswith("COM")]
+
+    if len(candidates) == 1:
+        print(f"Note: {SERIAL_PORT} is not present. Using {candidates[0]} "
+              f"instead, the only USB serial device attached.")
+        return candidates[0]
+
+    if not candidates:
+        print(f"\nNo USB serial device found. {SERIAL_PORT} is not present "
+              f"and neither is any other.", file=sys.stderr)
+        print("The Arduino is not on the bus. Check the cable is seated at "
+              "both ends and is a data cable, not charge-only.",
+              file=sys.stderr)
+    else:
+        print(f"\n{SERIAL_PORT} is not present, and more than one USB serial "
+              f"device is attached: {', '.join(candidates)}", file=sys.stderr)
+        print("Set SERIAL_PORT to the right one rather than guessing.",
+              file=sys.stderr)
+
+    if ports:
+        print("Ports this computer can see:", file=sys.stderr)
+        for port in ports:
+            print(f"    {port.device}    {port.description}", file=sys.stderr)
+    sys.exit(1)
 
 
 # =====================================================================
@@ -291,9 +352,23 @@ class ControlWindow(QtWidgets.QMainWindow):
             font.setPointSize(15)
             label.setFont(font)
 
+        # The sketch may refuse to deliver the duty it was commanded, and
+        # when it does it says so on a "# " line. That notice previously went
+        # only to the terminal, where it was missed, and a run at a quarter
+        # of the commanded drive was read as a hardware fault for most of an
+        # afternoon. A number on the GUI that does not describe what the
+        # bridge is doing has to be contradicted on the GUI, not somewhere
+        # the operator is not looking.
+        self.cap_label = QtWidgets.QLabel("")
+        cap_font = self.cap_label.font()
+        cap_font.setPointSize(15)
+        cap_font.setBold(True)
+        self.cap_label.setFont(cap_font)
+        self.cap_label.setStyleSheet("color: #ff8c00;")
+
         readout_row = QtWidgets.QHBoxLayout()
         for label in (self.temp_label, self.pwm_label,
-                      self.dir_label, self.time_label):
+                      self.dir_label, self.time_label, self.cap_label):
             readout_row.addWidget(label)
         readout_row.addStretch(1)
 
@@ -469,6 +544,16 @@ class ControlWindow(QtWidgets.QMainWindow):
                 text = line.strip()
                 if text:
                     print(text)
+
+                # Two notices from the sketch mean the commanded duty is not
+                # the delivered duty. Put them on the window, not just in the
+                # terminal. Everything else passes through as before.
+                if "CAPPED" in text:
+                    self.cap_label.setText(
+                        "OUTPUT CAPPED, commanded duty is not being delivered")
+                elif "OUTPUT CEILING" in text:
+                    self.cap_label.setText(
+                        "OUTPUT CEILING SET, see the terminal for the value")
             return
 
         time_s, temperature_c, pwm, heat_cool = measurement
@@ -553,9 +638,16 @@ class ControlWindow(QtWidgets.QMainWindow):
 
 
 def main():
-    global DEMO_MODE
+    global DEMO_MODE, SERIAL_PORT
     if "--demo" in sys.argv:
         DEMO_MODE = True
+
+    # Resolve the port BEFORE the window is built, because the window opens
+    # the CSV in its constructor. Exiting after that point leaves a file
+    # holding nothing but a header row, which looks like a run that recorded
+    # no data rather than a run that never started.
+    if not DEMO_MODE:
+        SERIAL_PORT = resolve_port()
 
     app = QtWidgets.QApplication(sys.argv)
     window = ControlWindow()

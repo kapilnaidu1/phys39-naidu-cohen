@@ -129,18 +129,27 @@ const int lpwmPin = 10;
 // applyDrive(), so the instrument can accept a legal command and still
 // refuse to deliver more current than the bench has been proven safe at.
 //
-// Set to 64 for first power-on, the same ceiling both manual sketches used.
-// Reason: duty 63 was measured at +25.7 C/min on this plate, so duty 255 is
-// roughly four times that command and would pass 80 C from room temperature
-// in under a minute, with the thermal switch as the only thing in the way.
+// RAISED TO FULL SCALE 23 SEPTEMBER 2026, and worth recording why.
 //
-// Raise to 255 for the graded run, but only after the A0, A1 and pin 11
-// contacts are fixed, so the temperature channel cannot drop out while the
-// plate is under full command.
+// It was 64 for first power-on, the same ceiling both manual sketches used.
+// That made the instrument safe and it also made it misleading. The GUI was
+// commanded to 255 and the bridge received 64, so the plate reached only
+// +27 C and -10 C from ambient and the run was read as a hardware fault. The
+// supply, the bridge, the module and the heat exchanger were all fine. The
+// ceiling was doing exactly what it was written to do, and the temperature
+// curve was the honest response to a quarter of the commanded drive.
 //
-// A cap is never applied silently: setup() announces it and every
-// acknowledgement above the ceiling says it was capped.
-const int maxDuty = 64;
+// A safety limit that the operator forgets is present will be mistaken for a
+// broken instrument. The boot banner and the CAPPED notice both announced it
+// and neither was enough, because nobody reads a banner they have seen
+// twenty times.
+//
+// 255 is now the ceiling, so commanded and delivered duty are the same
+// number and there is nothing left to misread. What keeps the plate safe is
+// the thermal switch in series with the module, the temperature channel
+// itself, and not leaving a full-drive heating run unattended. At full drive
+// this plate rises fast, so watch it.
+const int maxDuty = 255;
 
 // Commanded state. Both start at the safe value.
 int  commandedPwm     = 0;

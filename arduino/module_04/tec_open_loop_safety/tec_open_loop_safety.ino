@@ -67,6 +67,38 @@
     the instrument less safe than the compiled-in value. CLEAR SAFETY puts
     the limit back to temperatureLimitC and releases the latch.
 
+  MEMORY, AND A BUG THIS SKETCH ALREADY HAD ONCE
+
+    The first version of this file would not boot. It printed a few
+    characters of its own banner and reset, over and over:
+
+        #39 Mod
+        # Phys 39 Mod
+
+    Cause: the ATmega328P has 2048 bytes of SRAM, and by default every
+    string literal in a Serial.print() call is copied into SRAM at startup.
+    The safety code added enough new messages to push the total to about
+    1491 bytes of literals alone, before any variables, the three 48-byte
+    line buffers, or the stack. The stack collided with the globals and the
+    board reset partway through printing.
+
+    Worth recognising, because the symptom looks like a bad upload or a
+    flaky board rather than a memory problem. A sketch that resets mid-print
+    and always at roughly the same point is running out of RAM.
+
+    Fixes applied:
+
+      every Serial.print literal wrapped in F(), which keeps it in flash
+        and streams it out rather than copying it to SRAM
+      sensorName moved to PROGMEM for the same reason
+      parseSafetyCommand() tokenizes in place instead of taking its own
+        48-byte copy, since handleLine() already holds one and the two
+        would be live at the same time
+
+    Only the short reason strings passed to tripSafety() and failSafe()
+    remain in SRAM, about 146 bytes, because they are handled as char* and
+    moving them would complicate the code for little gain.
+
   Descended from the manual trim-pot sketch. PWM and direction arrive as
   commands from the Python GUI.
 
@@ -118,6 +150,7 @@
 */
 
 #include <math.h>
+#include <avr/pgmspace.h>   // PROGMEM and the F() macro for sensorName
 
 // ---- MEASURED ON THE BENCH, 16 SEPTEMBER 2026 ------------------------
 // true  = PWM on pin 9 heats the plate, pin 10 cools it
@@ -148,11 +181,11 @@ const bool PIN9_IS_HEAT = false;
 #if SENSOR_IS_10K
   const float Rnominal = 10000.0;    // ohms at 25 C
   const float Beta     = 3435.0;     // kelvin. CONFIRM against the part number.
-  const char  sensorName[] = "10 kOhm plate thermistor";
+  const char  sensorName[] PROGMEM = "10 kOhm plate thermistor";
 #else
   const float Rnominal = 100000.0;   // ohms at 25 C
   const float Beta     = 4540.0;     // TDK/EPCOS B57861S0104F040V24, B25/100
-  const char  sensorName[] = "100 kOhm thermistor, TDK B57861S0104F040V24";
+  const char  sensorName[] PROGMEM = "100 kOhm thermistor, TDK B57861S0104F040V24";
 #endif
 
 // Rfixed is PHYSICAL. It must match the resistor actually in the upper leg.
@@ -347,10 +380,10 @@ void tripSafety(const char *why) {
   applyDrive();                       // both inputs LOW, immediately
 
   Serial.println();
-  Serial.print("# *** SAFETY SHUTDOWN: ");
+  Serial.print(F("# *** SAFETY SHUTDOWN: "));
   Serial.println(why);
-  Serial.println("# Both H-bridge outputs driven LOW. PWM commands are refused.");
-  Serial.println("# Reporting continues. Clear with RESET or: CLEAR SAFETY");
+  Serial.println(F("# Both H-bridge outputs driven LOW. PWM commands are refused."));
+  Serial.println(F("# Reporting continues. Clear with RESET or: CLEAR SAFETY"));
   Serial.println();
 }
 
@@ -376,7 +409,7 @@ void checkTemperatureLimit(float celsius, bool readingUsable) {
 void failSafe(const char *why) {
   commandedPwm = 0;
   applyDrive();
-  Serial.print("# PWM set to 0: ");
+  Serial.print(F("# PWM set to 0: "));
   Serial.println(why);
 }
 
@@ -387,12 +420,14 @@ void failSafe(const char *why) {
 // MODULE 4: the two safety commands, handled before the SET PWM grammar
 // because they have a different shape. Returns true if the line was one of
 // them and has been dealt with.
+//
+// NOTE ON MEMORY: this deliberately tokenizes `line` in place rather than
+// taking its own copy. handleLine() already holds a 48-byte `echo` buffer on
+// the stack, and this function is called from inside it, so a local copy here
+// would be a third 48-byte buffer live at the same time. On a 2 KB Uno that
+// matters. handleLine() restores `line` from `echo` if this returns false.
 bool parseSafetyCommand(char *line) {
-  char copy[bufSize];
-  strncpy(copy, line, bufSize - 1);
-  copy[bufSize - 1] = '\0';
-
-  char *a = strtok(copy, " \t");
+  char *a = strtok(line, " \t");
   char *b = strtok(NULL, " \t");
   char *c = strtok(NULL, " \t");
   char *d = strtok(NULL, " \t");
@@ -406,9 +441,9 @@ bool parseSafetyCommand(char *line) {
     activeLimitC  = temperatureLimitC;
     commandedPwm  = 0;              // never resume drive on a clear. The
     applyDrive();                   // operator re-commands deliberately.
-    Serial.print("# SAFETY CLEARED. Limit restored to ");
+    Serial.print(F("# SAFETY CLEARED. Limit restored to "));
     Serial.print(temperatureLimitC, 1);
-    Serial.println(" C. PWM is 0; re-command drive when ready.");
+    Serial.println(F(" C. PWM is 0; re-command drive when ready."));
     return true;
   }
 
@@ -418,18 +453,18 @@ bool parseSafetyCommand(char *line) {
   if (strcmp(a, "TEST") == 0 && strcmp(b, "LIMIT") == 0 && c) {
     float requested = atof(c);
     if (requested > temperatureLimitC) {
-      Serial.print("# REFUSED: ");
+      Serial.print(F("# REFUSED: "));
       Serial.print(requested, 1);
-      Serial.print(" C is above the compiled limit of ");
+      Serial.print(F(" C is above the compiled limit of "));
       Serial.print(temperatureLimitC, 1);
-      Serial.println(" C. TEST LIMIT can only lower it.");
+      Serial.println(F(" C. TEST LIMIT can only lower it."));
       return true;
     }
     activeLimitC = requested;
-    Serial.print("# TEST LIMIT IN FORCE: ");
+    Serial.print(F("# TEST LIMIT IN FORCE: "));
     Serial.print(activeLimitC, 1);
-    Serial.println(" C. This is a test setting, not the real limit.");
-    Serial.println("# Send CLEAR SAFETY to restore it.");
+    Serial.println(F(" C. This is a test setting, not the real limit."));
+    Serial.println(F("# Send CLEAR SAFETY to restore it."));
     return true;
   }
 
@@ -505,10 +540,17 @@ void handleLine() {
   echo[bufSize - 1] = '\0';
 
   // MODULE 4: safety commands first, they have their own grammar.
+  // parseSafetyCommand() tokenizes in place to save RAM, so if it does not
+  // recognise the line we restore it from `echo` before parseCommand() sees
+  // it. Without this, strtok's inserted NULs would leave parseCommand
+  // looking at only the first word.
   if (parseSafetyCommand(line)) {
     bufLen = 0;
     return;
   }
+  strncpy(buf, echo, bufSize - 1);
+  buf[bufSize - 1] = '\0';
+  line = buf;
 
   if (parseCommand(line)) {
     // MODULE 4: a drive command while latched is refused, loudly. Silently
@@ -518,36 +560,36 @@ void handleLine() {
     if (safetyLatched && commandedPwm > 0) {
       commandedPwm = 0;
       applyDrive();
-      Serial.print("# REFUSED, safety shutdown is latched: ");
+      Serial.print(F("# REFUSED, safety shutdown is latched: "));
       Serial.println(safetyReason);
-      Serial.println("# Send CLEAR SAFETY first. PWM stays at 0.");
+      Serial.println(F("# Send CLEAR SAFETY first. PWM stays at 0."));
       bufLen = 0;
       return;
     }
 
     applyDrive();
-    Serial.print("# OK: PWM ");
+    Serial.print(F("# OK: PWM "));
     Serial.print(commandedPwm);
-    Serial.print(" DIR ");
+    Serial.print(F(" DIR "));
     Serial.print(commandedHeating ? "HEAT" : "COOL");
-    Serial.print("  (PWM on pin ");
-    if (commandedPwm == 0) Serial.print("none");
+    Serial.print(F("  (PWM on pin "));
+    if (commandedPwm == 0) Serial.print(F("none"));
     else Serial.print((commandedHeating == PIN9_IS_HEAT) ? "9" : "10");
-    Serial.print(")");
+    Serial.print(F(")"));
 
     // Never cap silently. If the GUI says 200 and the plate behaves like 64,
     // the operator has to be told, or the instrument is lying about what it
     // is doing.
     if (commandedPwm > maxDuty) {
-      Serial.print("  CAPPED: driving ");
+      Serial.print(F("  CAPPED: driving "));
       Serial.print(maxDuty);
-      Serial.print(", the maxDuty output ceiling");
+      Serial.print(F(", the maxDuty output ceiling"));
     }
     Serial.println();
   } else {
-    Serial.print("# malformed command: \"");
+    Serial.print(F("# malformed command: \""));
     Serial.print(echo);
-    Serial.println("\"");
+    Serial.println(F("\""));
     failSafe("command not understood");
   }
 
@@ -587,32 +629,32 @@ void setup() {
   Serial.begin(9600);
   delay(200);
   Serial.println();
-  Serial.println("# Phys 39 Module 3 Part 6: TEC serial-command control. Naidu / Cohen");
-  Serial.print("# Sensor: ");
-  Serial.print(sensorName);
-  Serial.print(", R25 = ");
+  Serial.println(F("# Phys 39 Module 3 Part 6: TEC serial-command control. Naidu / Cohen"));
+  Serial.print(F("# Sensor: "));
+  Serial.print((const __FlashStringHelper *)sensorName);
+  Serial.print(F(", R25 = "));
   Serial.print(Rnominal / 1000.0, 1);
-  Serial.print(" kOhm, Beta = ");
+  Serial.print(F(" kOhm, Beta = "));
   Serial.print(Beta, 0);
-  Serial.print(" K, upper leg = ");
+  Serial.print(F(" K, upper leg = "));
   Serial.print(Rfixed / 1000.0, 1);
-  Serial.println(" kOhm");
-  Serial.print("# Calibration in use: PWM on pin 9 = ");
+  Serial.println(F(" kOhm"));
+  Serial.print(F("# Calibration in use: PWM on pin 9 = "));
   Serial.println(PIN9_IS_HEAT ? "HEAT" : "COOL");
-  Serial.println("# Commands: SET PWM <0-255> DIR <HEAT|COOL>");
-  Serial.println("#           TEST LIMIT <degC>   (lowers the limit, for the shutdown test)");
-  Serial.println("#           CLEAR SAFETY        (releases the latch, restores the limit)");
-  Serial.println("# PWM starts at 0 and stays there until a valid command arrives.");
-  Serial.print("# SOFTWARE TEMPERATURE LIMIT: ");
+  Serial.println(F("# Commands: SET PWM <0-255> DIR <HEAT|COOL>"));
+  Serial.println(F("#           TEST LIMIT <degC>   (lowers the limit, for the shutdown test)"));
+  Serial.println(F("#           CLEAR SAFETY        (releases the latch, restores the limit)"));
+  Serial.println(F("# PWM starts at 0 and stays there until a valid command arrives."));
+  Serial.print(F("# SOFTWARE TEMPERATURE LIMIT: "));
   Serial.print(temperatureLimitC, 1);
-  Serial.println(" C. Above it, both H-bridge outputs are driven LOW and latched.");
-  Serial.println("# Hardware thermal switch near 70 C remains the independent final protection.");
+  Serial.println(F(" C. Above it, both H-bridge outputs are driven LOW and latched."));
+  Serial.println(F("# Hardware thermal switch near 70 C remains the independent final protection."));
   if (maxDuty < 255) {
-    Serial.print("# OUTPUT CEILING: commands above ");
+    Serial.print(F("# OUTPUT CEILING: commands above "));
     Serial.print(maxDuty);
-    Serial.print(" are accepted but driven at ");
+    Serial.print(F(" are accepted but driven at "));
     Serial.print(maxDuty);
-    Serial.println(". Raise maxDuty for the graded run.");
+    Serial.println(F(". Raise maxDuty for the graded run."));
   }
   Serial.println();
 
@@ -642,33 +684,33 @@ void loop() {
   if (now - lastReportMs < reportIntervalMs) return;   // wrap-safe
   lastReportMs = now;
 
-  Serial.print("Temperature (C): ");
-  if (!ok || isnan(celsius)) Serial.print("---"); else Serial.print(celsius, 2);
-  Serial.print(", Time (s): ");
+  Serial.print(F("Temperature (C): "));
+  if (!ok || isnan(celsius)) Serial.print(F("---")); else Serial.print(celsius, 2);
+  Serial.print(F(", Time (s): "));
   Serial.print(now / 1000.0, 2);
-  Serial.print(", PWM: ");
+  Serial.print(F(", PWM: "));
   Serial.print(commandedPwm);
-  Serial.print(", Heat/Cool: ");
+  Serial.print(F(", Heat/Cool: "));
   Serial.println(commandedHeating ? 1 : 0);
 
   // MODULE 4: while latched, say so on every report. An operator who looks
   // at the screen at any moment during a shutdown sees the shutdown, not
   // just a PWM that happens to read zero.
   if (safetyLatched) {
-    Serial.print("# SAFETY SHUTDOWN ACTIVE: ");
+    Serial.print(F("# SAFETY SHUTDOWN ACTIVE: "));
     Serial.print(safetyReason);
-    Serial.print(". Limit ");
+    Serial.print(F(". Limit "));
     Serial.print(activeLimitC, 1);
-    Serial.println(" C. Outputs LOW. Send: CLEAR SAFETY");
+    Serial.println(F(" C. Outputs LOW. Send: CLEAR SAFETY"));
   }
 
   // A wiring fault is reported on its own comment line rather than folded
   // into the measurement line, so the Python parser never has to guess
   // whether a temperature field it cannot read means hot or means broken.
   if (!ok) {
-    Serial.print("# temperature channel not usable, ADC = ");
+    Serial.print(F("# temperature channel not usable, ADC = "));
     Serial.print(adcValue, 1);
-    Serial.print(": ");
+    Serial.print(F(": "));
     Serial.println(dividerHint(adcValue));
   }
 }

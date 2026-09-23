@@ -212,6 +212,24 @@ Arduino pin was carrying the pulse train while the plate warmed, and set
 
 So pin 10 is heat, pin 9 is cool, and **`PIN9_IS_HEAT = false`**.
 
+### Confirmed independently, 23 September
+
+A second session reached the same answer from a cleaner run, recorded in
+[`data/module_03/part3_cooling_below_ambient.txt`](../../data/module_03/part3_cooling_below_ambient.txt).
+Duty 28 on **pin 9** drove the plate from a 21.47 C ambient down to
+**18.62 C and still falling**, that is **2.85 C below ambient**, which no
+passive process can do. Pin 9 is the cooling direction and
+`PIN9_IS_HEAT = false` stands.
+
+**The onset delay, which invalidated several earlier attempts.** Drive was
+commanded at t = 90 s and the temperature did not move until t = 125 s: a
+**35 second lag** between command and response. Any drive interval shorter
+than about 45 s therefore carries no information about direction. Several
+runs on 16 and 23 September were 3 to 7 s long and were read at the time as
+"the TEC is doing nothing", including one that was taken as evidence the
+12 V supply was not reaching the bridge. The supply was on. The intervals
+were too short. Hold drive for at least 90 s before drawing any conclusion.
+
 ### Why these runs are conclusive and the earlier ones were not
 
 Passive physics only ever moves the plate **toward** room temperature. So

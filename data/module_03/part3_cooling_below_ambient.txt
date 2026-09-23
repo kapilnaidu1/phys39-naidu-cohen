@@ -1,0 +1,87 @@
+Phys 39 Module 3, Part 3: cooling direction, crossing below ambient
+Naidu / Cohen, 23 September 2026
+
+Sketch on the board: an older copy of tec_manual_hardware_direction with
+PIN9_IS_HEAT = true (header printed "PWM on pin 9 = HEAT", and the bracketed
+diagnostic has no "pot ADC" field). The printed heating/cooling word is
+therefore WRONG in this log. The physical facts are the pin 11 level, the
+named PWM pin, and the temperature column, and those are what is used below.
+
+Supply: 12 V on at the H-bridge.
+Ambient: 21.47 C, held flat for 45 s at the start and again from t = 53 to 90.
+
+RESULT
+
+    pin 11 = 5 V  ->  PWM on pin 9, duty 28 to 29  ->  plate FELL to 2.85 C
+    BELOW ambient and was still falling.
+
+    Therefore pin 9 is the COOLING direction and PIN9_IS_HEAT = false.
+
+    This independently confirms the value committed on 16 September from a
+    different pair of runs, and it resolves the contradiction logged in
+    part3_direction_calibration.txt, where one later run appeared to show
+    pin 9 heating. That run is superseded: it was judged on about 3 s of
+    drive, which this log shows is far shorter than the onset delay.
+
+THE ONSET DELAY, WHICH MATTERS FOR EVERY FUTURE RUN
+
+    Duty 28 was commanded at t = 90.0 and the temperature did not move at
+    all until t = 125.0. That is a 35 SECOND DELAY between commanding drive
+    and seeing any thermal response.
+
+    Consequence: a drive interval shorter than about 45 s carries no
+    information about direction. Several earlier attempts today and last
+    week were 3 to 7 s long and were read as "the TEC is doing nothing".
+    They were simply too short.
+
+NUMBERS
+
+    ambient                    21.47 C
+    duty commanded             28 to 29 of 255, on pin 9
+    drive begins               t = 90.0 s
+    first temperature motion   t = 125.0 s        (35 s onset delay)
+    crosses below ambient       t = about 126 s
+    at t = 180.5               18.62 C, still falling
+    fall rate                  (18.62 - 21.47) / (180.5 - 124.5)
+                               = -0.051 C/s = -3.1 C/min
+
+    Near the crossing the plate sat at ambient, where passive decay
+    contributes nothing, and it still moved at 0.051 C/s. By t = 180.5 it
+    was 2.85 C below ambient, where passive heat gain is pushing the plate
+    UP at about 2.85 / 146 = 0.020 C/s, so the Peltier was removing about
+    0.051 + 0.020 = 0.071 C/s worth against the room.
+
+    Passive physics can only move the plate toward room temperature. A plate
+    driven below ambient and held there is active cooling and nothing else.
+
+EARLIER IN THE SAME LOG, AND WHY IT PROVES NOTHING
+
+    t = 45.5 to 53.0 the trim pot was intermittent and duty bounced
+    2, 0, 3, 1, 2, 0, 0, 0, 12, 64, 64, 64, 64, 64, 64, 23, 0.
+    Duty 64 was held for about 3 s. Temperature: unchanged at 21.47 C.
+
+    With a 35 s onset delay that null is expected and carries no
+    information. It was initially misread as evidence that the 12 V supply
+    was not reaching the bridge. It was not: the supply was on, the interval
+    was too short.
+
+TRIM POT
+
+    Still intermittent. Duty wandered 28 to 30 across the run without the
+    knob being touched, and jumped erratically between t = 45 and 53. The
+    run is usable because the temperature trace is continuous and the duty
+    stayed within 28 to 30 for the whole measured interval, but the pot
+    needs its contact fixed before a submitted run.
+
+TEMPERATURE CHANNEL
+
+    A0 was excellent throughout: 558.0 counts held to the fourth digit for
+    the entire 90 s baseline, no dropouts, no excursions. Every R field
+    agrees with the beta model to better than 0.03 kOhm, spot-checked at
+    21.47 C (120.00 kOhm) and 18.62 C (139.49 kOhm).
+
+STILL OUTSTANDING
+
+    The heating half. Flip pin 11 to 0 V, drive pin 10 at the same duty, and
+    hold for AT LEAST 90 s given the onset delay. Expect the plate to rise
+    away from 21.47 C. That closes the calibration in both directions.

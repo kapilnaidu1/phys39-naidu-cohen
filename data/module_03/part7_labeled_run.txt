@@ -1,0 +1,103 @@
+Phys 39 Module 3, Part 7: heating and cooling with CORRECT direction labels
+Naidu / Cohen, 23 September 2026
+
+Programs: python/tec_control_gui.py driving arduino/module_03/tec_python_control
+Data:     data/module_03/part7_labeled_run.csv   (303 rows, 151.5 s)
+Ambient:  about 21.5 C
+
+THIS IS THE FIRST RUN IN THE MODULE WHOSE DIRECTION LABELS ARE TRUTHFUL.
+
+    Every previous run was taken with a board carrying PIN9_IS_HEAT = true,
+    so the printed direction was inverted. The correct sketch was confirmed
+    on this run from the boot banner:
+
+        # Calibration in use: PWM on pin 9 = COOL
+        (no OUTPUT CEILING line)
+
+RESULT
+
+    commanded HEAT, t = 10 to 39.5, duty 8 -> 255
+        26.75 -> 53.67 C          +0.913 C/s     plate ROSE
+        peak 54.11 C at t = 40.5 (overshoot after the switch)
+
+    commanded COOL, t = 44 to 151.5, duty 251
+        52.23 -> -6.79 C          -0.495 C/s avg  plate FELL
+        minimum -6.79 C at t = 134.5
+
+    swing 60.9 C, from -6.79 to +54.11, about ambient 21.5.
+
+    HEAT heats and COOL cools. The button, the printed word and the
+    Heat/Cool column now all agree with the plate.
+
+THE COOLING LEG REVERSED WHILE STILL UNDER FULL COOLING COMMAND
+
+    Rates in 10 s bins, duty held at 251 throughout:
+
+        t  44 -  53      -1.298 C/s
+        t  54 -  63      -1.088
+        t  64 -  73      -0.826
+        t  74 -  83      -0.674
+        t  84 -  93      -0.558
+        t  94 - 103      -0.482
+        t 104 - 113      -0.398
+        t 114 - 123      -0.333
+        t 124 - 133      -0.267
+        t 134 - 143      +0.327     <-- SIGN CHANGE
+        t 144 - 151      +0.332
+
+    The plate bottomed at -6.79 C and then warmed steadily, at a rate that
+    was still growing when the run ended, with the cooling command unchanged
+    at duty 251 the whole time.
+
+    WHAT THIS IS. Not a code fault and not a command that stopped being
+    sent. The duty column shows 251 on every row. It is the module reaching
+    its temperature-difference limit and then losing ground.
+
+    A Peltier pumps heat from its cold face to its hot face, and the amount
+    it can pump falls as the difference between the two faces grows. Its own
+    Joule heating is dumped into the hot face as well, and that grows as the
+    square of the current. So if the hot side is not being cleared fast
+    enough, the hot face climbs, the difference across the module widens, the
+    pumping capacity collapses, and the cold face comes back up. That is
+    exactly the shape above: a smooth deceleration to a floor, then reversal.
+
+    WHAT IT SAYS ABOUT THE BENCH. This is direct evidence bearing on the
+    Part 1 checklist row "heat exchanger connected to 12 V and operating",
+    which is still unrecorded. The -6.79 C floor and the reversal after it
+    are what a TEC does when hot-side heat removal is the limiting factor.
+    Worth confirming the pump is actually circulating, not just that the fans
+    are turning, before drawing any conclusion about the module itself.
+
+    It also sets an honest limit on what this instrument can claim. It will
+    not hold a setpoint below roughly -7 C in this configuration, not because
+    of anything in the control code, but because the hardware runs out of
+    pumping capacity there.
+
+COMPARISON WITH THE EARLIER FULL-DRIVE RUN
+
+    part7_full_drive_70C_swing.txt reached -16.00 C, about 9 C colder than
+    this run's floor. The difference is the starting point. That run began
+    cold and was driven colder; this one began at 52 C and had to remove the
+    plate's stored heat first, so the hot side was already loaded when the
+    cooling leg started.
+
+    Both runs are kept. That one has the wider swing and the better rate
+    figures. This one has correct labels and shows the cold limit.
+
+HEATING AND COOLING RATES
+
+    heating  +0.913 C/s      from 26.75 C, duty ramped 8 -> 255
+    cooling  -1.298 C/s      first 10 s, from 52.23 C, duty 251
+
+    The cooling figure LOOKS faster here, which is the opposite of the
+    asymmetry measured elsewhere, and it is an artifact rather than a result.
+    The cooling leg started at 52 C, about 30 C above ambient, where passive
+    loss to the room contributes strongly in the same direction. The heating
+    leg started near ambient, where passive loss opposes it, and spent part
+    of its interval at a duty still ramping up from 8.
+
+    The clean asymmetry measurement is in part7_full_drive_70C_swing.txt,
+    where both legs were driven at steady full duty: +1.821 against
+    -0.269 C/s, a factor of 6.8. Rates taken far from ambient with a ramping
+    duty are not comparable to rates taken at steady drive, and are recorded
+    here only so the raw numbers are not mistaken for a contradiction.

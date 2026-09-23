@@ -1,0 +1,104 @@
+Phys 39 Module 3, Part 6: serial command interface verification
+Naidu / Cohen, 23 September 2026
+
+Sketch: arduino/module_03/tec_python_control/tec_python_control.ino
+Tested through Arduino Serial Monitor at 9600, line ending Newline, with
+Python NOT running. This is the check the assignment asks for before the
+sketch is paired with the GUI.
+
+SKETCH IDENTITY CONFIRMED FROM THE BOOT BANNER
+
+    # Calibration in use: PWM on pin 9 = COOL
+    (no OUTPUT CEILING line)
+
+    which is PIN9_IS_HEAT = false and maxDuty = 255, the repository copy.
+
+    This mattered. Three different builds were uploaded in the same session
+    before the right one took, and they are distinguishable only by these two
+    banner lines:
+
+        pin 9 = COOL, ceiling 64      old pre-fix copy
+        pin 9 = HEAT, no ceiling      placeholder template, wrong direction
+        pin 9 = COOL, no ceiling      correct
+
+RESULTS
+
+1.  Valid command, cooling direction
+
+        sent      SET PWM 40 DIR COOL
+        reply     # OK: PWM 40 DIR COOL  (PWM on pin 9)
+        then      Temperature (C): 28.69, Time (s): 39.50, PWM: 40, Heat/Cool: 0
+
+    Pin 9 is the cooling direction, so COOL correctly selects pin 9. The
+    Heat/Cool field went to 0, matching the command.
+
+2.  Malformed number rejected, and the actuator forced to zero
+
+        sent      SET PWM abc DIR HEAT
+        reply     # malformed command: "SET PWM abc DIR HEAT"
+                  # PWM set to 0: command not understood
+        then      PWM: 40 -> PWM: 0 on the very next measurement line
+
+    This is the behaviour the assignment specifies and it is the test worth
+    having. A parser using atoi() alone would turn "abc" into 0 and report a
+    successful command at zero drive, which looks identical in the log but is
+    a parser that accepted garbage. Here the digit check rejects it, the
+    sketch says so, and failSafe() drops the duty from 40 to 0.
+
+3.  Out-of-range value clamped rather than rejected
+
+        sent      SET PWM 300 DIR HEAT
+        then      Temperature (C): 28.38, Time (s): 71.00, PWM: 255, Heat/Cool: 1
+
+    300 is a number, so it is a legal command and is clamped to 255. Only a
+    value that is not a number is malformed. No CAPPED notice appeared,
+    which is correct now that maxDuty is 255.
+
+4.  Zero command, both bridge inputs released
+
+        sent      SET PWM 0 DIR HEAT
+        reply     # OK: PWM 0 DIR HEAT  (PWM on pin none)
+        then      PWM: 0 held for the rest of the log
+
+    "pin none" rather than a pin number, because at zero duty applyDrive()
+    drives both inputs LOW instead of PWM-ing either one.
+
+NOT CAPTURED
+
+    The acknowledgement for SET PWM 40 DIR HEAT scrolled past before it was
+    copied. Its expected form is
+
+        # OK: PWM 40 DIR HEAT  (PWM on pin 10)
+
+    The mapping is not in doubt: case 1 above shows COOL selecting pin 9, the
+    sketch drives exactly one of the two inputs, and pwmOnPin9 is a single
+    boolean comparison, so HEAT can only be pin 10. The full-drive run in
+    part7_full_drive_70C_swing.txt also exercises both directions physically.
+    Noted here rather than quietly omitted.
+
+THE TEMPERATURE COLUMN IN THIS LOG IS NOT DIRECTION EVIDENCE
+
+    Temperature fell monotonically from 29.01 to 28.22 C across the whole
+    test, about -0.0096 C/s, and it kept falling at the same rate through
+    every segment: duty 40 HEAT, duty 40 COOL, duty 0, duty 255 HEAT, duty 0.
+    It did not respond to any command.
+
+    That is expected and it is not a fault. The plate was still shedding heat
+    from the +54 C run, no drive level was held longer than about 13 s, and
+    duty 40 is far below what produces a visible response on this plate in
+    that time. Earlier work measured a 35 s onset delay at duty 28.
+
+    Recorded explicitly because a later reader could see "commanded COOL,
+    temperature fell" in this log and mistake it for a direction
+    confirmation. It is passive decay, and it is present in the heating
+    segments too. Direction evidence lives in
+    part3_direction_calibration.txt, part3_cooling_below_ambient.txt and
+    part7_full_drive_70C_swing.txt, where drive was held long enough and the
+    plate was pushed clear of ambient in both directions.
+
+VERDICT
+
+    The command interface parses valid commands, names the correct pin,
+    rejects malformed input while forcing the actuator to zero, clamps
+    out-of-range values, and releases both bridge inputs at zero duty. Safe
+    to pair with the Python GUI.

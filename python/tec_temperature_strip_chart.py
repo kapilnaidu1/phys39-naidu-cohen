@@ -128,6 +128,61 @@ def is_measurement_line(line):
 
 
 # =====================================================================
+# PORT RESOLUTION
+# =====================================================================
+
+def resolve_port():
+    """Return the serial port to open, preferring SERIAL_PORT above.
+
+    macOS renames the Arduino's device node when it is plugged into a
+    different physical USB socket: /dev/cu.usbmodem1101 becomes
+    usbmodem1201 and so on. Hard-coding one name means a working setup
+    stops working because someone moved a cable, and the error that
+    produces, "No such file or directory", reads like a missing program
+    rather than a moved cable.
+
+    So the configured name is a preference, not a requirement. If it is
+    present it is used. If it is absent but exactly one USB serial device
+    is attached, that one is used and the substitution is announced,
+    because a program that silently picks a different instrument than the
+    one it was told to use is worse than one that fails.
+    """
+    ports = list(serial.tools.list_ports.comports())
+    names = [p.device for p in ports]
+
+    if SERIAL_PORT in names:
+        return SERIAL_PORT
+
+    # Built-in Bluetooth and debug nodes are always present and are never
+    # the Arduino, so match on the USB serial adapter names instead.
+    candidates = [n for n in names
+                  if "usbmodem" in n or "usbserial" in n or n.startswith("COM")]
+
+    if len(candidates) == 1:
+        print(f"Note: {SERIAL_PORT} is not present. Using {candidates[0]} "
+              f"instead, the only USB serial device attached.")
+        return candidates[0]
+
+    if not candidates:
+        print(f"\nNo USB serial device found. {SERIAL_PORT} is not present "
+              f"and neither is any other.", file=sys.stderr)
+        print("The Arduino is not on the bus. Check the cable is seated at "
+              "both ends and is a data cable, not charge-only.",
+              file=sys.stderr)
+    else:
+        print(f"\n{SERIAL_PORT} is not present, and more than one USB serial "
+              f"device is attached: {', '.join(candidates)}", file=sys.stderr)
+        print("Set SERIAL_PORT to the right one rather than guessing.",
+              file=sys.stderr)
+
+    if ports:
+        print("Ports this computer can see:", file=sys.stderr)
+        for port in ports:
+            print(f"    {port.device}    {port.description}", file=sys.stderr)
+    sys.exit(1)
+
+
+# =====================================================================
 # SERIAL READER
 # =====================================================================
 
@@ -338,9 +393,16 @@ class StripChartWindow(QtWidgets.QMainWindow):
 
 
 def main():
-    global DEMO_MODE
+    global DEMO_MODE, SERIAL_PORT
     if "--demo" in sys.argv:
         DEMO_MODE = True
+
+    # Resolve the port BEFORE the window is built, because the window opens
+    # the CSV in its constructor. Exiting after that point leaves a file
+    # containing nothing but a header row, which looks like a run that
+    # recorded no data rather than a run that never started.
+    if not DEMO_MODE:
+        SERIAL_PORT = resolve_port()
 
     app = QtWidgets.QApplication(sys.argv)
     window = StripChartWindow()

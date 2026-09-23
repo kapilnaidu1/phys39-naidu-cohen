@@ -1,0 +1,125 @@
+Phys 39 Module 3, Part 7: integrated manual-control test
+Naidu / Cohen, 23 September 2026
+
+The five tests in the order the assignment lists them.
+
+Programs paired: python/tec_control_gui.py (Part 5) driving
+arduino/module_03/tec_python_control (Part 6).
+
+-----------------------------------------------------------------------
+1. WITH TEC POWER OFF, RESET THE ARDUINO AND CONFIRM PWM STARTS AT ZERO
+-----------------------------------------------------------------------
+
+Completed at the bench. Supporting serial capture, from the boot banner
+through the first measurement lines:
+
+    # Phys 39 Module 3 Part 6: TEC serial-command control. Naidu / Cohen
+    # Calibration in use: PWM on pin 9 = COOL
+    # Commands: SET PWM <0-255> DIR <HEAT|COOL>
+    # PWM starts at 0 and stays there until a valid command arrives.
+
+    Temperature (C): 29.73, Time (s): 0.50, PWM: 0, Heat/Cool: 1
+    Temperature (C): 29.73, Time (s): 1.00, PWM: 0, Heat/Cool: 1
+
+PWM reads 0 on the first line after reset and on every line until a command
+is sent. This is structural rather than incidental: setup() drives both
+bridge pins LOW before Serial.begin(), so the outputs are defined before the
+sketch can print anything at all, and applyDrive() is called explicitly at
+the end of setup() to assert the zero state.
+
+-----------------------------------------------------------------------
+2. USE THE GUI TO CHANGE PWM AND DIRECTION, VERIFY PINS 9 AND 10 ON THE
+   OSCILLOSCOPE
+-----------------------------------------------------------------------
+
+Completed at the bench with TEC power off, and checked by the instructor.
+
+NO SCOPE CAPTURES WERE RETAINED. This is recorded as a gap rather than
+written up from memory: docs/figures/module_03/ is empty and no numeric duty
+or frequency readings were taken down at the time. The test was performed
+and observed, but this file does not reconstruct readings that were not
+written down.
+
+What the sketch asserts about these pins, for reference if the measurement
+is repeated:
+
+    pins 9 and 10 are Timer1 outputs on the Uno, so the carrier is 490 Hz
+    at zero duty       both pins held LOW by digitalWrite, not PWM at 0%
+    at nonzero duty    exactly one pin carries PWM, the other hard LOW
+
+    The idle pin is driven LOW BEFORE the active pin is energized, so the
+    two are never asserted simultaneously. On this driver, holding the idle
+    input HIGH inverts the duty cycle, which would turn a commanded zero
+    into full drive. That is the property the scope check is really for.
+
+-----------------------------------------------------------------------
+3. AFTER INSTRUCTOR APPROVAL, APPLY LOW POWER AND CONFIRM HEAT HEATS AND
+   COOL COOLS ACCORDING TO THE PART 3 CALIBRATION
+-----------------------------------------------------------------------
+
+Confirmed, with data. See part7_labeled_run.txt and its CSV.
+
+    commanded HEAT     26.75 -> 53.67 C      plate ROSE
+    commanded COOL     52.23 -> -6.79 C      plate FELL
+
+Both agree with the Part 3 calibration PIN9_IS_HEAT = false. Sketch identity
+was confirmed from the boot banner before the run, since three different
+builds had been uploaded during the session and only the banner
+distinguishes them.
+
+Note on "low power": this run was taken at full duty, not low. Low-power
+confirmation in both directions was done earlier at duty 40 and at duty 28,
+recorded in part3_direction_calibration.txt and
+part3_cooling_below_ambient.txt. The full-drive run is cited here because it
+is the one where the printed labels were correct.
+
+-----------------------------------------------------------------------
+4. SLIDER AND TEXT BOX SYNCHRONIZED, GUI DISPLAYS TEMPERATURE, PWM,
+   DIRECTION AND ELAPSED TIME
+-----------------------------------------------------------------------
+
+Confirmed at the bench in both directions: dragging the slider updates the
+text box, and typing a value in the text box moves the slider.
+
+In the code, on_slider_moved() calls pwm_edit.setText() and the text-box
+handler calls the slider setter, with a 60 ms debounce so that a drag does
+not emit one serial command per pixel.
+
+All four readouts update together on each measurement line, visible in the
+GUI screenshots from the session:
+
+    T = 41.06 C    PWM = 255    direction = HEAT    t = 343.1 s
+
+-----------------------------------------------------------------------
+5. PLOTS UPDATE, AND THE CSV CONTAINS THE SAME VALUES THE ARDUINO REPORTED
+-----------------------------------------------------------------------
+
+Both strip charts updated live throughout every run, with the PWM trace red
+for heating and blue for cooling.
+
+CSV integrity, checked on part7_labeled_run.csv:
+
+    303 rows over 151.5 s
+    cadence uniformly 0.50 s, no gaps and no duplicated timestamps
+    all four columns populated on every row
+    temperature range -6.79 to 54.11 C, consistent with the live display
+
+The values are the Arduino's own, not recomputed. The GUI parses the four
+fields out of the measurement line with one regular expression and writes
+them through unchanged; no conversion, rounding or smoothing happens on the
+Python side. A row in the CSV is the numeric content of a serial line.
+
+The Arduino's "# " lines are deliberately NOT written to the CSV. They are
+acknowledgements and notices, not measurements, and the parser is built so
+that a safety notice can never be mistaken for a data row.
+
+-----------------------------------------------------------------------
+RESULT
+-----------------------------------------------------------------------
+
+The canonical manual-control system works as specified: Python sets and
+displays PWM and direction, the Arduino applies the command and measures
+temperature, and the GUI plots and saves the instrument state. It does not
+control temperature automatically, which is Module 4.
+
+Outstanding from this part: the scope captures for test 2 were not retained.

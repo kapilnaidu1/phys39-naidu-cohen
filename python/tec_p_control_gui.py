@@ -164,6 +164,9 @@ class PControlWindow(QtWidgets.QMainWindow):
                           background: #FDEDEC; color: #C0392B;
                           font-weight: 600; }
             QPushButton:hover { background: #F9D9D6; }
+            QPushButton#plain { border: 1px solid #BBBBBB; background: #F4F4F4;
+                                color: #333333; font-weight: 500; }
+            QPushButton#plain:hover { background: #E8E8E8; }
             QGroupBox { font-size: 11px; color: #666666;
                         border: 1px solid #DDDDDD; border-radius: 4px;
                         margin-top: 8px; padding-top: 8px; }
@@ -226,6 +229,14 @@ class PControlWindow(QtWidgets.QMainWindow):
         self.stop_btn = QtWidgets.QPushButton("STOP  \u2014  PWM to 0")
         self.stop_btn.clicked.connect(self.on_stop)
 
+        # pyqtgraph turns auto-ranging OFF the moment you scroll or drag a
+        # plot, so one stray trackpad gesture strands the view somewhere with
+        # no data and the axis label goes to something like "Time (e27s)".
+        # This puts it back.
+        self.rescale_btn = QtWidgets.QPushButton("Rescale plots")
+        self.rescale_btn.setObjectName("plain")
+        self.rescale_btn.clicked.connect(self.rescale_plots)
+
         ctl = QtWidgets.QGroupBox("controller")
         row2 = QtWidgets.QHBoxLayout()
         row2.setSpacing(10)
@@ -237,6 +248,7 @@ class PControlWindow(QtWidgets.QMainWindow):
         row2.addSpacing(16)
         row2.addWidget(self.enable_box)
         row2.addStretch(1)
+        row2.addWidget(self.rescale_btn)
         row2.addWidget(self.stop_btn)
         ctl.setLayout(row2)
 
@@ -466,10 +478,30 @@ class PControlWindow(QtWidgets.QMainWindow):
         print(f"\nSerial error: {message}", file=sys.stderr)
 
     # -----------------------------------------------------------------
+    def rescale_plots(self):
+        """Put every view back on the data.
+
+        Re-enables auto-ranging on all three plots and snaps the shared time
+        axis to the rolling window. Safe to press at any time; it changes
+        only the view, never the data or the controller.
+        """
+        for plot in (self.temp_plot, self.err_plot, self.pwm_plot):
+            plot.enableAutoRange(axis="x", enable=True)
+            plot.enableAutoRange(axis="y", enable=True)
+        self.pwm_plot.setYRange(PWM_MIN - 5, PWM_MAX + 5)
+        if self.times:
+            t = list(self.times)
+            self.temp_plot.setXRange(t[0], t[-1], padding=0.02)
+        print("Plots rescaled.")
+
     def update_plots(self):
         if not self.times:
             return
         t = list(self.times)
+        # Keep the time axis pinned to the rolling window every redraw, so a
+        # stray scroll corrects itself on the next sample instead of leaving
+        # the operator staring at an empty plot.
+        self.temp_plot.setXRange(t[0], t[-1], padding=0.02)
         temps = list(self.temperatures)
         self.temp_curve.setData(t, temps)
         self.err_curve.setData(t, list(self.errors))

@@ -79,48 +79,92 @@ Full working is in section 5 of the module note.
 
 ## 4. Laird data sheet *(2 pts)*
 
-**We find these ourselves first.** The assignment forbids asking an AI for the
-numbers before locating them, and permits a check of our selection afterward.
+Source: **Laird CP14-127-045-L2-W4.5**, MFG part 58910-501, SPECIFICATIONS
+table, **Hot Side Temperature = 27.0 C** column.
 
-Class model, hot side **27 C**. For each: value, units, one sentence on what
-it means, and the operating condition attached.
-
-| Quantity | Value | Meaning and condition |
+| Quantity | Value | What it means, and the condition attached |
 |---|---|---|
-| R_M | | |
-| I_max | | |
-| Qc_max (at dT = 0) | | |
-| dT_max | | |
+| `R_M` | **1.50 ohm** | Ohmic resistance of the 127 couples in series. Quoted at Th = 27 C; it rises with temperature (1.56 at 35 C, 1.68 at 50 C on the same sheet) |
+| `I_max` | **8.6 A** | The current that produces the **largest temperature difference**, not a safety ceiling. Condition: I at dT_max |
+| `Qc_max` | **71.3 W** | Most heat the cold face can absorb. Condition: **dT = 0**, so the module is pumping with no temperature difference to fight |
+| `dT_max` | **70.5 C** | Largest temperature difference the module can sustain. Condition: **Qc = 0**, no heat load at all |
 
-Then:
+`Qc_max` and `dT_max` sit at opposite ends of one trade-off: maximum pumping
+needs zero temperature difference, maximum difference needs zero load. The
+module never delivers both.
+
+### Calculation
+
+At the data-sheet condition dT = 0, so the conduction term vanishes. The
+symmetric model puts half the Joule heat on each face:
 
 ```
 Qj_max = 0.5 * I_max^2 * R_M
+       = 0.5 * (8.6 A)^2 * 1.50 ohm
+       = 55.47 W
+
 Qp_max = Qc_max + Qj_max
+       = 71.3 W + 55.47 W
+       = 126.77 W
+
 r_Laird,max = (Qp_max + Qj_max) / (Qp_max - Qj_max)
+            = (126.77 + 55.47) / (126.77 - 55.47) W/W
+            = 2.556
 ```
 
-Keep the units visible through every line. The rubric asks for a
-"dimensionally clear calculation".
+### Cross-check worth including
+
+`V_max / I_max = 13.9 / 8.6 = 1.616 ohm`, which is **8% above** the quoted
+`R_M = 1.50 ohm`. That is not an inconsistency. At `dT_max` the module
+develops a Seebeck back-EMF, so
+
+```
+V_max = I_max * R_M + S * dT_max
+    S = (13.9 V - 8.6 A * 1.50 ohm) / 70.5 K = 0.0142 V/K
+```
+
+which is a sensible Seebeck coefficient for a 127-couple bismuth telluride
+module. It confirms we read the right rows.
 
 ## 5. Comparison *(part of 2 pts with item 6)*
 
-Compare `r_Laird,max` with measured `r`. **Do not assume they should agree.**
-Lead with why **D = 1 does not imply I = I_max**: full duty only means the
-bridge is continuously on, and the actual current is set by supply voltage and
-current limit, H-bridge drop, wiring and TEC resistance. Then PWM versus
-steady DC, finite dT against the data sheet's dT = 0, passive heat paths,
-temperature-dependent material properties, and one slope fitted to a curved
-branch.
+| | r | Qj/Qp |
+|---|---|---|
+| **measured** | **2.771** | **0.470** |
+| **Laird, at I_max** | **2.556** | **0.438** |
+| ratio | 1.084 | |
 
-## 6. Passive conduction *(part of 2 pts with item 5)*
+**Agreement to 8%**, which is closer than this comparison has any right to be,
+and the write-up should say so rather than claim a prediction confirmed.
 
-Hotter than the room, heat flows out. Colder, heat flows in. Either way it
-drives the plate back toward room temperature, opposing heating and cooling
-alike. Because that opposition is approximately symmetric it enters both
-branches through the same G and **cannot by itself produce unequal slopes**.
-The asymmetry is Joule heating, which adds on the heating branch and
-subtracts on the cooling branch.
+**Why they should not be expected to match.**
+
+- **D = 1 does not mean I = I_max.** Full duty only means the bridge is
+  continuously on. The actual current is set by supply voltage and current
+  limit, H-bridge forward drop, wiring resistance and `R_M`. With a 12 V
+  supply and about 1.6 ohm of loaded module plus bridge drop and wiring, the
+  bench current is well under 8.6 A, so we never operate at the data-sheet
+  condition.
+- **PWM, not steady DC.** Our current is chopped. Section 3a shows the
+  cycle averages are `<I> = DI` and `<I^2> = DI^2`, so the Peltier and Joule
+  contributions scale together with duty; the data sheet assumes a steady
+  current.
+- **Finite dT.** The data-sheet relation is stated at `dT = 0` where
+  conduction through the module is zero. Our plate ran 25 C above and 12 C
+  below ambient, where that term is not negligible and is lumped into `G`.
+- **Material properties move with temperature.** The same sheet shows `R_M`
+  rising from 1.50 to 1.68 ohm between 27 and 50 C.
+- **One slope fitted to each branch.** R^2 is 1.0000 and 0.9989, so this is a
+  small effect here, but the fit still averages over a range where the
+  coefficients are not strictly constant.
+
+**Direction of the difference.** Our `Qj/Qp` is the larger. That is what you
+expect when running below `I_max`: Peltier pumping falls linearly with
+current while the Joule term falls as the square, but the *ratio* `Qj/Qp`
+goes as `I`, so operating below `I_max` should actually reduce it. The fact
+that ours is instead slightly higher points at the extra dissipation our
+model lumps into the object face that the data sheet does not carry, such as
+lead and contact resistance in series with the module.
 
 ## 7. Conclusion, 100 to 150 words *(1 pt with formatting)*
 

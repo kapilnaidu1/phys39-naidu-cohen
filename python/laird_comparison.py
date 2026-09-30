@@ -35,13 +35,14 @@ WHAT IT DOES
 # DATA-SHEET VALUES   <-- fill these in from the PDF
 # =====================================================================
 
-R_M = None        # ohm,  module resistance
-I_MAX = None      # A,    current giving maximum dT
-QC_MAX = None     # W,    max cold-side pumping, at dT = 0
-DT_MAX = None     # K,    max temperature difference, at Qc = 0
+R_M = 1.50        # ohm,  module resistance
+I_MAX = 8.6       # A,    current giving maximum dT
+QC_MAX = 71.3     # W,    max cold-side pumping, at dT = 0
+DT_MAX = 70.5     # K,    max temperature difference, at Qc = 0
 
 HOT_SIDE_C = 27.0     # the column these were read from
-SOURCE = "Laird CP14-127-045 data sheet, performance table, Th = 27 C"
+V_MAX = 13.9      # V,    voltage at dT_max (not required, used as a cross-check)
+SOURCE = ("Laird CP14-127-045-L2-W4.5, MFG 58910-501, SPECIFICATIONS table,\n          Hot Side Temperature = 27.0 C column")
 
 # =====================================================================
 # OUR MEASUREMENT, Module 4 Part 3, 30 September 2026

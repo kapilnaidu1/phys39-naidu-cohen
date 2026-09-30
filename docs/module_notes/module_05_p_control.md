@@ -121,11 +121,34 @@ point computing a command more often than the measurement it is based on.
 
 | Step | Expected | Result |
 |---|---|---|
-| Setpoint ~32 &deg;C (above ambient), small K<sub>p</sub> | positive error &rarr; **heating** | *to record* |
-| Setpoint ~15 &deg;C (below ambient), same K<sub>p</sub> | negative error &rarr; **cooling** | *to record* |
+| Setpoint 30 &deg;C (above ambient), K<sub>p</sub> = 0.25 | positive error &rarr; **heating** | **PASS.** 3064 samples with e from +1.56 to +8.92 &deg;C, all reported HEAT |
+| Setpoint 15 &deg;C (below ambient), K<sub>p</sub> = 0.25 | negative error &rarr; **cooling** | **PASS.** 394 samples with e from &minus;13.44 to &minus;6.81 &deg;C, all reported COOL |
 
-Use **K<sub>p</sub> = 0.25** for this, giving L = 0.125: far too weak to
-regulate, which is the point. A sign test should not be able to run away.
+Data: `data/module_05/sign_test_and_sweep.csv`.
+
+**One sample needs explaining, and it is not a sign error.** At t = 1598.0 s,
+the instant the setpoint moved from 30 to 15, a single line reports
+e = &minus;13.44 &deg;C with direction HEAT and PWM 12. That is the Arduino
+echoing the *previous* command: the controller computes the new command from
+that measurement and sends it, but the sketch does not report the new
+direction until its next line a second later. One sample of pipeline delay
+in a 1 Hz loop. Recorded here because an automated check on the logged file
+flags it, and the explanation is more useful than silently filtering it out.
+
+**The asymmetry shows up in the loop gain.** The same K<sub>p</sub> = 0.25
+gives
+
+```
+L = 0.125  heating      (chi = 0.50127)
+L = 0.045  cooling      (chi = 0.18091)
+```
+
+a **2.77x weaker loop in the cooling direction for an identical gain**. The
+Module 4 heating/cooling asymmetry therefore propagates directly into the
+feedback behaviour: a gain that is comfortable when heating is nearly
+inoperative when cooling. This is the concrete answer to what "small" means
+here, and it is why L rather than K<sub>p</sub> is the quantity to reason
+with.
 
 **Small compared with what?** L = K<sub>p</sub>&chi;<sub>T,u</sub>. With
 &chi;<sub>T,h</sub> = 0.50127, L = 1 arrives at K<sub>p</sub> = 1.995. So on

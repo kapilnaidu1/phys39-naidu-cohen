@@ -437,7 +437,23 @@ stays here and does not go into A2.
 
 ## 7. Open items
 
-- Part 2 endpoints, Part 3 table, both traces
-- Laird values, to be read off the data sheet by us
-- Every `*to record*` row above
-- Numeric checklist values from the bench notebook
+Parts 1 to 6 are complete. `A2_Naidu_Cohen.pdf` is built and sits in the
+repository root; it still has to be uploaded to Moodle by each of us
+separately, **due Monday 5 October at 6:00 PM**.
+
+**Confirmed at the bench and signed off by the instructor, but the numeric
+value was never written down:**
+
+- the measured supply voltage at the barrier strip
+- the thermal-switch continuity reading
+- the thermal-switch rating from the body marking
+
+The inspections happened and were approved; only the numbers are missing
+from the record. Two minutes with a meter and a pen at the next session
+closes it, and it is worth doing, because a checklist row that says
+"confirmed" without a reading is weaker evidence than one that carries the
+value.
+
+**Carried over from Module 3:** the Part 7 oscilloscope captures of pins 9
+and 10 were never retained. The test was performed and checked by the
+instructor; the images were not saved.

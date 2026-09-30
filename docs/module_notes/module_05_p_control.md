@@ -418,8 +418,38 @@ H(T &minus; T<sub>amb</sub>), so T &minus; T<sub>amb</sub> =
   (&tau;<sub>cl</sub> = C/(H + P<sub>u</sub>K<sub>p</sub>)) and nothing about
   where the approach ends. Thermal capacity is a transient property.
 
-**(3) L for our gains, and 1/(1+L) against measurement.** Table in Part 3,
-comparison to be filled in after the runs.
+**(3) L for our gains, and 1/(1+L) against measurement.**
+
+| K<sub>p</sub> | L = K<sub>p</sub>&chi; | measured fractional droop | 1/(1+L) | ratio |
+|---|---|---|---|---|
+| 0.25 | 0.125 | 0.905 | 0.889 | 1.019 |
+| 0.50 | 0.251 | 0.820 | 0.800 | 1.026 |
+| 1.00 | 0.501 | 0.650 | 0.666 | 0.976 |
+| 2.00 | 1.003 | 0.502 | 0.499 | 1.006 |
+| 4.00 | 2.005 | 0.333 | 0.333 | 1.002 |
+| 8.00 | 4.010 | 0.197 | 0.200 | 0.989 |
+| 16.00 | 8.020 | 0.107 | 0.111 | 0.964 |
+
+Fractional droop is (T<sub>set</sub> &minus; T<sub>ss</sub>)/(T<sub>set</sub>
+&minus; T<sub>amb</sub>) with e<sub>0</sub> = 8.46 &deg;C.
+
+**Which runs genuinely have small gain?** Only the first two. L &lt; 0.3 at
+K<sub>p</sub> = 0.25 and 0.50, where more than 80% of the initial error
+survives and the loop is barely doing anything. K<sub>p</sub> = 1 and 2 are
+comparable feedback, L of order 1. From K<sub>p</sub> = 4 upward the feedback
+is strong and the fraction approaches 1/L.
+
+Note that this classification cannot be made from K<sub>p</sub> alone.
+K<sub>p</sub> = 2 is "comparable" for heating but would be weak for cooling,
+where the same gain gives L = 0.36 because &chi;<sub>T,c</sub> is 2.77x
+smaller.
+
+**Discrepancies.** Mean ratio over all seven gains is 1.00, standard
+deviation 0.02, and the residuals change sign across the range rather than
+trending, so there is no systematic bias to explain. The scatter is
+comparable to the noise floor divided by the droop, which runs from 2% at the
+largest droop to 18% at the smallest, so the two largest-gain points are the
+least precisely determined even though they are the closest to the setpoint.
 
 ### First-order expectation
 
@@ -449,21 +479,29 @@ control law. Candidates, in the order worth checking:
 
 ## 7. Evidence checklist for A3 and C4
 
-- [ ] low-gain sign test, both directions
-- [ ] gain range and the calculation justifying it *(table above, needs instructor approval)*
-- [ ] droop table with dimensions
-- [ ] high-gain response table
-- [ ] measured and predicted droop on one graph
-- [ ] the Part 4 &harr; Part 6 derivation *(drafted above, needs our numbers)*
-- [ ] representative low- and high-gain traces
-- [ ] exact filenames of controller, sketch and raw data
-- [ ] short written explanation of droop and of the oscillation result
+- [x] low-gain sign test, both directions &mdash; Part 2, `sign_test_and_sweep.csv`
+- [x] gain range and the calculation justifying it &mdash; Part 3, derived from P<sub>required</sub> = 16.9 counts
+- [x] droop table with dimensions &mdash; Part 3, six gains plus K<sub>p</sub> = 16
+- [x] high-gain response table &mdash; Part 5, no oscillation to L = 8.02
+- [x] measured and predicted droop on one graph &mdash; `docs/figures/module_05/droop_vs_gain.png`
+- [x] the Part 4 &harr; Part 6 derivation &mdash; Part 6, with our numbers
+- [x] representative low- and high-gain traces &mdash; `kp_0p25_run.csv`, `kp16_high_gain_run.csv`
+- [x] exact filenames of controller, sketch and raw data &mdash; listed at the top of this note
+- [x] short written explanation of droop and of the oscillation result &mdash; Parts 3, 5 and 6
 
 ---
 
 ## 8. Open items
 
-- Instructor approval of the gain range before running it
-- Everything marked *to record*
+Module 5 requires no separate paper. Its results feed **A3** (with Module 6)
+and the **C4** demonstration.
+
+- Instructor approval of the gain range, retrospectively, since the sweep was
+  run before it was signed off
+- K<sub>p</sub> = 32 not tested: P<sub>0</sub> would clamp at 255 from a
+  room-temperature start, which is saturation rather than instability
 - Carried over from Module 4: the blank numeric rows in the Part 1 pre-power
-  checklist
+  checklist (lead gauge, thermal-switch rating and continuity, measured
+  supply voltage and which of the two supplies)
+- Carried over from Module 3: the Part 7 oscilloscope captures were never
+  retained

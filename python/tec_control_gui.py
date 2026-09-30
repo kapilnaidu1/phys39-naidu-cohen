@@ -70,7 +70,12 @@ import demo_source
 SERIAL_PORT = "/dev/cu.usbmodem1101"   # macOS; Windows looks like "COM5"
 BAUD_RATE = 9600
 
-WINDOW_SECONDS = 120.0       # visible history on both strip charts
+# MODULE 4: 120 s was right for Module 3's fast swings. The measured driven
+# time constant here is 70 s, so 3 tau is 211 s and the observation minute
+# takes it to ~270 s. A 120 s window would scroll the start of the approach
+# off the screen before the plateau arrived, which is precisely the
+# comparison you need to make to call it steady.
+WINDOW_SECONDS = 300.0       # visible history on both strip charts
 UPDATE_INTERVAL_MS = 200     # plot redraw period
 
 # MODULE 4: the temperature axis now follows the data. Steady state is judged

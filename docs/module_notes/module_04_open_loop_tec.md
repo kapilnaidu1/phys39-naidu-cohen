@@ -91,14 +91,14 @@ notebook.
 
 | Item | Value or observation |
 |---|---|
-| 18 AWG on supply to `B+`/`B-` | *to record* |
-| 18 AWG on `M+`/`M-` to TEC circuit | *to record* |
-| 18 AWG on both thermal-switch wires | *to record* |
-| Both Module 3 spade crimps secure | *to record* |
-| Continuity through closed thermal switch | *to record, with the meter reading* |
-| Thermal switch in series with TEC current path | *to record* |
+| 18 AWG on supply to `B+`/`B-` | **confirmed at the bench**, checked by the instructor |
+| 18 AWG on `M+`/`M-` to TEC circuit | **confirmed at the bench**, checked by the instructor |
+| 18 AWG on both thermal-switch wires | **confirmed at the bench**, checked by the instructor |
+| Both Module 3 spade crimps secure | **confirmed at the bench**, checked by the instructor |
+| Continuity through closed thermal switch | **confirmed at the bench**, checked by the instructor. *Meter reading not written down* |
+| Thermal switch in series with TEC current path | **confirmed at the bench**, traced by hand and checked by the instructor |
 | H-bridge outputs checked with TEC power off in Module 3 | yes, Module 3 Part 7 test 2, checked by the instructor. Captures not retained |
-| Sketch uploaded, GUI started, PWM begins at 0 | *to record* |
+| Sketch uploaded, GUI started, PWM begins at 0 | **yes**, boot banner and PWM 0 verified at every session |
 | Displayed temperature plausible | **yes**, confirmed by the finger-response test: warming the thermistor raised the reading, releasing lowered it. Checked by the instructor |
 | High-current path drawn in notebook | yes, drawn and shown at the inspection, 23 Sept |
 | **Instructor approval before actuator power** | **APPROVED 23 September 2026.** Instructor inspected the completed high-current wiring and approved actuator power. *Name and time to fill in.* |
@@ -108,8 +108,8 @@ Carried over from Module 3 and still open:
 | Item | Status |
 |---|---|
 | Heat exchanger: **pump circulating**, not just fans turning | **Check this.** The 23 Sept run cooled to -6.79 C then warmed at +0.33 C/s with the command unchanged at duty 251, which is what a TEC does when hot-side heat is not being carried away. [`part7_labeled_run.txt`](../../data/module_03/part7_labeled_run.txt) |
-| Measured supply voltage at the barrier strip | *to record.* The panel carries **two** supplies. Record which one feeds `B+`/`B-` |
-| Thermal switch rating from the body marking | *to record* |
+| Measured supply voltage at the barrier strip | **confirmed at the bench**, including which of the two panel supplies feeds `B+`/`B-`. *Numeric value not written down* |
+| Thermal switch rating from the body marking | **read at the bench**, checked by the instructor. *Value not written down* |
 
 ### The software limit
 
@@ -182,7 +182,7 @@ fault.
 | Arduino sketch | `arduino/module_04/tec_open_loop_safety` |
 | Python program | `python/tec_control_gui.py` |
 | Serial port | `/dev/cu.usbmodem1101` (resolved automatically if the cable moves) |
-| Supply voltage | *to record* |
+| Supply voltage | ALITOVE ALT-1210T, 12 V nominal. Confirmed at the bench with the instructor; **numeric reading not written down** |
 | Supply current limit | ALT-1210T is fixed-output, 10 A / 120 W, no adjustable limit |
 | Software limit | 60.0 C |
 | Hardware cutoff | thermal switch, near 70 C, in series |
@@ -195,8 +195,8 @@ the earlier draft of this note got wrong.
 
 | Direction | Target steady temperature | PWM that produces it |
 |---|---|---|
-| Heat | **45 C +/- 2 C** | *to record* |
-| Cool | **10 C +/- 1 C** | *to record* |
+| Heat | **45 C +/- 2 C** | **PWM 50**, settled 46.6 C |
+| Cool | **10 C +/- 1 C** | **PWM 65**, settled 9.75 C |
 
 Those two PWM values ARE the maximum useful magnitudes. The two will differ,
 and heating's will be much the smaller of the two.
@@ -285,9 +285,9 @@ the ratio r, and Qj/Qp.
 
 | | value | fit range | R squared |
 |---|---|---|---|
-| m_h | *to record* C per PWM count | | |
-| m_c | *to record* C per PWM count | | |
-| r = m_h/m_c | *to record* | | |
+| m_h | **0.5013** C per PWM count | u = 0 to +50 | 1.0000 |
+| m_c | **0.1809** C per PWM count | u = -65 to 0 | 0.9989 |
+| r = m_h/m_c | **2.771** | | |
 
 Note any visible curvature. The assignment expects heating to be the steeper
 branch and says a factor near 2 is an observation to investigate, not a
@@ -359,7 +359,7 @@ Algebra check: r = 2 gives Qj/Qp = 1/3. The plot script prints this.
 
 | | value |
 |---|---|
-| Qj/Qp from measured r | *to record* |
+| Qj/Qp from measured r | **0.470** |
 
 ### 5.4 Laird CP14-127-045 data sheet
 
@@ -371,10 +371,10 @@ Column for the class model at **hot side 27 C**:
 
 | Quantity | Symbol | Value | What it means, and the condition attached |
 |---|---|---|---|
-| Module resistance | R_M | | |
-| Maximum current | I_max | | |
-| Max cold-side pumping at dT = 0 | Qc_max | | |
-| Maximum temperature difference | dT_max | | |
+| Module resistance | R_M | **1.50 ohm** | at Th = 27 C; rises to 1.68 at 50 C |
+| Maximum current | I_max | **8.6 A** | the current at dT_max, not a safety ceiling |
+| Max cold-side pumping at dT = 0 | Qc_max | **71.3 W** | at dT = 0 |
+| Maximum temperature difference | dT_max | **70.5 C** | at Qc = 0 |
 
 Then, at dT = 0 where conduction vanishes, with the symmetric model putting
 half the Joule heat on each face:
@@ -387,9 +387,9 @@ r_Laird,max = (Qp_max + Qj_max) / (Qp_max - Qj_max)
 
 | | value |
 |---|---|
-| Qj_max | *to record* W |
-| Qp_max | *to record* W |
-| r_Laird,max | *to record* |
+| Qj_max | **55.47** W |
+| Qp_max | **126.77** W |
+| r_Laird,max | **2.556**, against measured 2.771, agreement to 8% |
 
 ### 5.5 Interpretation
 

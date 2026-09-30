@@ -304,17 +304,74 @@ later data set does show a trend.
 
 ## 5. Part 5: high-gain response
 
-| K<sub>p</sub> | Settles? | Mean T (&deg;C) | Amplitude (&deg;C) | Period (s) | Frequency (Hz) | Saturation? |
-|---|---|---|---|---|---|---|
-| | | | | | | |
+| K<sub>p</sub> | L | Settles? | T<sub>ss</sub> (&deg;C) | predicted | Amplitude | Period | Saturation? |
+|---|---|---|---|---|---|---|---|
+| 8.00 | 4.01 | **yes** | 28.33 | 28.31 | none | n/a | no |
+| 16.00 | 8.02 | **yes** | 29.10 | 29.06 | none | n/a | no, PWM peaked at 27 |
 
-Amplitude defined as **half the peak-to-peak excursion** of the settled
-oscillation, measured after any initial transient has passed. State this in
-the note rather than leaving it implicit.
+**No oscillation appeared, and no saturation, at the highest gain tested
+(K<sub>p</sub> = 16, L = 8.02).** The run was held 128 s, seventeen
+closed-loop time constants, and the final 30 s had a peak-to-peak spread of
+**0.020 &deg;C**, which is smaller than the 0.16 &deg;C open-loop noise
+floor. Amplitude is defined here as half the peak-to-peak excursion of the
+settled response after the transient; there was no settled excursion to
+measure.
 
-Do not assume it must oscillate. If it does not within the approved range,
-report the highest gain tested and describe how that response differs from
-the low-gain one.
+**How the high-gain response differs from the low-gain one.** Not in shape,
+only in speed and offset. Both are monotonic approaches with no overshoot.
+What changes is that &tau;<sub>cl</sub> = &tau;/(1+L) falls from 62 s at
+K<sub>p</sub> = 0.25 to 7.8 s at K<sub>p</sub> = 16, and the droop falls from
+7.66 to 0.90 &deg;C. Higher gain buys both a faster approach and a smaller
+offset, and on this apparatus it cost nothing up to L = 8.
+
+**Why that is worth stating rather than glossing.** At L = 8 the closed-loop
+time constant is 7.8 s while the sampling interval is 1 s, so the controller
+is now acting faster than the plate can carry heat from the TEC face to the
+thermistor. That is normally where lag-driven overshoot appears. It did not,
+which means the lag on this apparatus is short compared with 7.8 s. The
+one-lump model, which contains no lag at all, therefore remains adequate over
+the whole range tested.
+
+### An unplanned result: feedback suppresses the temperature noise
+
+Peak-to-peak temperature over the final 60 s of each settled run:
+
+| K<sub>p</sub> | L | T p-p (&deg;C) | suppression vs open loop |
+|---|---|---|---|
+| 0.25 | 0.13 | 0.040 | 4x |
+| 0.50 | 0.25 | 0.050 | 3x |
+| 1.00 | 0.50 | 0.040 | 4x |
+| 2.00 | 1.00 | 0.020 | 8x |
+| 4.00 | 2.01 | 0.050 | 3x |
+| 8.00 | 4.01 | 0.020 | 8x |
+| 16.00 | 8.02 | 0.020 | 8x |
+
+The open-loop channel measured **0.16 &deg;C peak-to-peak** at rest in
+Module 4. Under feedback it is 0.02 to 0.05 &deg;C throughout.
+
+This is the same 1/(1+L) acting on a different input. The factor that leaves
+a fraction of the *setpoint* error behind also leaves only that fraction of
+any slow *disturbance*, so droop and disturbance rejection are two faces of
+one number: you cannot reduce the offset without also quieting the output.
+The measured suppression does not track 1+L point by point, which is
+expected since the residual at these levels is partly ADC quantization
+(0.079 &deg;C per count) rather than a disturbance the loop can reject.
+
+It also explains a prediction that came out wrong in a useful direction.
+Command jitter at K<sub>p</sub> = 16 was forecast as K<sub>p</sub> &times;
+0.16 = 2.6 counts from the open-loop noise figure, and measured 0.49 counts.
+The forecast used the wrong noise: by the time the loop is closed, the
+temperature fluctuation the controller sees has already been suppressed by
+the loop itself.
+
+Trace: `data/module_05/kp16_high_gain_run.csv`.
+
+### Not tested, and why
+
+K<sub>p</sub> = 32 would clamp the initial command at 255 from a room-
+temperature start (P<sub>0</sub> = 262), making the loop nonlinear. That is
+saturation rather than instability and would need to be labelled as such.
+Left for a supervised opportunity rather than run unattended.
 
 ---
 

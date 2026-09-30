@@ -50,10 +50,13 @@ COOL_COLOR = "#1f77b4"         # blue, matching the strip chart
 # Printed on the figure so the caption requirement is satisfied by the figure
 # itself. EDIT THIS to match what was actually done at the bench.
 STEADY_CRITERION = (
-    "Steady state: after each PWM step, waited about three thermal time "
-    "constants,\nthen watched one further minute and accepted the temperature "
-    "once its net drift\nover that minute was no larger than the short-term "
-    "noise in the trace."
+    "Steady state: after each PWM step the trace was watched for about three "
+    "thermal time constants\n(tau = 70 s driven), then for one further "
+    "minute. A point was accepted once its net drift over\nthat minute was no "
+    "larger than the measured short-term noise, 0.16 C peak-to-peak. Points "
+    "that had\nnot fully arrived are reported as the asymptote of an "
+    "exponential fit to the approach; steady_state.csv\nrecords which. "
+    "T0 = 21.54 C. Both branches linear: R^2 = 1.0000 heating, 0.9989 cooling."
 )
 
 

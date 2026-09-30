@@ -102,51 +102,99 @@ def main():
     print("  or the command is being clamped.")
 
     # ---- figure ----
-    plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10,
-                         "axes.edgecolor": "#868686", "axes.linewidth": 0.8})
-    fig, ax = plt.subplots(figsize=(7.6, 5.0))
+    #
+    # Styled to read like a spreadsheet chart: white plot area, light grey
+    # gridlines on both axes, no top or right border, outward ticks,
+    # dark-edged markers, and the fit equation plus R-squared printed on the
+    # chart the way Excel's "Display Equation" option writes them.
+    plt.rcParams.update({
+        "font.family": "DejaVu Sans", "font.size": 10,
+        "axes.edgecolor": "#868686", "axes.linewidth": 0.8,
+        "xtick.direction": "out", "ytick.direction": "out",
+        "xtick.color": "#595959", "ytick.color": "#595959",
+    })
+    fig, ax = plt.subplots(figsize=(8.4, 5.6))
     fig.patch.set_facecolor("white")
     ax.set_facecolor("white")
-    ax.grid(True, color="#D9D9D9", linewidth=0.8)
+    ax.grid(True, which="major", color="#D9D9D9", linewidth=0.8)
     ax.set_axisbelow(True)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
 
-    # Smooth prediction curve across the tested range, so the comparison is
-    # against a model rather than against six isolated predicted points.
     lo, hi = min(kps), max(kps)
-    span = [lo + (hi - lo) * i / 300.0 for i in range(301)]
+    span = [lo + (hi - lo) * i / 400.0 for i in range(401)]
     sp0 = rows[0][1]
     e0 = sp0 - T_AMB
+
     ax.plot(span, [e0 / (1.0 + k * CHI_H) for k in span], "-",
-            color=PRED_COLOR, linewidth=1.6,
-            label=f"Predicted, $e_0/(1+K_p\\chi)$, $\\chi$={CHI_H:.4f}")
-    ax.plot(kps, pred, "^", color=PRED_COLOR, markersize=6,
-            markerfacecolor="none", label="Predicted at tested gains")
-    ax.plot(kps, meas, "o", color=MEAS_COLOR, markersize=7,
-            markeredgecolor="#404040", markeredgewidth=0.6,
-            label="Measured droop")
+            color=PRED_COLOR, linewidth=1.8, zorder=2,
+            label="Model,  $T_{set}-T_{ss}=e_0/(1+K_p\\chi)$")
+    ax.plot(kps, meas, "o", color=MEAS_COLOR, markersize=9,
+            markeredgecolor="#404040", markeredgewidth=0.7, linestyle="none",
+            zorder=4, label="Measured droop")
+    ax.plot(kps, pred, "^", color=PRED_COLOR, markersize=7,
+            markerfacecolor="none", markeredgewidth=1.2, linestyle="none",
+            zorder=3, label="Model at the tested gains")
 
-    ax.set_xlabel("Proportional gain $K_p$  (PWM counts per °C)")
-    ax.set_ylabel("Steady-state droop  $T_{set}-T_{ss}$  (°C)")
-    ax.set_title("P-only control: droop falls as 1/(1+L)")
-    ax.legend(fontsize=8.5)
+    # Agreement quoted on the chart, the way a trendline R^2 would be.
+    ratios = [m / p for m, p in zip(meas, pred)]
+    mean_r = sum(ratios) / len(ratios)
+    sd_r = (sum((r - mean_r) ** 2 for r in ratios) / len(ratios)) ** 0.5
+    worst = max(abs(r - 1.0) for r in ratios) * 100.0
+    ss_res = sum((m - p) ** 2 for m, p in zip(meas, pred))
+    mbar = sum(meas) / len(meas)
+    ss_tot = sum((m - mbar) ** 2 for m in meas)
+    r2 = 1.0 - ss_res / ss_tot if ss_tot else float("nan")
 
-    # Second axis in L, since L is what the physics depends on.
+    ax.text(0.975, 0.985,
+            f"$\\chi_{{T,h}}$ = {CHI_H:.4f} \u00b0C/count  (Module 4, "
+            f"not fitted here)\n"
+            f"R\u00b2 = {r2:.4f}\n"
+            f"mean measured/model = {mean_r:.3f} \u00b1 {sd_r:.3f},  "
+            f"worst {worst:.1f}%",
+            transform=ax.transAxes, ha="right", va="top", fontsize=9,
+            color=PRED_COLOR,
+            bbox=dict(boxstyle="round,pad=0.45", facecolor="#F4F8FC",
+                      edgecolor="#C9DCEC", linewidth=0.8))
+
+    # Mark L = 1, where exactly half the initial error survives. It is the
+    # single most quotable point on the curve, so name it.
+    kp_L1 = 1.0 / CHI_H
+    if lo <= kp_L1 <= hi:
+        ax.plot([kp_L1], [e0 / 2.0], "*", color="#7030A0", markersize=15,
+                zorder=5, label=f"$L=1$ at $K_p$={kp_L1:.2f}: half of $e_0$")
+
+    ax.axhline(e0, color="#999999", linewidth=1.0, linestyle=":", zorder=1)
+    ax.text(lo, e0, f"  no feedback: $e_0$ = {e0:.2f} \u00b0C",
+            fontsize=8.5, color="#777777", va="bottom", ha="left")
+
+    ax.set_xlabel("Proportional gain  $K_p$   (PWM counts per \u00b0C)",
+                  color="#404040")
+    ax.set_ylabel("Steady-state droop  $T_{set}-T_{ss}$   (\u00b0C)",
+                  color="#404040")
+    ax.set_title("P-Only Control: Steady-State Droop vs Gain",
+                 fontsize=13.5, color="#404040", pad=26)
+    ax.set_ylim(0, e0 * 1.30)
+
     top = ax.secondary_xaxis("top", functions=(lambda k: k * CHI_H,
                                                lambda l: l / CHI_H))
-    top.set_xlabel("Dimensionless loop gain  $L=K_p\\chi_{T,u}$")
+    top.set_xlabel("Dimensionless loop gain   $L=K_p\\chi_{T,u}$",
+                   color="#404040", labelpad=7)
+    top.tick_params(colors="#595959")
 
-    ax.axhline(e0, color="#999999", linewidth=0.9, linestyle=":")
-    ax.text(hi, e0, f" $e_0$ = {e0:.2f} °C, no feedback",
-            fontsize=7.5, color="#777777", va="bottom", ha="right")
+    leg = ax.legend(loc="center right", frameon=True, fontsize=9)
+    leg.get_frame().set_edgecolor("#BFBFBF")
+    leg.get_frame().set_linewidth(0.8)
 
-    fig.text(0.01, 0.015,
-             f"Setpoint {sp0:.1f} °C, T_amb = {T_AMB:.2f} °C, "
-             f"e0 = {e0:.2f} °C. Prediction uses the Module 4 heating "
-             f"susceptibility and is not fitted to these data.",
-             fontsize=7.4, color="#595959", va="bottom")
-    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.text(0.012, 0.015,
+             f"Setpoint {sp0:.1f} \u00b0C,  T_amb = {T_AMB:.2f} \u00b0C,  "
+             f"e\u2080 = {e0:.2f} \u00b0C.  Each point is the mean of the "
+             f"final 60 s of a settled run (net drift \u2264 0.16 \u00b0C, "
+             f"the measured noise floor).\nThe curve is not a fit: it uses "
+             f"the open-loop susceptibility measured in Module 4 and has no "
+             f"free parameters.",
+             fontsize=7.6, color="#595959", va="bottom")
+    fig.tight_layout(rect=(0, 0.085, 1, 1))
 
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)
     fig.savefig(OUTPUT_PNG, dpi=200, facecolor="white")

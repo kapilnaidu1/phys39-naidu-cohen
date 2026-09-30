@@ -1,1 +1,11 @@
 direction,pwm,start_c,steady_c,waited_s,notes
+heat,0,27.20,21.54,291,baseline T0; drift -0.12 C/60s vs 0.16 noise
+heat,12,12.24,27.57,285,asymptote from exponential fit
+heat,25,21.92,34.07,255,asymptote from fit
+heat,38,34.53,40.61,222,asymptote from fit; predicted 40.6
+heat,50,25.40,46.60,311,45 C endpoint; asymptote from fit
+cool,0,27.20,21.54,291,same baseline measurement as heat 0
+cool,16,38.42,18.90,264,asymptote from fit
+cool,32,18.89,15.83,209,asymptote from fit
+cool,49,15.72,12.99,274,drift -0.06 C/60s; steady by criterion
+cool,65,4.90,9.75,330,10 C endpoint; asymptote from fit

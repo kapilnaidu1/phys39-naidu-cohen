@@ -208,14 +208,22 @@ stops being able to cool.
 
 ### Our number
 
-| | value |
-|---|---|
-| m_h | *to record* C per PWM count |
-| m_c | *to record* C per PWM count |
-| r = m_h/m_c | *to record* |
-| **Qj/Qp = (r-1)/(r+1)** | *to record* |
+Measured 30 September 2026, five points per branch, `T0 = 21.54 C`.
 
-`python/plot_open_loop_calibration.py` prints all four.
+| | value | fit range | R squared |
+|---|---|---|---|
+| m_h | **0.5013 C per PWM count** | u = 0 to +50 | 1.0000 |
+| m_c | **0.1809 C per PWM count** | u = -65 to 0 | 0.9989 |
+| r = m_h/m_c | **2.771** | | |
+| **Qj/Qp = (r-1)/(r+1)** | **0.470** | | |
+
+So the Joule heat delivered to the object face is about **47% of the Peltier
+pumping** at full duty.
+
+The heating branch is straight to one part in a thousand, which is the
+prediction of 3a arriving on the bench: both contributions linear in D gives a
+constant susceptibility. Predicting the u = 38 point from the u = 12 and 25
+points gave 40.6 C against 40.61 C measured.
 
 ---
 

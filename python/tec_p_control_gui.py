@@ -86,6 +86,10 @@ CHI_COOL = 0.18091            # C per PWM count, cooling magnitude
 DEFAULT_SETPOINT = 30.0       # C, inside the 30 to 35 band the module asks for
 DEFAULT_KP = 0.25             # PWM counts per C. Deliberately small: L = 0.13
 
+# Measured zero-PWM temperature, Module 4. Used only to predict where the
+# loop should settle, so the readout can be checked against the run.
+T_AMBIENT = 21.54             # C
+
 
 class PControlWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -140,31 +144,72 @@ class PControlWindow(QtWidgets.QMainWindow):
         pg.setConfigOption("background", "w")
         pg.setConfigOption("foreground", "k")
 
-        big = lambda w: (w.setFont(self._f(15)) or w)
+        # Force a light window. Without this the app inherits macOS dark
+        # mode while the plots are white, which is what made the first
+        # version hard to read.
+        self.setStyleSheet("""
+            QWidget { background: #FFFFFF; color: #202020;
+                      font-family: -apple-system, Helvetica, Arial; }
+            QLabel#big   { font-size: 19px; font-weight: 600; }
+            QLabel#unit  { font-size: 11px; color: #777777; }
+            QLabel#loop  { font-size: 12px; color: #1F4E79;
+                           background: #EEF4FA; padding: 6px 9px;
+                           border: 1px solid #C9DCEC; border-radius: 4px; }
+            QDoubleSpinBox { font-size: 15px; padding: 3px 6px;
+                             border: 1px solid #BBBBBB; border-radius: 3px;
+                             min-width: 96px; }
+            QCheckBox { font-size: 15px; font-weight: 600; }
+            QPushButton { font-size: 14px; padding: 6px 14px;
+                          border: 1px solid #C0392B; border-radius: 4px;
+                          background: #FDEDEC; color: #C0392B;
+                          font-weight: 600; }
+            QPushButton:hover { background: #F9D9D6; }
+            QGroupBox { font-size: 11px; color: #666666;
+                        border: 1px solid #DDDDDD; border-radius: 4px;
+                        margin-top: 8px; padding-top: 8px; }
+            QGroupBox::title { subcontrol-origin: margin; left: 8px;
+                               padding: 0 4px; }
+        """)
 
-        self.temp_label = QtWidgets.QLabel("T = --- C")
-        self.set_label = QtWidgets.QLabel(f"set = {self.setpoint:.1f} C")
-        self.err_label = QtWidgets.QLabel("e = --- C")
-        self.pwm_label = QtWidgets.QLabel("PWM = 0")
-        self.dir_label = QtWidgets.QLabel("dir = ---")
-        self.loop_label = QtWidgets.QLabel("")
-        for w in (self.temp_label, self.set_label, self.err_label,
-                  self.pwm_label, self.dir_label, self.loop_label):
-            big(w)
-        self.loop_label.setStyleSheet("color: #1f4e79;")
+        # ---- readouts, as a row of labelled tiles ---------------------
+        def tile(caption):
+            """One big number over a small grey caption."""
+            box = QtWidgets.QVBoxLayout()
+            box.setSpacing(0)
+            value = QtWidgets.QLabel("---")
+            value.setObjectName("big")
+            unit = QtWidgets.QLabel(caption)
+            unit.setObjectName("unit")
+            box.addWidget(value)
+            box.addWidget(unit)
+            return box, value
 
         row1 = QtWidgets.QHBoxLayout()
-        for w in (self.temp_label, self.set_label, self.err_label,
-                  self.pwm_label, self.dir_label):
-            row1.addWidget(w)
+        row1.setSpacing(26)
+        b, self.temp_label = tile("measured T  (\u00b0C)");   row1.addLayout(b)
+        b, self.set_label = tile("setpoint  (\u00b0C)");      row1.addLayout(b)
+        b, self.err_label = tile("error e = Tset \u2212 T");  row1.addLayout(b)
+        b, self.pwm_label = tile("PWM magnitude");             row1.addLayout(b)
+        b, self.dir_label = tile("direction");                 row1.addLayout(b)
         row1.addStretch(1)
+
+        self.set_label.setText(f"{self.setpoint:.1f}")
+        self.pwm_label.setText("0")
+
+        # The error is the quantity this module is about, so colour it:
+        # red when the plate is below setpoint, blue when above.
+        self.err_label.setStyleSheet("color: #C0392B;")
+
+        self.loop_label = QtWidgets.QLabel("")
+        self.loop_label.setObjectName("loop")
+        self.loop_label.setWordWrap(True)
 
         # ---- controls -------------------------------------------------
         self.set_spin = QtWidgets.QDoubleSpinBox()
         self.set_spin.setRange(5.0, 55.0)
         self.set_spin.setSingleStep(0.5)
         self.set_spin.setDecimals(1)
-        self.set_spin.setSuffix(" C")
+        self.set_spin.setSuffix(" \u00b0C")
         self.set_spin.setValue(self.setpoint)
         self.set_spin.valueChanged.connect(self.on_setpoint_changed)
 
@@ -172,27 +217,28 @@ class PControlWindow(QtWidgets.QMainWindow):
         self.kp_spin.setRange(0.0, 200.0)
         self.kp_spin.setSingleStep(0.25)
         self.kp_spin.setDecimals(3)
-        self.kp_spin.setSuffix(" PWM/C")
         self.kp_spin.setValue(self.kp)
         self.kp_spin.valueChanged.connect(self.on_kp_changed)
 
         self.enable_box = QtWidgets.QCheckBox("P control ON")
         self.enable_box.toggled.connect(self.on_enable_toggled)
 
-        self.stop_btn = QtWidgets.QPushButton("STOP, PWM to 0")
+        self.stop_btn = QtWidgets.QPushButton("STOP  \u2014  PWM to 0")
         self.stop_btn.clicked.connect(self.on_stop)
 
+        ctl = QtWidgets.QGroupBox("controller")
         row2 = QtWidgets.QHBoxLayout()
+        row2.setSpacing(10)
         row2.addWidget(QtWidgets.QLabel("Setpoint"))
         row2.addWidget(self.set_spin)
-        row2.addSpacing(14)
-        row2.addWidget(QtWidgets.QLabel("Kp"))
+        row2.addSpacing(10)
+        row2.addWidget(QtWidgets.QLabel("Kp  (PWM/\u00b0C)"))
         row2.addWidget(self.kp_spin)
-        row2.addSpacing(14)
+        row2.addSpacing(16)
         row2.addWidget(self.enable_box)
-        row2.addSpacing(14)
-        row2.addWidget(self.stop_btn)
         row2.addStretch(1)
+        row2.addWidget(self.stop_btn)
+        ctl.setLayout(row2)
 
         # ---- plots ----------------------------------------------------
         self.temp_plot = pg.PlotWidget()
@@ -201,16 +247,14 @@ class PControlWindow(QtWidgets.QMainWindow):
         self.temp_plot.showGrid(x=True, y=True, alpha=0.3)
         self.temp_curve = self.temp_plot.plot(
             pen=pg.mkPen("#2ca02c", width=2))
-        # The setpoint drawn as a line is what makes droop visible: the gap
-        # between the trace and this line IS the thing being measured.
         self.set_line = pg.InfiniteLine(
             pos=self.setpoint, angle=0,
-            pen=pg.mkPen(SET_COLOR, width=1.4, style=QtCore.Qt.DashLine))
+            pen=pg.mkPen(SET_COLOR, width=1.6, style=QtCore.Qt.DashLine))
         self.temp_plot.addItem(self.set_line)
 
         self.err_plot = pg.PlotWidget()
         self.err_plot.setLabel("bottom", "Time", units="s")
-        self.err_plot.setLabel("left", "Error e = Tset - T", units="C")
+        self.err_plot.setLabel("left", "Error", units="C")
         self.err_plot.showGrid(x=True, y=True, alpha=0.3)
         self.err_plot.addItem(pg.InfiniteLine(
             pos=0, angle=0, pen=pg.mkPen("#999999", width=1.2,
@@ -220,7 +264,7 @@ class PControlWindow(QtWidgets.QMainWindow):
 
         self.pwm_plot = pg.PlotWidget()
         self.pwm_plot.setLabel("bottom", "Time", units="s")
-        self.pwm_plot.setLabel("left", "PWM magnitude")
+        self.pwm_plot.setLabel("left", "PWM")
         self.pwm_plot.showGrid(x=True, y=True, alpha=0.3)
         self.pwm_plot.setYRange(PWM_MIN - 5, PWM_MAX + 5)
         self.pwm_heat_curve = self.pwm_plot.plot(
@@ -231,15 +275,17 @@ class PControlWindow(QtWidgets.QMainWindow):
 
         legend = QtWidgets.QLabel(
             "<span style='color:#d62728'><b>&#9644; heating</b></span>"
-            "&nbsp;&nbsp;<span style='color:#1f77b4'><b>&#9644; cooling</b>"
-            "</span>&nbsp;&nbsp;<span style='color:#7f7f7f'>- - setpoint"
-            "</span>")
+            "&nbsp;&nbsp;&nbsp;<span style='color:#1f77b4'><b>&#9644; cooling"
+            "</b></span>&nbsp;&nbsp;&nbsp;<span style='color:#7f7f7f'>"
+            "&#9476;&#9476; setpoint</span>")
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(14, 12, 14, 10)
+        layout.setSpacing(9)
         layout.addLayout(row1)
         layout.addWidget(self.loop_label)
-        layout.addLayout(row2)
-        layout.addWidget(self.temp_plot, stretch=3)
+        layout.addWidget(ctl)
+        layout.addWidget(self.temp_plot, stretch=4)
         layout.addWidget(self.err_plot, stretch=2)
         layout.addWidget(legend)
         layout.addWidget(self.pwm_plot, stretch=2)
@@ -265,16 +311,33 @@ class PControlWindow(QtWidgets.QMainWindow):
         Kp on its own is uninterpretable because it carries units. L tells
         you where you are: L << 1 is weak feedback with most of the error
         surviving, L ~ 1 is comparable, L >> 1 is strong. The predicted
-        fractional droop 1/(1+L) is printed beside it so the number can be
-        checked against the run as it happens.
+        fractional droop 1/(1+L) and the droop in degrees are printed beside
+        it so the prediction can be checked against the run as it happens.
         """
         chi = CHI_HEAT if self.commanded_heating else CHI_COOL
+        which = "heating" if self.commanded_heating else "cooling"
         L = self.kp * chi
         frac = 1.0 / (1.0 + L) if L > -1 else float("nan")
+
+        if L < 0.3:
+            verdict = "weak feedback"
+        elif L < 3.0:
+            verdict = "comparable feedback"
+        else:
+            verdict = "strong feedback"
+
+        # Predicted settling point, which is the thing to watch for.
+        e0 = self.setpoint - T_AMBIENT
+        droop = e0 * frac
+        Tss = self.setpoint - droop
+
         self.loop_label.setText(
-            f"L = Kp × χ = {self.kp:.3f} × {chi:.5f} = "
-            f"{L:.3f}      predicted fractional droop 1/(1+L) = {frac:.3f}"
-            f"      χ used: {'heating' if self.commanded_heating else 'cooling'}"
+            f"<b>L = Kp \u00d7 \u03c7 = {self.kp:.3f} \u00d7 {chi:.5f} = "
+            f"{L:.3f}</b>  ({verdict}, \u03c7 for {which})"
+            f" &nbsp;&nbsp;|&nbsp;&nbsp; predicted droop "
+            f"1/(1+L) = {frac:.3f} of e\u2080 = {droop:+.2f} \u00b0C"
+            f" &nbsp;&nbsp;|&nbsp;&nbsp; <b>expect to settle near "
+            f"{Tss:.2f} \u00b0C</b>, not {self.setpoint:.1f}"
         )
 
     def compute_command(self, temperature_c):
@@ -298,7 +361,7 @@ class PControlWindow(QtWidgets.QMainWindow):
     def on_setpoint_changed(self, value):
         self.setpoint = float(value)
         self.set_line.setPos(self.setpoint)
-        self.set_label.setText(f"set = {self.setpoint:.1f} C")
+        self.set_label.setText(f"{self.setpoint:.1f}")
         self._refresh_loop_label()
 
     def on_kp_changed(self, value):
@@ -390,10 +453,14 @@ class PControlWindow(QtWidgets.QMainWindow):
                                   1 if self.p_enabled else 0])
         self.csv_file.flush()
 
-        self.temp_label.setText(f"T = {temperature_c:.2f} C")
-        self.err_label.setText(f"e = {e:+.2f} C")
-        self.pwm_label.setText(f"PWM = {pwm}")
-        self.dir_label.setText(f"dir = {'HEAT' if heat_cool == 1 else 'COOL'}")
+        self.temp_label.setText(f"{temperature_c:.2f}")
+        self.err_label.setText(f"{e:+.2f}")
+        self.err_label.setStyleSheet(
+            "color: #C0392B;" if e >= 0 else "color: #1F77B4;")
+        self.pwm_label.setText(f"{pwm}")
+        self.dir_label.setText('HEAT' if heat_cool == 1 else 'COOL')
+        self.dir_label.setStyleSheet(
+            'color: #d62728;' if heat_cool == 1 else 'color: #1f77b4;')
 
     def on_serial_error(self, message):
         print(f"\nSerial error: {message}", file=sys.stderr)

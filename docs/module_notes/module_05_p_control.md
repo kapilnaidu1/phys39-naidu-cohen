@@ -308,14 +308,28 @@ later data set does show a trend.
 |---|---|---|---|---|---|---|---|
 | 8.00 | 4.01 | **yes** | 28.33 | 28.31 | none | n/a | no |
 | 16.00 | 8.02 | **yes** | 29.10 | 29.06 | none | n/a | no, PWM peaked at 27 |
+| 32.00 | 16.04 | **yes** | 29.53 | 29.50 | none | n/a | no, PWM peaked at 31 |
 
 **No oscillation appeared, and no saturation, at the highest gain tested
-(K<sub>p</sub> = 16, L = 8.02).** The run was held 128 s, seventeen
-closed-loop time constants, and the final 30 s had a peak-to-peak spread of
-**0.020 &deg;C**, which is smaller than the 0.16 &deg;C open-loop noise
-floor. Amplitude is defined here as half the peak-to-peak excursion of the
-settled response after the transient; there was no settled excursion to
+(K<sub>p</sub> = 32, L = 16.04).** Each run was held at least sixteen
+closed-loop time constants and the final 30 s spread was 0.020 &deg;C, below
+the 0.16 &deg;C open-loop noise floor. There were **zero direction reversals**
+across all three high-gain runs: the command never once flipped from heating
+to cooling. Amplitude is defined here as half the peak-to-peak excursion of
+the settled response after the transient; there was no settled excursion to
 measure.
+
+**Saturation was not reached, and the reason is worth recording.** Each gain
+was entered from the previous gain's steady state rather than from ambient,
+so the step was small and the initial command modest. At K<sub>p</sub> = 32
+the run began at 29.09 &deg;C with an error of 0.91 &deg;C, giving a first
+command of 29 counts. Starting the same gain from ambient would give
+P<sub>0</sub> = 32 &times; 8.46 = 271 counts, which clamps at 255 and stays
+clamped until the error falls below 255/32 = 7.97 &deg;C. **That would be a
+genuinely different experiment**, since saturation makes the loop nonlinear
+and the 1/(1+L) result no longer applies during the clamped interval. It is
+identified here as the measurement to make at the next supervised
+opportunity rather than claimed as done.
 
 **How the high-gain response differs from the low-gain one.** Not in shape,
 only in speed and offset. Both are monotonic approaches with no overshoot.
@@ -345,6 +359,7 @@ Peak-to-peak temperature over the final 60 s of each settled run:
 | 4.00 | 2.01 | 0.050 | 3x |
 | 8.00 | 4.01 | 0.020 | 8x |
 | 16.00 | 8.02 | 0.020 | 8x |
+| 32.00 | 16.04 | 0.020 | 8x |
 
 The open-loop channel measured **0.16 &deg;C peak-to-peak** at rest in
 Module 4. Under feedback it is 0.02 to 0.05 &deg;C throughout.
@@ -364,14 +379,25 @@ The forecast used the wrong noise: by the time the loop is closed, the
 temperature fluctuation the controller sees has already been suppressed by
 the loop itself.
 
-Trace: `data/module_05/kp16_high_gain_run.csv`.
+Traces: `data/module_05/kp16_high_gain_run.csv`, `kp32_high_gain_run.csv`.
 
 ### Not tested, and why
 
-K<sub>p</sub> = 32 would clamp the initial command at 255 from a room-
-temperature start (P<sub>0</sub> = 262), making the loop nonlinear. That is
-saturation rather than instability and would need to be labelled as such.
-Left for a supervised opportunity rather than run unattended.
+**Saturation.** Reaching it needs a large step, which means entering a high
+gain from ambient rather than from the previous steady state. Worth doing
+under supervision; it is the one qualitatively different regime this sweep
+did not enter.
+
+**K<sub>p</sub> = 400**, which another bench used. At that gain L = 200, the
+command clamps until the error is within 255/400 = 0.64 &deg;C, and inside
+that band a single ADC count (0.079 &deg;C) swings the command by 32 counts
+while the noise swings it by 64. There is no proportional region left: the
+output is full-on heat or full-on cool. Since the plate slews about
+1.8 &deg;C/s at full drive and the loop samples once a second, it cannot stop
+inside a 0.64 &deg;C band, so a limit cycle follows. Not attempted here: it
+is a relay controller rather than a P controller, it falls outside the range
+justified in Part 3, and it repeatedly reverses several amps through the
+Peltier, which is the loading that fatigues module solder joints.
 
 ---
 

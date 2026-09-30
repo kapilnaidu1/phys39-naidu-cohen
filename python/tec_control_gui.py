@@ -106,7 +106,10 @@ SEND_DEBOUNCE_MS = 60
 # separate CSV so it can never be mistaken for measured data.
 DEMO_MODE = False
 
-CSV_FILENAME = "data/module_03/tec_control_run.csv"
+# MODULE 4: writes into data/module_04/ now, so traces land with the rest of
+# this module's data instead of among Module 3's. Still overwritten on every
+# launch, so snapshot anything worth keeping before the next run.
+CSV_FILENAME = "data/module_04/tec_run.csv"
 
 HEAT_COLOR = "#d62728"       # solid red while heating
 COOL_COLOR = "#1f77b4"       # solid blue while cooling

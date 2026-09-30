@@ -168,10 +168,24 @@ lead and contact resistance in series with the module.
 
 ## 7. Conclusion, 100 to 150 words *(1 pt with formatting)*
 
-What the measurements imply about Peltier transport, Joule heating, and
-conduction. Write last, once the numbers are in.
+> Steady-state temperature is linear in signed PWM on both branches
+> (R^2 = 1.0000 heating, 0.9989 cooling), which is what the PWM averages
+> predict: Peltier transport follows `<I> = DI` and Joule heating follows
+> `<I^2> = DI^2`, so both scale with duty and the susceptibility stays
+> constant. Had `<I^2>` gone as `D^2`, the branches would curve. The two
+> slopes differ by a factor r = 2.771 because reversing the current reverses
+> Peltier pumping but not Joule heating: the two add when heating and oppose
+> when cooling, giving `Qj/Qp = (r-1)/(r+1) = 0.470`. Passive conduction
+> enters both branches through the same `G` and cancels from the ratio, so it
+> sets how steep the lines are but cannot make them unequal. The Laird
+> maximum-current figures predict r = 2.556, within 8% despite describing a
+> steady-DC, zero-dT condition our apparatus never reaches.
 
----
+**146 words.** Edit freely; it's meant as a starting draft, not a final voice.
+
+Every claim in it traces to something in the paper above: the two R^2 values
+from item 1, r and Qj/Qp from items 2 and 3, the cancellation argument from
+item 6, and the 8% from item 5.
 
 ## Assembly
 

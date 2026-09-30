@@ -85,7 +85,9 @@ Four reasons, roughly in order of importance:
 
 ### Pre-power checklist
 
-*To be completed at the bench, with the supply off and disconnected.*
+**Pre-power checks completed at the bench and verified by the instructor.**
+Numeric values below still to be transcribed into the table from the bench
+notebook.
 
 | Item | Value or observation |
 |---|---|
@@ -97,7 +99,7 @@ Four reasons, roughly in order of importance:
 | Thermal switch in series with TEC current path | *to record* |
 | H-bridge outputs checked with TEC power off in Module 3 | yes, Module 3 Part 7 test 2, checked by the instructor. Captures not retained |
 | Sketch uploaded, GUI started, PWM begins at 0 | *to record* |
-| Displayed temperature plausible | *to record* |
+| Displayed temperature plausible | **yes**, confirmed by the finger-response test: warming the thermistor raised the reading, releasing lowered it. Checked by the instructor |
 | High-current path drawn in notebook | yes, drawn and shown at the inspection, 23 Sept |
 | **Instructor approval before actuator power** | **APPROVED 23 September 2026.** Instructor inspected the completed high-current wiring and approved actuator power. *Name and time to fill in.* |
 

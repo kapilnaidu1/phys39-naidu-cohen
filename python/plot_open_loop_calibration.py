@@ -172,45 +172,90 @@ def main():
     print("=" * 62)
 
     # ---- figure ----
-    fig, ax = plt.subplots(figsize=(7.5, 5.0))
+    #
+    # Deliberately styled to read like an Excel scatter chart with trendlines:
+    # white plot area inside a thin grey border, light horizontal AND vertical
+    # gridlines, tick marks turned outward, a plain sans title, markers with
+    # dark outlines, and each fit annotated with its equation and R^2 the way
+    # Excel writes them. The physics is unchanged; this is presentation only,
+    # so the figure sits comfortably beside spreadsheet plots in a lab report.
+    plt.rcParams.update({
+        "font.family": "DejaVu Sans",
+        "font.size": 10,
+        "axes.edgecolor": "#868686",
+        "axes.linewidth": 0.8,
+        "xtick.direction": "out",
+        "ytick.direction": "out",
+        "xtick.color": "#595959",
+        "ytick.color": "#595959",
+    })
 
+    fig, ax = plt.subplots(figsize=(8.0, 5.2))
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
+
+    # Excel's default gridlines: light grey, both axes, behind the data.
+    ax.grid(True, which="major", color="#D9D9D9", linewidth=0.8)
+    ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+
+    fit_labels = []
     for pts, slope, rng, color, label, marker in (
         (heat, m_h, heat_range, HEAT_COLOR, "Heating", "o"),
         (cool, m_c, cool_range, COOL_COLOR, "Cooling", "s"),
     ):
         if not pts:
             continue
-        ax.plot([p[0] for p in pts], [p[1] for p in pts],
-                marker, color=color, markersize=7, linestyle="none",
-                label=f"{label} data")
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        # Markers with a dark edge, as Excel draws them.
+        ax.plot(xs, ys, marker, color=color, markersize=7,
+                markeredgecolor="#404040", markeredgewidth=0.6,
+                linestyle="none", label=f"{label}", zorder=3)
         if slope is not None:
-            _, intercept, _ = least_squares(pts)
+            _, intercept, r2 = least_squares(pts)
             lo, hi = rng
-            ax.plot([lo, hi], [slope * lo + intercept, slope * hi + intercept],
-                    "-", color=color, linewidth=1.6,
-                    label=f"{label} fit, {slope:+.4f} C/count")
+            # Excel draws a trendline as a thin dashed line across the fit range.
+            ax.plot([lo, hi],
+                    [slope * lo + intercept, slope * hi + intercept],
+                    "--", color=color, linewidth=1.3, zorder=2,
+                    label=f"Linear ({label})")
+            sign = "+" if intercept >= 0 else "-"
+            fit_labels.append((
+                color,
+                f"{label}:  y = {slope:.4f}x {sign} {abs(intercept):.2f}",
+                f"R\u00b2 = {r2:.4f}",
+            ))
 
-    ax.axvline(0, color="gray", linewidth=0.8)
-    ax.set_xlabel("Signed PWM $u$ (counts; + heating, − cooling)")
-    ax.set_ylabel("Steady-state temperature (°C)")
-    ax.set_title("Open-loop TEC response: steady-state temperature "
-                 "vs signed PWM")
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8)
+    ax.axvline(0, color="#BFBFBF", linewidth=1.0, zorder=1)
 
-    # The 10 to 45 C band this module is restricted to.
-    ax.axhspan(10, 45, color="green", alpha=0.05)
-    ax.axhline(10, color="gray", linewidth=0.8, linestyle=":")
-    ax.axhline(45, color="gray", linewidth=0.8, linestyle=":")
-    ax.text(0.99, 0.02, "shaded: 10 to 45 C operating band",
-            transform=ax.transAxes, ha="right", va="bottom",
-            fontsize=8, color="gray")
+    ax.set_xlabel("Signed PWM $u$  (counts;  + heating,  \u2212 cooling)",
+                  color="#404040")
+    ax.set_ylabel("Steady-state temperature  (\u00b0C)", color="#404040")
+    ax.set_title("Steady-State Temperature vs Signed PWM",
+                 fontsize=13, color="#404040", pad=12)
 
-    fig.text(0.01, 0.01, STEADY_CRITERION, fontsize=7.5, va="bottom")
-    fig.tight_layout(rect=(0, 0.13, 1, 1))
+    # Trendline equations and R^2, printed on the plot the way Excel's
+    # "Display Equation on chart" and "Display R-squared value" options do.
+    y = 0.96
+    for color, eqn, r2txt in fit_labels:
+        ax.text(0.03, y, eqn, transform=ax.transAxes, fontsize=9.5,
+                color=color, va="top", family="DejaVu Sans")
+        ax.text(0.03, y - 0.055, r2txt, transform=ax.transAxes, fontsize=9.5,
+                color=color, va="top", family="DejaVu Sans")
+        y -= 0.135
+
+    leg = ax.legend(loc="lower right", frameon=True, fontsize=9)
+    leg.get_frame().set_edgecolor("#BFBFBF")
+    leg.get_frame().set_linewidth(0.8)
+
+    fig.text(0.01, 0.015, STEADY_CRITERION, fontsize=7.2, va="bottom",
+             color="#595959")
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
 
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)
-    fig.savefig(OUTPUT_PNG, dpi=150)
+    fig.savefig(OUTPUT_PNG, dpi=200, facecolor="white")
     print(f"\nFigure written to {OUTPUT_PNG}")
 
 

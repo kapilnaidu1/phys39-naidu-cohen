@@ -15,71 +15,33 @@ the submitted note in [`docs/assessments/a2_open_loop_tec.md`](../assessments/a2
 
 ## Pre-class questions
 
-**1. What does it mean for the TEC/block temperature to reach steady state?**
+**1. Steady state?** The plate stops changing because the heat the Peltier
+moves equals what leaks back through the exchanger, mounting and air. Nothing
+has stopped happening; the flows have balanced. Practically it is a
+temperature whose rate of change has fallen below a threshold declared in
+advance, since an exponential approach never formally arrives. Module 3 gives
+the numbers: passive &tau; &asymp; 146 s, driven &asymp; 50 s, so three time
+constants is minutes.
 
-The plate stops changing because the heat the Peltier is moving equals the
-heat leaking back in or out through the exchanger, the mounting and the air.
-Nothing has stopped happening; the flows have balanced. Practically, steady
-state is a temperature whose rate of change has fallen below some threshold
-we declare in advance, since a real exponential approach never formally
-arrives.
+**2. Why wait?** An exponential approach is steepest at the start, so an early
+reading is not a small error but a systematically low one, low by different
+amounts at different PWM values. That biases the *slope*, which is what this
+module measures. Module 3 saw no response at all for 35 s after commanding
+duty 28.
 
-Module 3 gives us the numbers to pick that threshold. The passive time
-constant of this plate is about **146 s**, and a driven leg at full duty ran
-with a time constant nearer **50 s**. After three time constants a system is
-within 5% of its final value, so the honest waiting time is minutes, not
-seconds.
+**3. Why do the slopes differ?** Measured in Module 3: +1.821 &deg;C/s heating
+against &minus;0.269 cooling at full drive, a factor of 6.8, and 3.7 at duty
+159. The asymmetry growing with drive is the clue: Peltier pumping scales with
+current, Joule heating with current squared. Heating adds them, cooling
+opposes them.
 
-**2. Why should you wait before recording a steady-state temperature?**
-
-Because an exponential approach is steepest at the start, so an early reading
-is not a small error, it is a systematically low one, and it is low by
-different amounts at different PWM values. That biases the *slope*, which is
-the thing this module is actually measuring, not just the individual points.
-
-Module 3 measured this directly: at duty 28 the plate showed **no visible
-response for 35 s** after the command. A reading taken inside that window
-would have recorded the previous steady state and attributed it to the new
-PWM value.
-
-**3. Why might heating and cooling have different slopes in T vs PWM?**
-
-Measured in Module 3, so this is not speculation. At full drive the heating
-rate was **+1.821 C/s** and the cooling rate **-0.269 C/s**, a factor of
-**6.8**. At duty 159 the same comparison gave a factor of 3.7.
-
-The asymmetry grows with drive, which is the clue to the mechanism. A Peltier
-pumps heat in proportion to current, but dissipates Joule heat in proportion
-to current *squared*. When heating, the pumped heat and the Joule heat land
-on the same face and add. When cooling, the Joule heat is working against the
-pumping. So the useful cooling effect is a difference between a linear term
-and a quadratic one, and past some current the quadratic wins.
-
-Full discussion belongs in Part 5.
-
-**4. Why is a software limit useful when a hardware thermal switch exists?**
-
-Four reasons, roughly in order of importance:
-
-- **The hardware switch is the last line, not the working line.** It opens
-  near 70 C, far outside the 10 to 45 C band this module runs in. Reaching it
-  means the experiment already went badly wrong. A run should not normally
-  end by tripping the final protection, any more than a car should normally
-  stop by hitting the barrier.
-- **It can act on information the switch cannot see.** The switch responds to
-  its own body temperature at one spot on the plate. Software can also stop
-  on a sensor that has stopped making sense, which is a fault the switch has
-  no way to detect.
-- **It leaves a record.** A bimetallic switch opens silently and closes again
-  when it cools, with nothing written down. Our interlock latches, prints why,
-  and keeps reporting, so the temperature trace through the event survives in
-  the CSV.
-- **It fails in a different way.** The switch is in series with the TEC and
-  works even if the sketch hangs. The software limit works even if the switch
-  is mis-mounted or has poor thermal contact. Two protections that share no
-  failure mode is the point.
-
----
+**4. Why a software limit when a hardware switch exists?** The switch opens
+near 70 &deg;C, far outside the 10 to 45 band, so reaching it means the
+experiment already went wrong; a run should not normally end by tripping the
+final protection. Software can also stop on a sensor that has stopped making
+sense, which the switch cannot detect. It leaves a record, where a bimetallic
+switch opens silently. And the two fail differently: the switch works if the
+sketch hangs, the software works if the switch is mis-mounted.
 
 ## 1. Part 1: instrument preparation and the safety interlock
 
@@ -115,79 +77,51 @@ Carried over from Module 3 and still open:
 
 Implemented in
 [`tec_open_loop_safety.ino`](../../arduino/module_04/tec_open_loop_safety/tec_open_loop_safety.ino).
-Against the assignment's five requirements:
 
 | Requirement | Where |
 |---|---|
 | Named constant | `const float temperatureLimitC = 60.0;` |
-| Checked every loop | `checkTemperatureLimit()`, called from `loop()` before the reporting gate |
-| Both PWM outputs to zero | `tripSafety()` zeroes the command, `applyDrive()` returns early with both pins LOW |
-| Serial data keeps printing | the measurement line is untouched; the trip only adds `# ` lines |
-| Reports clearly when active | a banner at the moment of the trip, then `# SAFETY SHUTDOWN ACTIVE` on **every** report while latched |
+| Checked every loop | `checkTemperatureLimit()`, called before the reporting gate, ~20 Hz |
+| Both PWM outputs to zero | `tripSafety()` zeroes the command; `applyDrive()` returns early with both pins LOW |
+| Serial keeps printing | measurement line untouched; the trip only adds `# ` lines |
+| Reports clearly | banner at the trip, then `SAFETY SHUTDOWN ACTIVE` on every report |
 
-Three design decisions worth defending in the writeup:
+Three design decisions worth defending:
 
-**It latches.** Auto-resuming the moment the plate dropped back under the
-limit would turn an over-temperature event into an oscillation around the
-safety threshold, which the operator might never notice. A latch forces a
-human to acknowledge the event. Cleared by RESET or `CLEAR SAFETY`.
+**It latches.** Auto-resuming would turn an over-temperature event into an
+unnoticed oscillation at the safety threshold. Cleared by RESET or
+`CLEAR SAFETY`.
 
-**The check is not gated by the print interval.** In the Module 3 sketch the
-temperature was only computed inside the 500 ms reporting block. Leaving the
-safety check there would mean it ran at whatever rate we happened to be
-printing. It now runs every pass, roughly 20 Hz, since 500 averaged samples
-take about 50 ms.
+**The check is not gated by the print interval**, which would have made it run
+at whatever rate we happened to be printing. It runs every pass, ~20 Hz.
 
-**A second trip condition, not required by the assignment.** Five consecutive
-unusable thermistor readings also latch the shutdown. An instrument that
-cannot measure temperature should not be driving a heater. Five rather than
-one because the A0 contact on this bench glitches for single samples: one bad
-reading is noise, five in a row is a fault.
+**A second trip condition**, not required: five consecutive unusable thermistor
+readings also latch, because an instrument that cannot measure temperature
+should not drive a heater. Five rather than one because the A0 contact glitches
+for single samples.
 
-### Demonstrating the shutdown without heating anything
-
-`TEST LIMIT <degC>` lowers the active limit immediately, so the trip can be
-demonstrated at room temperature with TEC power off and nothing re-uploaded.
-It can only ever lower the limit, never raise it above `temperatureLimitC`,
-so the test path cannot be used to weaken the interlock.
-
-Procedure, with **TEC power off**:
-
-1. Note the room temperature from the display, call it `T_room`
-2. Send `TEST LIMIT` with a value about 2 C below `T_room`
-3. Expect the trip banner within about 50 ms, then `# SAFETY SHUTDOWN ACTIVE` on every report
-4. Confirm the measurement lines keep coming, with `PWM: 0`
-5. Send `SET PWM 40 DIR HEAT` and confirm it is **refused** while latched
-6. Send `CLEAR SAFETY`, confirm the limit returns to 60.0 C and PWM stays 0
-7. Show the instructor
-
-**Done 23 September.** Transcript:
+**Demonstrated 23 September**, transcript in
 [`data/module_04/part1_safety_shutdown_test.txt`](../../data/module_04/part1_safety_shutdown_test.txt).
+`TEST LIMIT 20` tripped within one 0.5 s reporting interval, PWM went 40 to 0,
+measurement lines continued without a gap, a drive command sent while latched
+was refused, and `CLEAR SAFETY` restored the 60.0 C limit with PWM left at 0.
 
-All five requirements demonstrated. `TEST LIMIT 20` tripped within one 0.5 s
-reporting interval, PWM went 40 to 0, measurement lines continued without a
-gap, a drive command sent while latched was refused out loud, and
-`CLEAR SAFETY` restored the 60.0 C limit with PWM left at 0.
-
-The interlock also fired **unplanned** earlier the same day, on the first
-boot of the new sketch: the divider's 100 kOhm upper leg had come loose, A0
-read exactly 0.0, and the second trip condition caught it. A safety system
-catching a fault nobody staged is better evidence than one catching a staged
-fault.
+The interlock also fired **unplanned** on the sketch's first boot: the
+divider's 100 kOhm upper leg had come loose, A0 read exactly 0.0, and the
+unusable-reading condition caught it.
 
 ### Run configuration
 
 | Item | Value |
 |---|---|
 | Arduino sketch | `arduino/module_04/tec_open_loop_safety` |
-| Python program | `python/tec_control_gui.py` |
-| Serial port | `/dev/cu.usbmodem1101` (resolved automatically if the cable moves) |
-| Supply voltage | ALITOVE ALT-1210T, 12 V nominal. Confirmed at the bench with the instructor; **numeric reading not written down** |
-| Supply current limit | ALT-1210T is fixed-output, 10 A / 120 W, no adjustable limit |
+| Python | `python/tec_control_gui.py` |
+| Serial port | `/dev/cu.usbmodem1101` |
+| Supply | ALITOVE ALT-1210T, 12 V; fixed output, no adjustable current limit |
 | Software limit | 60.0 C |
-| Hardware cutoff | thermal switch, near 70 C, in series |
+| Hardware cutoff | thermal switch near 70 C, in series |
 
----
+
 ## 2. Part 2: choosing the two endpoint PWM values
 
 **The endpoints are defined by temperature, not by a band.** This is the part
@@ -297,128 +231,67 @@ required answer.
 
 ## 5. Part 5: guided energy-balance analysis
 
-Done at home from the Part 4 graph. No further measurements.
+Written up in full in **`A2_Naidu_Cohen.pdf`** (repository root), which is the
+submitted form. Summary of the results:
 
-### 5.1 The two slopes
+**PWM averaging.** Over one period the current is I for D&tau; and zero
+otherwise, so `<I> = DI` and `<I^2> = DI^2`. These differ from `<I>^2 = D^2I^2`
+by a factor 1/D. Both Peltier (&prop; `<I>`) and Joule (&prop; `<I^2>`) are
+therefore **linear in duty**, giving a constant susceptibility. The heating
+branch is linear to one part in a thousand, which is the bench confirmation:
+a D&sup2; Joule term would have curved it visibly.
 
-Above. Report units and fit ranges.
-
-### 5.2 PWM current averaging
-
-Over one period, current is I for time D*tau and zero for (1-D)*tau, with
-D = |u|/255. From the definitions of the averages,
-
-```
-<I>   = D I
-<I^2> = D I^2
-```
-
-**Why <I^2> is not <I>^2.** Squaring before averaging is not the same as
-averaging before squaring. Here <I>^2 = D^2 I^2, which differs by a factor
-of D. The physical consequence is the whole point of the section: Peltier
-transport follows <I> and Joule heating follows <I^2>, and under PWM **both
-are linear in D**, so the susceptibility is approximately constant and the
-graph should be roughly straight. Had <I^2> gone as D^2, Joule heating would
-be quadratic in duty and the slope would change along the axis.
-
-With a DAC supplying a steady current instead of a chopped one,
-<I^2> = <I>^2 would hold. The distinction is a property of PWM.
-
-*Compare this prediction against the straightness of the measured graph.*
-
-### 5.3 Steady-state balance and the slope ratio
+**Slope ratio.** From `C dT/dt = Q_TEC - G(T-T0)` at steady state, with
+`Q_TEC = d*Qp + |d|*Qj`:
 
 ```
-C dT/dt = Q_TEC - G (T - T0)        at steady state, G (T - T0) = Q_TEC
+dTh/dd = (Qp + Qj)/G      dTc/dd = (Qp - Qj)/G
+r = (Qp+Qj)/(Qp-Qj)   =>   Qj/Qp = (r-1)/(r+1)
 ```
 
-The individual flows are not zero; their sum is. With signed duty d = u/255,
-Peltier reversing sign with current and Joule heating not:
-
-```
-Q_TEC = d Qp + |d| Qj
-
-heating (d > 0):   Q_TEC = d (Qp + Qj)
-cooling (d < 0):   Q_TEC = d (Qp - Qj)
-```
-
-Substituting and differentiating with respect to d:
-
-```
-dTh/dd = (Qp + Qj)/G          dTc/dd = (Qp - Qj)/G
-```
-
-Both positive when Qp > Qj, with heating the larger. The 1/255 from d = u/255
-appears in both measured slopes and cancels from their ratio, so
-
-```
-r = (Qp + Qj)/(Qp - Qj)   =>   Qj/Qp = (r - 1)/(r + 1)
-```
-
-Algebra check: r = 2 gives Qj/Qp = 1/3. The plot script prints this.
+The 1/255 from d = u/255 and the conductance G are common to both slopes and
+cancel from the ratio, which is why r is worth measuring: it is independent of
+G, which was never determined.
 
 | | value |
 |---|---|
-| Qj/Qp from measured r | **0.470** |
+| r = m_h/m_c | **2.771** |
+| **Qj/Qp = (r-1)/(r+1)** | **0.470** |
 
-### 5.4 Laird CP14-127-045 data sheet
+Joule heat at the object face is about 47% of the Peltier pumping.
 
-**Find these yourself before asking anyone, including an AI.** The assignment
-says so explicitly, and afterward you may hand over the data sheet and your
-interpretation to have the selection checked.
+**Laird CP14-127-045**, SPECIFICATIONS table, hot side 27.0 &deg;C:
 
-Column for the class model at **hot side 27 C**:
-
-| Quantity | Symbol | Value | What it means, and the condition attached |
-|---|---|---|---|
-| Module resistance | R_M | **1.50 ohm** | at Th = 27 C; rises to 1.68 at 50 C |
-| Maximum current | I_max | **8.6 A** | the current at dT_max, not a safety ceiling |
-| Max cold-side pumping at dT = 0 | Qc_max | **71.3 W** | at dT = 0 |
-| Maximum temperature difference | dT_max | **70.5 C** | at Qc = 0 |
-
-Then, at dT = 0 where conduction vanishes, with the symmetric model putting
-half the Joule heat on each face:
+| Quantity | Value | Condition |
+|---|---|---|
+| R_M | 1.50 ohm | at Th = 27 C; 1.68 at 50 C |
+| I_max | 8.6 A | current at dT_max, not a safety ceiling |
+| Qc_max | 71.3 W | at **dT = 0** |
+| dT_max | 70.5 C | at **Qc = 0** |
 
 ```
-Qj_max = 0.5 * I_max^2 * R_M
-Qc_max = Qp_max - Qj_max          =>  solve for Qp_max
-r_Laird,max = (Qp_max + Qj_max) / (Qp_max - Qj_max)
+Qj_max = 0.5 * I_max^2 * R_M = 55.47 W
+Qp_max = Qc_max + Qj_max     = 126.77 W
+r_Laird,max                  = 2.556
 ```
 
-| | value |
-|---|---|
-| Qj_max | **55.47** W |
-| Qp_max | **126.77** W |
-| r_Laird,max | **2.556**, against measured 2.771, agreement to 8% |
+Cross-check that the right rows were read: V_max/I_max = 13.9/8.6 = 1.616 ohm,
+8% above R_M. That is the Seebeck back-EMF at dT_max, giving S = 0.0142 V/K,
+sensible for 127 bismuth telluride couples.
 
-### 5.5 Interpretation
+**Comparison: 2.771 measured against 2.556, agreement to 8%**, closer than
+this comparison deserves. They are not expected to agree: D = 1 does not imply
+I = I_max (the bench current is set by supply voltage and limit, H-bridge drop,
+wiring and R_M); our current is chopped rather than steady DC; the data sheet
+holds at dT = 0 while the plate ran 25 C above and 12 C below ambient; and the
+coefficients move with temperature.
 
-Compare r_Laird,max with the measured r. **They are not expected to agree.**
-Points to make:
-
-- **D = 1 does not mean I = I_max.** Full duty means the bridge is
-  continuously on; the actual current is set by supply voltage and current
-  limit, H-bridge voltage drop, wiring resistance and the TEC's own
-  resistance. The data-sheet figure is a maximum-current condition, not a
-  full-duty condition.
-- PWM chopping rather than steady DC
-- The apparatus runs at finite dT, where the data-sheet dT = 0 assumption fails
-- Passive heat paths the model lumps into G
-- Material properties change with temperature
-- Fitting one slope to a slightly curved branch
-
-**Passive conduction.** Object hotter than the room: heat flows **out**.
-Object colder: heat flows **in**. Either way it pushes the plate back toward
-room temperature, so it opposes heating and cooling alike. Because that
-opposition is roughly symmetric, it **cannot by itself explain unequal slope
-magnitudes** - it enters both branches through the same G. The asymmetry comes
-from Joule heating, which adds to Peltier transport on the heating branch and
-subtracts on the cooling branch.
-
-Module 3 saw the conductance limit directly: the plate bottomed at -6.79 C
-and then warmed at +0.33 C/s with the command unchanged at duty 251.
-
----
+**Passive conduction.** Hotter than the room, heat flows out; colder, in.
+Either way it drives the object back toward room temperature, opposing both
+branches. It cannot explain unequal slopes: the *same* G sits in the
+denominator of both derivatives, so it sets how steep they are but cancels
+from their ratio. The asymmetry lives in the numerators, where Qj adds on
+heating and subtracts on cooling.
 
 ## 6. Part 6: A2 submission
 

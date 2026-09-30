@@ -101,107 +101,36 @@ which is the quantization floor rather than sensor noise.
 
 ## 4. Build order and test gates
 
-The circuit is built in five stages, and **each stage is verified before the
-next one is added**. A fault can then only ever be in the thing just added,
-which is the difference between a five minute fix and an afternoon. Build
-everything first and any one of forty connections can be the problem.
+Five stages, each verified before the next was added, so a fault could only
+ever be in the thing just added. The 12 V supply stayed unplugged for stages
+1 to 4.
 
-Work with the 12 V supply unplugged from the wall for stages 1 to 4.
+| Stage | Wiring | Gate: passed when |
+|---|---|---|
+| 1 Power rails | `5V` to `+`, `GND` to `-` | about 5.00 V at **all four** rail ends. The `+` and `-` rails split at the middle of a full size board, so jumper across the break. |
+| 2 Trim pot on A1 | outer pins to `+` and `-`, wiper to `A1` | `pot ADC` sweeps 0 to 1023 smoothly end to end. Partial range means one of the three connections is wrong. |
+| 3 Thermistor divider on A0 | `+` to 100 k&Omega; to node, node to thermistor to `-`, node to `A0` | ADC near 551 at rest **and** pinching the thermistor drives ADC down while reported temperature rises. |
+| 4 H-bridge logic, TEC power off | pin 9 to `RPWM`, pin 10 to `LPWM`, `+` to `R_EN`/`L_EN`/`VCC`, `-` to logic `GND`, pin 11 to the direction switch | exactly one of `RPWM`/`LPWM` carries the pulse train, the other sits at 0 V. `R_IS` and `L_IS` stay unconnected. |
+| 5 TEC power | 12 V in, after the Part 1 checklist and the instructor check | plate moves and keeps moving in one direction long enough to clear the sensor's thermal lag. |
 
-### Stage 1: power rails
+Two details are worth calling out because neither is visible in a photograph.
+The resistor's lower leg, the thermistor's upper leg and the wire to `A0` all
+have to share one breadboard row; rows five apart are not the same node. And
+at stage 3 the pinch test is the orientation check, not a formality: the
+conversion chain will produce a plausible looking temperature from a reading
+that carries no sensor information, which is exactly the failure that cost us
+most of Module 4.
 
-| From | To |
-|---|---|
-| Arduino `5V` | breadboard `+` rail |
-| Arduino `GND` | breadboard `-` rail |
+Holding the idle bridge pin at 5 V rather than 0 V inverts the duty, so a
+commanded zero would mean full drive.
 
-**The rails are split in the middle.** On a full size breadboard the `+` rail
-on one half is a separate conductor from the `+` rail on the other half, and
-the same for `-`. If any component sits in the far half, jumper `+` to `+` and
-`-` to `-` across the break.
+**Gate 5 passed, 16 September 2026**, both directions at duty 40. `PIN9_IS_HEAT`
+was set from which pin carried the pulse train while the plate warmed. See
+section 5.
 
-**Gate 1.** DMM between `+` and `-`, measured at **all four rail ends**. Every
-one must read about 5.00 V. A rail that reads 0 V at one end and 5 V at the
-other is the split rail.
-
-### Stage 2: trim pot on A1
-
-| From | To |
-|---|---|
-| `+` rail | one outer pot pin |
-| `-` rail | other outer pot pin |
-| pot wiper, the middle pin | Arduino `A1` |
-
-Each of the three pins in its own breadboard row. No resistor: the pot is
-already a divider. Which outer pin takes `5V` only decides which way the screw
-increases the reading.
-
-**Gate 2.** Upload, open Serial Monitor at 9600, turn the screw end to end.
-`pot ADC` must sweep smoothly from near 0 to near 1023. Partial range or no
-response means one of the three connections is wrong.
-
-### Stage 3: thermistor divider on A0
-
-```
-+ rail ── 20a [100 kOhm] 25a
-                          25b [thermistor] 30a ── 30b ── - rail
-                          25c ──────────────────────────► A0
-```
-
-| From | To |
-|---|---|
-| `+` rail | `20a` |
-| 100 kOhm resistor | `20b` to `25a` |
-| thermistor | `25b` to `30a` |
-| `30b` | `-` rail |
-| `25c` | Arduino `A0` |
-
-Row 25 must hold three things: the resistor's lower leg, the thermistor's upper
-leg, and the wire to `A0`. Those five holes are one node, and it is the whole
-circuit. Two rows five apart are not the same node, so an off by one row error
-here is invisible in a photograph and fatal to the measurement.
-
-**Gate 3.** Two conditions, both required:
-
-1. At rest, ADC near 551 and a temperature near room temperature
-2. Pinch the thermistor: ADC falls, reported temperature rises
-
-Condition 2 is the orientation test. If warming it sends the ADC up, the
-resistor and thermistor are in each other's positions. Condition 1 without
-condition 2 is not a pass, because the conversion chain produces a plausible
-looking temperature from a reading that carries no sensor information.
-
-### Stage 4: H-bridge logic, no actuator power
-
-| From | To |
-|---|---|
-| Arduino pin 9 | `RPWM` |
-| Arduino pin 10 | `LPWM` |
-| `+` rail | `R_EN`, `L_EN`, logic `VCC` |
-| `-` rail | logic `GND` |
-| pin 11 | SPDT direction switch common, Part 3 onward |
-
-`R_IS` and `L_IS` stay unconnected. The 12 V supply is still unplugged.
-
-**Gate 4.** `PWM: 0` at rest with the pot at zero. Turn the pot up and the
-commanded duty must rise while `Active PWM pin` names one pin and only one.
-Exactly one of `RPWM` and `LPWM` ever carries the pulse train; the other sits
-at 0 V, never at 5 V, because holding it high inverts the duty and a commanded
-zero would mean full drive.
-
-### Stage 5: TEC power
-
-Only after gates 1 to 4 pass. Fill in the Part 1 checklist in section 1 first,
-including the instructor check, then plug in the 12 V supply.
-
-**Gate 5.** At low duty, the plate temperature moves and keeps moving in one
-direction for long enough to clear the sensor's thermal lag. Record which
-Arduino pin was carrying the pulse train while the plate warmed, and set
-`PIN9_IS_HEAT` from that observation.
-
-**Gate 5 passed, 16 September 2026.** Both directions at duty 40. Section 5.
-
----
+**Oscilloscope grounding.** Every probe ground clip to Arduino `GND`, never to
+`M+` or `M-`. Both are driven outputs and a ground clip is earth referenced, so
+grounding either shorts the bridge.
 
 ## 5. Direction calibration, measured
 

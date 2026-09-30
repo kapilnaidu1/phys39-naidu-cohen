@@ -1,1 +1,7 @@
 kp,setpoint_c,final_t_c,final_pwm,notes
+0.25,30.0,22.34,2,settled; 60 s drift 0.000 C; low-gain representative trace
+0.50,30.0,23.06,3,settled; 60 s drift 0.000 C
+1.00,30.0,24.50,6,settled; 60 s drift +0.020 C
+2.00,30.0,25.75,8,settled; L=1.003; 50.2 pct of e0 survives vs 50 pct predicted
+4.00,30.0,27.18,11,settled; diff from prediction -0.01 C; PWM jitter sd 0.00
+8.00,30.0,28.33,13,settled; PWM 13-14 sd 0.28 counts; predicted jitter 1.3

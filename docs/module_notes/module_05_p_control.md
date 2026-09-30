@@ -178,21 +178,73 @@ P<sub>required</sub> = 16.9 from below as L grows: 1.9, 3.4, 5.6, 8.4, 11.3,
 13.5 counts for the six gains. The loop always ends up asking for nearly the
 same PWM; what changes is how much error it needs in order to ask.
 
-### Measured
+### Measured, 30 September 2026
 
-| K<sub>p</sub> | Predicted P<sub>0</sub> | Setpoint (&deg;C) | Final T (&deg;C) | Droop (&deg;C) | Final PWM | Notes |
-|---|---|---|---|---|---|---|
-| 0.25 | 2.1 | 30.0 | | | | |
-| 0.50 | 4.2 | 30.0 | | | | |
-| 1.00 | 8.5 | 30.0 | | | | |
-| 2.00 | 16.9 | 30.0 | | | | |
-| 4.00 | 33.8 | 30.0 | | | | |
-| 8.00 | 67.7 | 30.0 | | | | |
+All six settled by the drift criterion: net change over the last 60 s no
+larger than the 0.16 &deg;C noise floor. T<sub>ss</sub> is the mean of that
+final minute.
 
-Each run: start from PWM 0, enable P control, wait to settle or clearly fail
-to, record final temperature / error / PWM, save the trace. Allow **4 to 5
-minutes** per gain; &tau;<sub>cl</sub> shortens as L grows, so the high-gain
-runs settle faster than the low-gain ones.
+| K<sub>p</sub> | L | T<sub>ss</sub> (&deg;C) | predicted (&deg;C) | droop (&deg;C) | predicted | ratio | final PWM | K<sub>p</sub>&times;droop |
+|---|---|---|---|---|---|---|---|---|
+| 0.25 | 0.125 | 22.34 | 22.48 | 7.66 | 7.52 | 1.019 | 2 | 1.9 |
+| 0.50 | 0.251 | 23.06 | 23.24 | 6.94 | 6.76 | 1.026 | 3 | 3.5 |
+| 1.00 | 0.501 | 24.50 | 24.36 | 5.50 | 5.64 | 0.976 | 6 | 5.5 |
+| **2.00** | **1.003** | **25.75** | **25.78** | **4.25** | **4.22** | **1.006** | 8 | 8.5 |
+| 4.00 | 2.005 | 27.18 | 27.18 | 2.82 | 2.82 | 1.002 | 11 | 11.3 |
+| 8.00 | 4.010 | 28.33 | 28.31 | 1.67 | 1.69 | 0.989 | 13 | 13.4 |
+
+**Mean ratio 1.003, standard deviation 0.017, worst point 2.6% off**, across
+a 32-fold range of gain. The prediction was made from the Module 4
+susceptibility before any of these runs and was not fitted to them.
+
+Trace: `data/module_05/kp_sweep_full_run.csv` holds the whole sweep;
+`kp_0p25_run.csv` is the low-gain example on its own.
+
+### Three things the table shows that the graph does not
+
+**1. L = 1 does what it says.** At K<sub>p</sub> = 2.00, L = 1.003 and the
+measured droop is 4.25 &deg;C out of e<sub>0</sub> = 8.46 &deg;C. That is
+**50.2% of the initial error surviving** against a predicted 50%. The
+clearest single demonstration of 1/(1+L) in the set.
+
+**2. The last column is an independent check.** At steady state the
+commanded PWM must equal K<sub>p</sub>&times;droop, and it does at every
+gain to within one count. This uses no droop model at all, so it confirms
+the loop really had settled rather than being caught mid-approach.
+
+It also shows the mechanism directly: that column climbs 1.9, 3.5, 5.5, 8.5,
+11.3, 13.4 toward **P<sub>required</sub> = 16.9**, the open-loop PWM needed
+to hold 30 &deg;C. The loop is always converging on the same command; what
+changes with gain is how much error it needs in order to ask for it. Droop
+does not vanish because the plate still needs those counts, and the only way
+P control can request them is to sit below the setpoint.
+
+**3. Noise amplification arrived exactly where predicted.** At K<sub>p</sub>
+= 4 the command sat at 11 with **zero** variation over the last minute. At
+K<sub>p</sub> = 8 it moved between 13 and 14, standard deviation 0.28 counts.
+Predicted from the noise floor: K<sub>p</sub> &times; 0.16 &deg;C = 1.3
+counts. This is the first gain at which the controller is visibly chasing
+measurement noise rather than temperature, and it is the effect that
+eventually limits useful gain.
+
+### Closed-loop speed
+
+&tau;<sub>cl</sub> = &tau;/(1+L) with &tau; = 70 s from Module 4, so the loop
+should also get faster as the gain rises: 62 s at K<sub>p</sub> = 0.25 down
+to 14 s at K<sub>p</sub> = 8. The runs bore this out, the later points
+settling in about 100 s where the first took over 250 s. Higher gain buys
+both a smaller droop and a quicker approach; what it costs is noise.
+
+---
+
+## 4. Part 4: predicted versus measured droop
+
+![droop versus gain](../figures/module_05/droop_vs_gain.png)
+
+Measured droop on the unfitted 1/(1+L) curve. The second axis is L, since L
+is what the physics depends on; K<sub>p</sub> is only how it is dialled in.
+The dotted line at e<sub>0</sub> = 8.46 &deg;C is the no-feedback limit the
+curve approaches as L &rarr; 0.
 
 ---
 
@@ -209,11 +261,19 @@ fractional droop:   (T_set - T_ss)/(T_set - T_amb) = 1/(1 + L)
 The product &chi;<sub>T,h</sub>K<sub>p</sub> is dimensionless:
 (&deg;C/count)(count/&deg;C) = 1.
 
-Generate the overlay with:
+Regenerate with `python3 python/plot_droop.py`.
 
-```
-python3 python/plot_droop.py
-```
+**Where the model and the data part company: nowhere that matters.** Mean
+ratio 1.003 with a spread of 1.7%, and the residuals change sign across the
+range rather than trending, so there is no systematic bias to report. The
+scatter is comparable to the 0.16 &deg;C noise floor divided by the droop,
+which is 2% at the largest droop and 10% at the smallest.
+
+If the residuals are instead attributed entirely to the susceptibility, the
+&chi; that best fits all six is 0.4966 against the Module 4 open-loop value
+of 0.50127, about 1% lower. That is within the scatter and is not claimed as
+a result; it is recorded because it is the right quantity to look at if a
+later data set does show a trend.
 
 *To record: measured against predicted, and where they part company.*
 

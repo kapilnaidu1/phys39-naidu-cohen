@@ -213,7 +213,11 @@ const int   thermistorPin = A0;
 const float Vref          = 5.0;     // volts
 const float Tnominal      = 25.0;    // deg C
 const float KELVIN_OFFSET = 273.15;
-const int   sampleCount   = 500;     // assignment requires 100 to 1000
+// Module 4 requires 1000 samples averaged before each temperature, and the
+// data to update about once a second. 1000 analogReads take about 104 ms, so
+// the loop runs near 10 Hz and the safety check runs at that rate too, while
+// reports go out on the 1000 ms cadence below.
+const int   sampleCount   = 1000;    // Module 4 requires 1000
 
 // ---- actuator --------------------------------------------------------
 
@@ -284,7 +288,7 @@ const int  bufSize = 48;
 char       buf[bufSize];
 int        bufLen = 0;
 
-const unsigned long reportIntervalMs = 500;
+const unsigned long reportIntervalMs = 1000;   // Module 4: about once a second
 unsigned long lastReportMs = 0;
 
 // ---- measurement chain -----------------------------------------------

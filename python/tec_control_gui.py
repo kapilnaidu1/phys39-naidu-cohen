@@ -73,7 +73,13 @@ BAUD_RATE = 9600
 WINDOW_SECONDS = 120.0       # visible history on both strip charts
 UPDATE_INTERVAL_MS = 200     # plot redraw period
 
-# Celsius axis limits, None for autoscale.
+# MODULE 4: the temperature axis now follows the data. Steady state is judged
+# by whether a slow drift has stopped, and a 0.05 C/s drift is invisible on a
+# 100 C axis. Set False to go back to the fixed Module 3 axis below.
+AUTOSCALE_TEMPERATURE = True
+
+# Celsius axis limits. Used as the starting view, and as the fixed axis when
+# AUTOSCALE_TEMPERATURE is False.
 #
 # Widened from 10 to 45 after the first full-drive run. At maxDuty 64 the
 # plate stayed inside that window; at 255 it does not. A fixed axis that the
@@ -418,6 +424,11 @@ class ControlWindow(QtWidgets.QMainWindow):
         control_row.addWidget(pwm_box, stretch=1)
 
         # ---- temperature strip chart ---------------------------------
+        # MODULE 4: light background. A faint slope on a dark plot is much
+        # harder to read, and reading faint slopes is the whole task now.
+        pg.setConfigOption("background", "w")
+        pg.setConfigOption("foreground", "k")
+
         self.temp_plot = pg.PlotWidget()
         self.temp_plot.setLabel("bottom", "Time", units="s")
         self.temp_plot.setLabel("left", "Temperature", units="C")
@@ -610,13 +621,56 @@ class ControlWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.quit()
 
     # -----------------------------------------------------------------
+    def autoscale_temperature_axis(self, visible_temps):
+        """Rescale the temperature axis to what is currently on screen.
+
+        MODULE 4. The fixed axis was right for Module 3, where the plate swung
+        70 C and the question was "which way is it going". Module 4 asks a
+        different question: has the drift stopped? A 0.05 C/s drift is the
+        difference between steady state and thirty more seconds of waiting,
+        and on a 100 C axis it is invisible.
+
+        So the axis follows the data: 1 C of headroom past the visible
+        minimum and maximum, with a floor of 6 C total span so that ordinary
+        measurement noise does not get magnified into what looks like a
+        signal. Below that floor the span is centred on the data instead.
+
+        Only the temperature axis moves. The PWM axis stays fixed, because a
+        duty of 40 should look like a duty of 40 all session.
+        """
+        if not visible_temps:
+            return
+
+        low = min(visible_temps)
+        high = max(visible_temps)
+
+        MIN_SPAN = 6.0        # C, the smallest window we will ever show
+        PAD = 1.0             # C of headroom above and below the data
+
+        span = (high + PAD) - (low - PAD)
+        if span < MIN_SPAN:
+            # Too tight. Centre the minimum span on the data rather than
+            # zooming in until noise fills the frame.
+            centre = 0.5 * (low + high)
+            low, high = centre - MIN_SPAN / 2.0, centre + MIN_SPAN / 2.0
+        else:
+            low, high = low - PAD, high + PAD
+
+        self.temp_plot.setYRange(low, high, padding=0)
+
     def update_plots(self):
         if not self.times:
             return
         times = list(self.times)
-        self.temp_curve.setData(times, list(self.temperatures))
+        temps = list(self.temperatures)
+        self.temp_curve.setData(times, temps)
         self.pwm_heat_curve.setData(times, list(self.pwm_heat))
         self.pwm_cool_curve.setData(times, list(self.pwm_cool))
+
+        # MODULE 4: the deques already hold only the rolling window, so what
+        # they contain is exactly what is visible.
+        if AUTOSCALE_TEMPERATURE:
+            self.autoscale_temperature_axis(temps)
 
     def closeEvent(self, event):
         # Command the actuator to zero before letting go of the port. A GUI

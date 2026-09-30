@@ -22,6 +22,12 @@ back for the note. Numbers in brackets are what Module 3 measured.
 
 A1 and A2 are the two that can waste the whole session. Do them first.
 
+**Safety test, revised wording.** The assignment now says set the limit to
+about **30 C** and warm the sensor until it trips, rather than setting it
+below room temperature. Send `TEST LIMIT 30`, then warm the thermistor between
+finger and thumb until the shutdown fires. Restore with `CLEAR SAFETY` and
+show the instructor.
+
 A1 matters because the channel sat frozen at exactly 24.27 C for 80
 consecutive reports on 23 Sept. A frozen channel looks like perfect data.
 
@@ -40,44 +46,42 @@ Strip chart: PWM trace red heating, blue cooling.
 
 ---
 
-## C. Exploratory sweep (15 min)
+## C. Find the two endpoints (15 min)
 
-Find the highest PWM in each direction whose **steady** temperature stays
-inside **10 to 45 C**. Climb gradually, watch temperature and supply current.
-
-Starting estimates from Module 3:
+**The endpoints are set by TEMPERATURE, not by a band.** Find one heating PWM
+that settles at **45 C +/- 2 C**, and separately one cooling PWM that settles
+at **10 C +/- 1 C**. Those two values are the maxima.
 
 | | Module 3 evidence | try near |
 |---|---|---|
-| Heat | effective duty 64 headed for ~48 C | **50 to 60** |
-| Cool | duty 251 floored at -6.79 C | **100 to 120** |
+| Heat | effective duty 64 extrapolated to ~48 C | **45 to 60** |
+| Cool | duty 251 floored at -6.79 C | **90 to 130** |
 
-Heating maxes out at a much lower PWM than cooling. That is the asymmetry,
-not a mistake.
+Heating's endpoint will be much the smaller number. That is the asymmetry,
+not an error.
 
-| Direction | Max useful PWM | Steady T there |
-|---|---|---|
-| Heat | ____ | ____ C |
-| Cool | ____ | ____ C |
+| Direction | Target | PWM found | Steady T |
+|---|---|---|---|
+| Heat | 45 +/- 2 C | ____ | ____ C |
+| Cool | 10 +/- 1 C | ____ | ____ C |
 
 ---
 
 ## D. Steady-state points (45 to 50 min)
 
-Five per direction: 0, 25%, 50%, 75%, 100% of that direction's max.
-Record the **exact integers used**.
+Five per direction: **0%, 25%, 50%, 75%, 100%** of that direction's own
+endpoint. Exact integers. No continuous sweep, only these ten.
 
-**Criterion: less than 0.1 C change over 30 s, minimum wait 180 s.**
-0.1 C is just above the 0.079 C quantization step, so anything tighter is
-measuring the ADC rather than the plate. 180 s is three of the ~50 s driven
-time constant.
+**Steady state:** estimate the time constant from a PWM step, wait about
+**three** of them, then watch **one more minute**. Accept when the net drift
+over that minute is no larger than the ordinary noise wiggle. Clear drift
+still there, wait longer. Do not expect a flat line.
 
-Two time savers:
+Module 3: driven time constant ~50 s, passive ~146 s. So roughly 3.5 min per
+driven point, longer for the two PWM 0 points.
 
-- **Go ascending within a direction.** Each setting then starts from the
-  previous steady state instead of a return to ambient. Roughly halves the
-  total wait.
-- **The two PWM 0 rows are one measurement.** Wait once, write it twice.
+Two savers: **ascending within a direction**, and the **two PWM 0 rows are one
+measurement** written twice.
 
 | Dir | PWM | Start C | Steady C | Waited s | Notes |
 |---|---|---|---|---|---|
@@ -85,12 +89,12 @@ Two time savers:
 | Heat | | | | | |
 | Heat | | | | | |
 | Heat | | | | | |
-| Heat | | | | | |
+| Heat | | | | | 45 C endpoint |
 | Cool | 0 | | | | |
 | Cool | | | | | |
 | Cool | | | | | |
 | Cool | | | | | |
-| Cool | | | | | |
+| Cool | | | | | 10 C endpoint |
 
 ---
 

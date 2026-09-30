@@ -188,99 +188,256 @@ fault.
 | Hardware cutoff | thermal switch, near 70 C, in series |
 
 ---
+## 2. Part 2: choosing the two endpoint PWM values
 
-## 2. Parts 2 and 3: direction, PWM values and steady-state data
+**The endpoints are defined by temperature, not by a band.** This is the part
+the earlier draft of this note got wrong.
 
-**Operating band for this module: 10 C to 45 C.** Narrower than Module 3,
-which ran -16 to +54. The maximum useful PWM in each direction is whatever
-keeps the steady temperature inside that band, and it will be **well below
-255 for heating**, since full duty reached 54 C.
+| Direction | Target steady temperature | PWM that produces it |
+|---|---|---|
+| Heat | **45 C +/- 2 C** | *to record* |
+| Cool | **10 C +/- 1 C** | *to record* |
 
-Starting estimate from Module 3, to be replaced by the exploratory sweep:
-heating passed 45 C partway through a full-duty leg, so the heating maximum
-is likely modest. Cooling reached its floor near -7 C at duty 251, so the
-cooling maximum is limited by the 10 C bound rather than by the hardware.
+Those two PWM values ARE the maximum useful magnitudes. The two will differ,
+and heating's will be much the smaller of the two.
 
-### Exploratory sweep
+Starting estimates from Module 3, to be replaced by measurement:
 
-*Start low, increase gradually, watch temperature and supply current.*
+| | Module 3 evidence | try near |
+|---|---|---|
+| Heat | effective duty 64 extrapolated to about 48 C | **45 to 60** |
+| Cool | duty 251 floored at -6.79 C | **90 to 130** |
 
-| Direction | Max useful PWM | Steady T at that PWM | Why this is the maximum |
-|---|---|---|---|
-| Heat | *to record* | | |
-| Cool | *to record* | | |
+Then five magnitudes per direction: **0%, 25%, 50%, 75%, 100%** of that
+direction's own endpoint. Record the exact integers used.
 
-### Steady-state criterion
+No continuous 0 to 255 sweep. Only the five chosen values per direction,
+starting low and working up.
 
-*Declare it before taking data, and record it here.*
+---
 
-Proposed: **temperature changing by less than 0.1 C over 30 s**, with a
-minimum wait of 3 minutes regardless. The 0.1 C figure is just above the
-0.079 C quantization step at room temperature, so a tighter threshold would
-be measuring the ADC rather than the plate. The minimum wait comes from the
-~50 s driven time constant: three of those is 150 s.
+## 3. Part 3: steady-state measurements
+
+### Criterion, as the assignment defines it
+
+1. Estimate the time constant from the response to a PWM step
+2. Wait about **three time constants**
+3. Then watch for **one more minute**
+4. Accept the temperature when its net drift over that minute is **no larger
+   than the ordinary short-term noise** in the trace
+5. If a clear upward or downward drift remains, wait longer
+
+Not a perfectly flat line, which noise makes impossible. The test is drift
+against noise.
+
+Module 3 measured a driven time constant near **50 s**, so expect roughly
+150 s plus the observation minute, call it **3.5 minutes per point** and
+around **45 minutes for all ten**. The passive constant was about 146 s, so
+the PWM 0 points take longer than the driven ones.
 
 ### Data table
 
-| Direction | PWM | Start T (C) | Steady T (C) | Time waited (s) | Notes |
+| Dir | PWM | Start C | Steady C | Waited s | Notes |
 |---|---|---|---|---|---|
 | Heat | 0 | | | | |
 | Heat | | | | | |
 | Heat | | | | | |
 | Heat | | | | | |
-| Heat | | | | | |
+| Heat | | | | | 45 C endpoint |
 | Cool | 0 | | | | |
 | Cool | | | | | |
 | Cool | | | | | |
 | Cool | | | | | |
-| Cool | | | | | |
+| Cool | | | | | 10 C endpoint |
 
-Time-series traces to retain: at least one heating and one cooling.
+Two savers: go **ascending within a direction** so each point starts from the
+previous steady state, and treat the two PWM 0 rows as **one measurement**
+written twice.
+
+Retain one temperature-versus-time trace per direction. Snapshot them out of
+the live CSV before the next launch overwrites it.
+
+### Strip chart y-axis
+
+Autoscaling is implemented in `tec_control_gui.py`
+(`AUTOSCALE_TEMPERATURE = True`): 1 C of headroom past the visible minimum
+and maximum, with a 6 C minimum span so noise is not magnified into apparent
+signal, on a white background. The PWM axis stays fixed. The fixed Module 3
+axis was right for a 70 C swing and useless for judging whether a 0.05 C/s
+drift has stopped.
 
 ---
 
-## 3. Part 4: temperature versus PWM
+## 4. Part 4: temperature versus SIGNED PWM
 
-Generate with:
+Signed axis: **u positive for heating, negative for cooling**. Both branches
+slope upward, so both susceptibilities are positive. Raising u warms the
+plate either way; going further negative cools it.
 
 ```
 python3 python/plot_open_loop_calibration.py
 ```
 
-It reads `data/module_04/steady_state.csv`, writes the figure to
-`docs/figures/module_04/`, and prints dT/dPWM for each direction.
+Reads `data/module_04/steady_state.csv` (record PWM as a positive magnitude,
+the script applies the sign from the direction column), writes the figure to
+`docs/figures/module_04/`, and prints both slopes with fit ranges, R squared,
+the ratio r, and Qj/Qp.
 
-| Direction | dT/dPWM (C per PWM count) | Linear? |
-|---|---|---|
-| Heat | *to record* | |
-| Cool | *to record* | |
+| | value | fit range | R squared |
+|---|---|---|---|
+| m_h | *to record* C per PWM count | | |
+| m_c | *to record* C per PWM count | | |
+| r = m_h/m_c | *to record* | | |
 
----
-
-## 4. Part 5: heating/cooling asymmetry
-
-*To write after the data is in.* The argument is sketched in pre-class
-question 3 above and the Module 3 measurements support it. Points to cover,
-referring to the apparatus rather than the code:
-
-- pumped heat scales with current, Joule heat with current squared, and on
-  the heating leg they add while on the cooling leg they oppose
-- the exchanger is a finite heat sink, demonstrated by the 23 Sept cooling
-  leg reversing at -6.79 C under unchanged full command
-- the thermistor reads one point on the plate, not the whole thermal system
-- thermal contact, heat capacity and the room as a boundary condition
+Note any visible curvature. The assignment expects heating to be the steeper
+branch and says a factor near 2 is an observation to investigate, not a
+required answer.
 
 ---
 
-## 5. Open items
+## 5. Part 5: guided energy-balance analysis
 
-- **Check the temperature channel responds before taking calibration data.**
-  Through the safety test the reading sat at exactly 24.27 C for 80
-  consecutive reports over 41 s, with no variation in the last digit, on a
-  channel that wandered normally an hour earlier. Warm the thermistor between
-  finger and thumb: the reading must rise, then fall when released. Module 4
-  is entirely a steady-state temperature measurement and a frozen channel
-  would look exactly like excellent data.
+Done at home from the Part 4 graph. No further measurements.
+
+### 5.1 The two slopes
+
+Above. Report units and fit ranges.
+
+### 5.2 PWM current averaging
+
+Over one period, current is I for time D*tau and zero for (1-D)*tau, with
+D = |u|/255. From the definitions of the averages,
+
+```
+<I>   = D I
+<I^2> = D I^2
+```
+
+**Why <I^2> is not <I>^2.** Squaring before averaging is not the same as
+averaging before squaring. Here <I>^2 = D^2 I^2, which differs by a factor
+of D. The physical consequence is the whole point of the section: Peltier
+transport follows <I> and Joule heating follows <I^2>, and under PWM **both
+are linear in D**, so the susceptibility is approximately constant and the
+graph should be roughly straight. Had <I^2> gone as D^2, Joule heating would
+be quadratic in duty and the slope would change along the axis.
+
+With a DAC supplying a steady current instead of a chopped one,
+<I^2> = <I>^2 would hold. The distinction is a property of PWM.
+
+*Compare this prediction against the straightness of the measured graph.*
+
+### 5.3 Steady-state balance and the slope ratio
+
+```
+C dT/dt = Q_TEC - G (T - T0)        at steady state, G (T - T0) = Q_TEC
+```
+
+The individual flows are not zero; their sum is. With signed duty d = u/255,
+Peltier reversing sign with current and Joule heating not:
+
+```
+Q_TEC = d Qp + |d| Qj
+
+heating (d > 0):   Q_TEC = d (Qp + Qj)
+cooling (d < 0):   Q_TEC = d (Qp - Qj)
+```
+
+Substituting and differentiating with respect to d:
+
+```
+dTh/dd = (Qp + Qj)/G          dTc/dd = (Qp - Qj)/G
+```
+
+Both positive when Qp > Qj, with heating the larger. The 1/255 from d = u/255
+appears in both measured slopes and cancels from their ratio, so
+
+```
+r = (Qp + Qj)/(Qp - Qj)   =>   Qj/Qp = (r - 1)/(r + 1)
+```
+
+Algebra check: r = 2 gives Qj/Qp = 1/3. The plot script prints this.
+
+| | value |
+|---|---|
+| Qj/Qp from measured r | *to record* |
+
+### 5.4 Laird CP14-127-045 data sheet
+
+**Find these yourself before asking anyone, including an AI.** The assignment
+says so explicitly, and afterward you may hand over the data sheet and your
+interpretation to have the selection checked.
+
+Column for the class model at **hot side 27 C**:
+
+| Quantity | Symbol | Value | What it means, and the condition attached |
+|---|---|---|---|
+| Module resistance | R_M | | |
+| Maximum current | I_max | | |
+| Max cold-side pumping at dT = 0 | Qc_max | | |
+| Maximum temperature difference | dT_max | | |
+
+Then, at dT = 0 where conduction vanishes, with the symmetric model putting
+half the Joule heat on each face:
+
+```
+Qj_max = 0.5 * I_max^2 * R_M
+Qc_max = Qp_max - Qj_max          =>  solve for Qp_max
+r_Laird,max = (Qp_max + Qj_max) / (Qp_max - Qj_max)
+```
+
+| | value |
+|---|---|
+| Qj_max | *to record* W |
+| Qp_max | *to record* W |
+| r_Laird,max | *to record* |
+
+### 5.5 Interpretation
+
+Compare r_Laird,max with the measured r. **They are not expected to agree.**
+Points to make:
+
+- **D = 1 does not mean I = I_max.** Full duty means the bridge is
+  continuously on; the actual current is set by supply voltage and current
+  limit, H-bridge voltage drop, wiring resistance and the TEC's own
+  resistance. The data-sheet figure is a maximum-current condition, not a
+  full-duty condition.
+- PWM chopping rather than steady DC
+- The apparatus runs at finite dT, where the data-sheet dT = 0 assumption fails
+- Passive heat paths the model lumps into G
+- Material properties change with temperature
+- Fitting one slope to a slightly curved branch
+
+**Passive conduction.** Object hotter than the room: heat flows **out**.
+Object colder: heat flows **in**. Either way it pushes the plate back toward
+room temperature, so it opposes heating and cooling alike. Because that
+opposition is roughly symmetric, it **cannot by itself explain unequal slope
+magnitudes** - it enters both branches through the same G. The asymmetry comes
+from Joule heating, which adds to Peltier transport on the heating branch and
+subtracts on the cooling branch.
+
+Module 3 saw the conductance limit directly: the plate bottomed at -6.79 C
+and then warmed at +0.33 C/s with the command unchanged at duty 251.
+
+---
+
+## 6. Part 6: A2 submission
+
+**Due Monday 5 October, 6:00 PM.** `A2_Naidu_Cohen.pdf`, uploaded separately
+by each of us. One to two pages. **No repository file and no Git checkpoint
+required** for this one.
+
+Seven required items, tracked in
+[`docs/assessments/a2_open_loop_tec.md`](../assessments/a2_open_loop_tec.md).
+
+**Explicitly excluded:** C2/C3 circuit sketches, apparatus descriptions, the
+safety demonstration, and code documentation. The Part 1 material in this note
+stays here and does not go into A2.
+
+---
+
+## 7. Open items
+
+- Part 2 endpoints, Part 3 table, both traces
+- Laird values, to be read off the data sheet by us
 - Every `*to record*` row above
-- Whether the pump is actually circulating
-- Scope captures were not retained for Module 3 Part 7 test 2
+- Numeric checklist values from the bench notebook

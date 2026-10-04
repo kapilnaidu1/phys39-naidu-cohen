@@ -129,7 +129,7 @@ def story():
         "Team members: Kapil Naidu and Samuel Cohen",
         "Date: September 30, 2026 (data collection)",
         "Repository: https://github.com/kapilnaidu1/phys39-naidu-cohen, "
-        "branch main. No Git checkpoint is required for this assessment.",
+        "branch main",
     ]:
         A(Paragraph(line, meta))
     A(Spacer(1, 9))

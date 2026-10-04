@@ -2,7 +2,7 @@
 
 **Team:** Naidu / Cohen
 **Due:** Monday 5 October 2026, 6:00 PM
-**Submit:** `A2_Naidu_Cohen.pdf`, one to two pages, each of us uploads it
+**Submit:** `docs/A2_Naidu_Cohen.pdf`, two pages, each of us uploads it
 separately to Moodle
 **Repository file:** none required. No Git checkpoint for this one.
 
@@ -192,5 +192,5 @@ item 6, and the 8% from item 5.
 1. Fill `data/module_04/steady_state.csv`
 2. `python3 python/plot_open_loop_calibration.py` from the repo root
 3. Read the Laird values off the data sheet
-4. Draft items 1 to 7, export to PDF as `A2_Naidu_Cohen.pdf`
+4. `python3 python/build_a2_pdf.py`, which writes `docs/A2_Naidu_Cohen.pdf`
 5. Both of us upload it to Moodle separately

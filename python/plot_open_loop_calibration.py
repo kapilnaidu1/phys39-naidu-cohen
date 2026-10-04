@@ -47,8 +47,9 @@ OUTPUT_PNG = "docs/figures/module_04/steady_temperature_vs_signed_pwm.png"
 HEAT_COLOR = "#d62728"         # red, matching the strip chart
 COOL_COLOR = "#1f77b4"         # blue, matching the strip chart
 
-# Printed on the figure so the caption requirement is satisfied by the figure
-# itself. EDIT THIS to match what was actually done at the bench.
+# Printed to the console at the end of a run so it can be pasted into the A2
+# caption and the module note. EDIT THIS to match what was actually done at
+# the bench.
 STEADY_CRITERION = (
     "Steady state: after each PWM step the trace was watched for about three "
     "thermal time constants\n(tau = 70 s driven), then for one further "
@@ -181,7 +182,7 @@ def main():
     # so the figure sits comfortably beside spreadsheet plots in a lab report.
     plt.rcParams.update({
         "font.family": "DejaVu Sans",
-        "font.size": 10,
+        "font.size": 11.5,
         "axes.edgecolor": "#868686",
         "axes.linewidth": 0.8,
         "xtick.direction": "out",
@@ -190,7 +191,9 @@ def main():
         "ytick.color": "#595959",
     })
 
-    fig, ax = plt.subplots(figsize=(8.0, 5.2))
+    # Wide and short: this figure is placed at full text width in the A2
+    # PDF, so a squat frame keeps the annotations legible there.
+    fig, ax = plt.subplots(figsize=(10.0, 3.5))
     fig.patch.set_facecolor("white")
     ax.set_facecolor("white")
 
@@ -210,7 +213,7 @@ def main():
         xs = [p[0] for p in pts]
         ys = [p[1] for p in pts]
         # Markers with a dark edge, as Excel draws them.
-        ax.plot(xs, ys, marker, color=color, markersize=7,
+        ax.plot(xs, ys, marker, color=color, markersize=8,
                 markeredgecolor="#404040", markeredgewidth=0.6,
                 linestyle="none", label=f"{label}", zorder=3)
         if slope is not None:
@@ -234,29 +237,32 @@ def main():
                   color="#404040")
     ax.set_ylabel("Steady-state temperature  (\u00b0C)", color="#404040")
     ax.set_title("Steady-State Temperature vs Signed PWM",
-                 fontsize=13, color="#404040", pad=12)
+                 fontsize=14.5, color="#404040", pad=10)
 
     # Trendline equations and R^2, printed on the plot the way Excel's
     # "Display Equation on chart" and "Display R-squared value" options do.
-    y = 0.96
+    y = 0.955
     for color, eqn, r2txt in fit_labels:
-        ax.text(0.03, y, eqn, transform=ax.transAxes, fontsize=9.5,
+        ax.text(0.022, y, eqn, transform=ax.transAxes, fontsize=11,
                 color=color, va="top", family="DejaVu Sans")
-        ax.text(0.03, y - 0.055, r2txt, transform=ax.transAxes, fontsize=9.5,
+        ax.text(0.022, y - 0.075, r2txt, transform=ax.transAxes, fontsize=11,
                 color=color, va="top", family="DejaVu Sans")
-        y -= 0.135
+        y -= 0.18
 
-    leg = ax.legend(loc="lower right", frameon=True, fontsize=9)
+    leg = ax.legend(loc="lower right", frameon=True, fontsize=10.5)
     leg.get_frame().set_edgecolor("#BFBFBF")
     leg.get_frame().set_linewidth(0.8)
 
-    fig.text(0.01, 0.015, STEADY_CRITERION, fontsize=7.2, va="bottom",
-             color="#595959")
-    fig.tight_layout(rect=(0, 0.14, 1, 1))
+    # The steady-state criterion is not printed on the figure: it is stated
+    # in the Figure 1 caption of A2 and in section 3 of the module note, and
+    # leaving it off here buys the plot area the height instead.
+    fig.tight_layout()
 
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)
     fig.savefig(OUTPUT_PNG, dpi=200, facecolor="white")
     print(f"\nFigure written to {OUTPUT_PNG}")
+    print("\nCaption text for the steady-state criterion:")
+    print(STEADY_CRITERION)
 
 
 if __name__ == "__main__":

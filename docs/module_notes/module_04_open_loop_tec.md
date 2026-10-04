@@ -231,8 +231,8 @@ required answer.
 
 ## 5. Part 5: guided energy-balance analysis
 
-Written up in full in **`A2_Naidu_Cohen.pdf`** (repository root), which is the
-submitted form. Summary of the results:
+Written up in full in **`docs/A2_Naidu_Cohen.pdf`**, which is the submitted
+form. Summary of the results:
 
 **PWM averaging.** Over one period the current is I for D&tau; and zero
 otherwise, so `<I> = DI` and `<I^2> = DI^2`. These differ from `<I>^2 = D^2I^2`
@@ -310,9 +310,8 @@ stays here and does not go into A2.
 
 ## 7. Open items
 
-Parts 1 to 6 are complete. `A2_Naidu_Cohen.pdf` is built and sits in the
-repository root; it still has to be uploaded to Moodle by each of us
-separately, **due Monday 5 October at 6:00 PM**.
+Parts 1 to 6 are complete. `docs/A2_Naidu_Cohen.pdf` is built; it still has to
+be uploaded to Moodle by each of us separately, **due Monday 5 October at 6:00 PM**.
 
 **Confirmed at the bench and signed off by the instructor, but the numeric
 value was never written down:**

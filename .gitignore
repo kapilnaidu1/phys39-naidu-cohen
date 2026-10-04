@@ -26,3 +26,6 @@ build/
 # (kp_*_run.csv, *_trace_*.csv, full_run.csv) and let this one stay local.
 data/module_04/tec_run.csv
 data/module_05/p_control_run.csv
+
+__pycache__/
+*.pyc

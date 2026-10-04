@@ -193,7 +193,10 @@ def story():
         "&lt;I<super>2</super>&gt;, and under PWM both are linear in D, so "
         "the susceptibility dT/du is constant and the graph is straight. Had "
         "the Joule term gone as D<super>2</super> the branches would curve "
-        "visibly; they do not.", body))
+        "visibly; they do not. With a DAC supplying a steady current of "
+        "variable amplitude instead, &lt;I<super>2</super>&gt; = "
+        "&lt;I&gt;<super>2</super> would hold, so the distinction is a "
+        "property of PWM.", body))
 
     A(Paragraph("3.2 Steady-state energy balance", h2))
     A(Paragraph(
@@ -206,7 +209,9 @@ def story():
         "heating does not, so Q<sub>TEC</sub> = d Q<sub>P</sub> + "
         "|d| Q<sub>J</sub>. On the heating branch d &gt; 0 and both terms "
         "deliver heat into the object; on the cooling branch d &lt; 0 and "
-        "Peltier removes heat while Joule still adds it. Hence", body))
+        "Peltier removes heat while Joule still adds it. Both derivatives "
+        "below are positive while Q<sub>P</sub> &gt; Q<sub>J</sub>, and the "
+        "heating one is the larger. Hence", body))
     A(Paragraph(
         "T<sub>h</sub> &minus; T<sub>0</sub> = d (Q<sub>P</sub> + "
         "Q<sub>J</sub>) / G &nbsp;&nbsp;&rarr;&nbsp;&nbsp; "

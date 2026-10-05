@@ -132,17 +132,30 @@ droop, 18% at the smallest.
 
 ## 5. High gain
 
-| K<sub>p</sub> | L | Settles? | T<sub>ss</sub> | predicted | Amplitude | Saturation? |
-|---|---|---|---|---|---|---|
-| 8.00 | 4.01 | yes | 28.33 | 28.31 | none | no |
-| 16.00 | 8.02 | yes | 29.10 | 29.06 | none | no, PWM peaked at 27 |
-| 32.00 | 16.04 | yes | 29.53 | 29.50 | none | no, PWM peaked at 31 |
+| K<sub>p</sub> | L | Settles? | T<sub>ss</sub> | predicted | Sustained amplitude | Overshoot | Saturation? |
+|---|---|---|---|---|---|---|---|
+| 8.00 | 4.01 | yes | 28.33 | 28.31 | none | none | no |
+| 16.00 | 8.02 | yes | 29.10 | 29.06 | none | none | no, PWM peaked at 27 |
+| 32.00 | 16.04 | yes | 29.54 | 29.50 | none | 0.041 &deg;C at t = 7 s | no, PWM peaked at 31 |
 
-**No oscillation and no saturation at the highest gain tested.** Each run held
-at least 16 closed-loop time constants, final-30 s spread 0.020 &deg;C, and
-**zero direction reversals** across all three: the command never flipped from
-heating to cooling. Amplitude is defined as half the peak-to-peak excursion of
-the settled response; there was none to measure.
+**No sustained oscillation and no saturation at the highest gain tested.** Each
+run held at least 16 closed-loop time constants, final-60 s spread 0.020
+&deg;C, and **zero direction reversals** across all three: the command never
+flipped from heating to cooling. Amplitude is defined as half the peak-to-peak
+excursion of the settled response; there was none to measure.
+
+**A single small overshoot did appear at K<sub>p</sub> = 32.** The trace peaks
+at 29.58 &deg;C about 7 s in and settles at 29.539, so the overshoot is 0.041
+&deg;C against a 0.020 &deg;C noise floor: a factor of two above the noise, and
+absent at every lower gain. See
+[`docs/figures/module_05/p_control_traces.png`](../figures/module_05/p_control_traces.png).
+This matters because the one-lump model **forbids** overshoot at any gain: its
+single eigenvalue is real and negative, so the deviation keeps its sign.
+Observing one is therefore evidence that the model is missing a state, most
+plausibly thermal lag between the TEC face and the thermistor, which only
+becomes visible once &tau;<sub>cl</sub> = &tau;/(1+L) = 4.1 s is short enough
+to approach it. It is small enough that it may also be a sampling artefact at
+1 Hz, and distinguishing the two needs a faster log than this one.
 
 **Saturation was not reached.** Each gain was entered from the previous steady
 state, so the steps were small. At K<sub>p</sub> = 32 the run began 0.91 &deg;C
@@ -151,15 +164,17 @@ clamping at 255 until the error fell below 7.97 &deg;C. That is a different
 experiment, since the loop is nonlinear while clamped and 1/(1+L) does not
 apply. Identified for a supervised opportunity, not claimed as done.
 
-**How high gain differs from low:** only in speed and offset, not shape. Both
-are monotonic approaches. &tau;<sub>cl</sub> = &tau;/(1+L) falls from 62 s at
-K<sub>p</sub> = 0.25 to 7.8 s at K<sub>p</sub> = 16, and droop falls from 7.66
-to 0.90 &deg;C. At L = 8 the loop is faster than the thermal lag between TEC
-face and thermistor, which is where lag-driven overshoot would appear. It did
-not, so that lag is short compared with 7.8 s and the one-lump model remains
-adequate over the whole range.
+**How high gain differs from low:** mostly in speed and offset.
+&tau;<sub>cl</sub> = &tau;/(1+L) falls from 62 s at K<sub>p</sub> = 0.25 to 7.8
+s at K<sub>p</sub> = 16 and 4.1 s at K<sub>p</sub> = 32, while droop falls from
+7.66 to 0.46 &deg;C. Up to K<sub>p</sub> = 16 the shape is also unchanged, a
+monotonic approach, so the one-lump model is adequate there. The shape first
+departs from it at K<sub>p</sub> = 32, where the overshoot above appears, which
+puts the thermal lag somewhere between 4 and 8 s.
 
-Traces: `kp16_high_gain_run.csv`, `kp32_high_gain_run.csv`.
+Figure: `docs/figures/module_05/p_control_traces.png`, built by
+`python/plot_p_control_traces.py` from `kp32_high_gain_run.csv`.
+Raw traces: `kp_0p25_run.csv`, `kp16_high_gain_run.csv`, `kp32_high_gain_run.csv`.
 
 ### Feedback suppresses the temperature noise
 
@@ -169,7 +184,7 @@ gain**, against **0.16 &deg;C** measured open-loop at rest.
 This is the same 1/(1+L) acting on a different input: the factor that leaves a
 fraction of the setpoint error behind also leaves only that fraction of any
 slow disturbance. **Droop and disturbance rejection are two faces of one
-number** — the offset cannot be reduced without also quieting the output.
+number**, and the offset cannot be reduced without also quieting the output.
 
 It explains a forecast that missed usefully. Command jitter at K<sub>p</sub> =
 16 was predicted as K<sub>p</sub>&times;0.16 = 2.6 counts and measured 0.49,
@@ -258,15 +273,19 @@ gain, or saturation making the loop nonlinear.
 
 ## 7. Evidence for A3 and C4
 
-- [x] sign test, both directions &mdash; Part 2
-- [x] gain range and its justification &mdash; Part 3
-- [x] dimensional droop table &mdash; Part 3
-- [x] high-gain response table &mdash; Part 5
-- [x] measured and predicted droop on one graph &mdash; `docs/figures/module_05/droop_vs_gain.png`
-- [x] Part 4 &harr; Part 6 derivation &mdash; Part 6
-- [x] low- and high-gain traces &mdash; `kp_0p25_run.csv`, `kp16_high_gain_run.csv`
-- [x] filenames of controller, sketch and data &mdash; top of this note
-- [x] explanation of droop and the oscillation result &mdash; Parts 3, 5, 6
+- [x] sign test, both directions: Part 2
+- [x] gain range and its justification: Part 3
+- [x] dimensional droop table: Part 3
+- [x] high-gain response table: Part 5
+- [x] measured and predicted droop on one graph:
+  `docs/figures/module_05/droop_vs_gain.png`
+- [x] Part 4 to Part 6 derivation: Part 6
+- [x] low- and high-gain strip-chart traces:
+  `docs/figures/module_05/p_control_traces.png`, from `kp32_high_gain_run.csv`
+- [x] filenames of controller, sketch and data: top of this note
+- [x] explanation of droop and the oscillation result: Parts 3, 5, 6
 
-**Open:** instructor approval of the gain range was obtained retrospectively;
-saturation not tested.
+**Open:** instructor approval of the gain range was obtained retrospectively,
+and saturation was never reached, so the clamped regime is untested. Both are
+carried into Module 6, where the K<sub>p</sub> = 32 overshoot is also the
+natural case for the "what is the model missing" discussion.

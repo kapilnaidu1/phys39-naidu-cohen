@@ -9,7 +9,13 @@ Data in `data/module_05/`, figure in `docs/figures/module_05/`.
 
 **From Module 4:** &chi;<sub>T,h</sub> = 0.50127 &deg;C/count,
 &#124;&chi;<sub>T,c</sub>&#124; = 0.18091, T<sub>amb</sub> = 21.54 &deg;C,
-&tau; = 70 s, noise floor 0.16 &deg;C p-p.
+&tau; = 62.9 &plusmn; 5.0 s, noise floor 0.16 &deg;C p-p.
+
+The time constant is the one fitted in Module 6 Part 3
+([`python/estimate_tau.py`](../../python/estimate_tau.py)) from the eight
+constant-command steps in `data/module_04/full_run.csv`. The 70 s used at the
+bench to decide how long to wait was a working estimate; every &tau;<sub>cl</sub>
+below uses the fitted value.
 
 ---
 
@@ -153,7 +159,7 @@ This matters because the one-lump model **forbids** overshoot at any gain: its
 single eigenvalue is real and negative, so the deviation keeps its sign.
 Observing one is therefore evidence that the model is missing a state, most
 plausibly thermal lag between the TEC face and the thermistor, which only
-becomes visible once &tau;<sub>cl</sub> = &tau;/(1+L) = 4.1 s is short enough
+becomes visible once &tau;<sub>cl</sub> = &tau;/(1+L) = 3.7 s is short enough
 to approach it. It is small enough that it may also be a sampling artefact at
 1 Hz, and distinguishing the two needs a faster log than this one.
 
@@ -165,12 +171,12 @@ experiment, since the loop is nonlinear while clamped and 1/(1+L) does not
 apply. Identified for a supervised opportunity, not claimed as done.
 
 **How high gain differs from low:** mostly in speed and offset.
-&tau;<sub>cl</sub> = &tau;/(1+L) falls from 62 s at K<sub>p</sub> = 0.25 to 7.8
-s at K<sub>p</sub> = 16 and 4.1 s at K<sub>p</sub> = 32, while droop falls from
+&tau;<sub>cl</sub> = &tau;/(1+L) falls from 55.9 s at K<sub>p</sub> = 0.25 to
+7.0 s at K<sub>p</sub> = 16 and 3.7 s at K<sub>p</sub> = 32, while droop falls from
 7.66 to 0.46 &deg;C. Up to K<sub>p</sub> = 16 the shape is also unchanged, a
 monotonic approach, so the one-lump model is adequate there. The shape first
 departs from it at K<sub>p</sub> = 32, where the overshoot above appears, which
-puts the thermal lag somewhere between 4 and 8 s.
+puts the thermal lag somewhere between 4 and 7 s.
 
 Figure: `docs/figures/module_05/p_control_traces.png`, built by
 `python/plot_p_control_traces.py` from `kp32_high_gain_run.csv`.
@@ -266,7 +272,7 @@ faster. Both were observed.
 
 Oscillation, had we seen it, would falsify the one-lump picture rather than the
 control law. Candidates: thermal lag between TEC and thermistor, a second
-thermal mass, 1 Hz sampling against a 70 s time constant, noise amplified by
+thermal mass, 1 Hz sampling against a 63 s time constant, noise amplified by
 gain, or saturation making the loop nonlinear.
 
 ---

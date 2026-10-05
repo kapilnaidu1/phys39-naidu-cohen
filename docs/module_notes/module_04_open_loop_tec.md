@@ -15,6 +15,13 @@ the submitted note in [`docs/assessments/a2_open_loop_tec.md`](../assessments/a2
 
 ## Pre-class questions
 
+> **Superseded.** The 146 s quoted below is the Module 3 estimate, taken on
+> 16 September, before the A0 wiring fault was found on 23 September. Fitting
+> the eight constant-command steps in `data/module_04/full_run.csv` gives
+> **&tau; = 62.9 &plusmn; 5.0 s** (`python/estimate_tau.py`), and the passive
+> zero-command decay alone gives 65.8 s. Use the fitted value; the text below
+> is left as written because it is what we reasoned from at the time.
+
 **1. Steady state?** The plate stops changing because the heat the Peltier
 moves equals what leaks back through the exchanger, mounting and air. Nothing
 has stopped happening; the flows have balanced. Practically it is a

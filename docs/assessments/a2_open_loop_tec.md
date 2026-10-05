@@ -1,7 +1,8 @@
 # A2: TEC Heating and Cooling Analysis
 
 **Team:** Naidu / Cohen
-**Due:** Monday 5 October 2026, 6:00 PM
+**Due:** Wednesday 7 October 2026, 6:00 PM (moved from 5 October by email,
+30 September)
 **Submit:** `docs/A2_Naidu_Cohen.pdf`, two pages, each of us uploads it
 separately to Moodle
 **Repository file:** none required. No Git checkpoint for this one.
@@ -12,15 +13,21 @@ Working note: [`docs/module_notes/module_04_open_loop_tec.md`](../module_notes/m
 > safety demonstration, or code documentation. Those live in the module note
 > and stay there. A2 is analysis only.
 
-Rubric weighting, worth knowing before deciding what to spend pages on:
+The assignment was restructured on 30 September. It now asks for **six numbered
+sections using the course page's own headings**, and the 100 to 150 word
+conclusion is **no longer required**. The PDF follows those headings exactly,
+including the two sections both numbered Part 5.4, since both come from Part 5
+subsection 4 of the module.
 
-| Criterion | Points |
-|---|---|
-| Graph, slopes, units, fit ranges, ratio | 2 |
-| **PWM averaging proof, energy balance, slope-ratio derivation** | **3** |
-| Laird values located, cited, interpreted, used | 2 |
-| Comparison and passive-conduction reasoning | 2 |
-| Concise, legible, complete | 1 |
+| Section heading in the PDF | Rubric | Points |
+|---|---|---|
+| Part 4: Combined graph and fits | items 1-2 | 2 |
+| Part 5.1: Measured slopes | items 1-2 | (same 2) |
+| **Part 5.2: PWM and the slope-ratio model** | item 3 | **3** |
+| Part 5.3: Laird data-sheet calculation | item 4 | 2 |
+| Part 5.4: Compare the ratios | items 5-6 | 2 |
+| Part 5.4: Passive conduction | items 5-6 | (same 2) |
+| Concise, legible, complete | | 1 |
 
 The derivation carries the most weight of any single item.
 

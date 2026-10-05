@@ -64,22 +64,22 @@ title = ParagraphStyle("title", fontName=SERIF_B, fontSize=17, leading=20,
                        spaceAfter=7)
 meta = ParagraphStyle("meta", fontName=SERIF, fontSize=8.4, leading=11.0,
                       spaceAfter=0)
-h1 = ParagraphStyle("h1", fontName=SERIF_B, fontSize=10.2, leading=12.2,
-                    spaceBefore=6, spaceAfter=2.5, keepWithNext=1)
-h2 = ParagraphStyle("h2", fontName=SERIF_B, fontSize=8.8, leading=10.8,
-                    spaceBefore=4.5, spaceAfter=1.5, keepWithNext=1)
-body = ParagraphStyle("body", fontName=SERIF, fontSize=7.9, leading=9.9,
-                      spaceAfter=2.8)
+h1 = ParagraphStyle("h1", fontName=SERIF_B, fontSize=9.8, leading=11.8,
+                    spaceBefore=5.5, spaceAfter=2, keepWithNext=1)
+h2 = ParagraphStyle("h2", fontName=SERIF_B, fontSize=8.5, leading=10.4,
+                    spaceBefore=4, spaceAfter=1.5, keepWithNext=1)
+body = ParagraphStyle("body", fontName=SERIF, fontSize=7.6, leading=9.5,
+                      spaceAfter=2.6)
 bullet = ParagraphStyle("bullet", parent=body, leftIndent=11,
                         bulletIndent=1, bulletFontName=SERIF,
-                        bulletFontSize=7.9, spaceAfter=1.8)
-mono = ParagraphStyle("mono", fontName=MONO, fontSize=7.2, leading=10.0,
+                        bulletFontSize=7.6, spaceAfter=1.6)
+mono = ParagraphStyle("mono", fontName=MONO, fontSize=7.0, leading=9.6,
                       leftIndent=13, spaceBefore=1.5, spaceAfter=3.5)
-cap = ParagraphStyle("cap", fontName=SERIF, fontSize=7.3, leading=9.1,
+cap = ParagraphStyle("cap", fontName=SERIF, fontSize=7.1, leading=8.9,
                      textColor=GREY, spaceBefore=3, spaceAfter=2)
 
 
-def table(rows, widths, size=7.7):
+def table(rows, widths, size=7.5):
     """Grid table with a grey header row. Cells must be Paragraph objects or
     the <sub> and <super> markup renders literally."""
     th = ParagraphStyle("th", fontName=SERIF_B, fontSize=size,
@@ -134,28 +134,30 @@ def story():
         A(Paragraph(line, meta))
     A(Spacer(1, 9))
 
-    # ------------------------------------------------------------------ 1
-    A(Paragraph("1. Steady-state temperature versus signed PWM", h1))
+    # ------------------------------------------- Part 4
+    A(Paragraph("Part 4: Combined graph and fits", h1))
     img = Image(FIG)
-    img._restrictSize(TEXT_WIDTH, 2.30 * inch)
+    img._restrictSize(TEXT_WIDTH, 2.95 * inch)
     img.hAlign = "CENTER"
     A(img)
     A(Paragraph(
         "<b>Figure 1.</b> Steady-state plate temperature against the signed "
-        "PWM command u, positive for heating and negative for cooling. Ten "
-        "points, five per branch, about the zero-command temperature "
-        "T<sub>0</sub> = 21.54 &deg;C. Each trendline is fitted only over "
-        "its own branch. <b>Steady-state criterion:</b> after each step the "
-        "trace was watched for about three driven time constants "
+        "PWM command u, positive for heating and negative for cooling, with "
+        "both branches on one graph. Ten points, five per branch, about the "
+        "zero-command temperature T<sub>0</sub> = 21.54 &deg;C. Each "
+        "trendline is drawn only over the PWM range used for its own fit: "
+        "u = 0 to +50 counts for heating, u = &minus;65 to 0 counts for "
+        "cooling. <b>Steady-state criterion:</b> after each step the trace "
+        "was watched for about three driven time constants "
         "(&tau; &asymp; 70 s) plus one further minute, and the point was "
         "accepted once its net drift over that minute was no larger than the "
         "measured noise of 0.16 &deg;C peak to peak. Points that had not "
         "fully arrived are reported as the asymptote of an exponential fit, "
         "and data/module_04/steady_state.csv records which.", cap))
 
-    # ------------------------------------------------------------------ 2
-    A(Paragraph("2. Slopes, units, fit ranges and ratio", h1))
-    A(table([["Branch", "Susceptibility dT/du", "Fit range",
+    # ------------------------------------------- Part 5.1
+    A(Paragraph("Part 5.1: Measured slopes", h1))
+    A(table([["Branch", "Susceptibility dT/du", "Fit range (counts)",
               "R<super>2</super>", "Intercept"],
              ["Heating", "m<sub>h</sub> = 0.5013 &deg;C per PWM count",
               "u = 0 to +50", "1.0000", "21.55 &deg;C"],
@@ -164,25 +166,49 @@ def story():
             [0.66 * inch, 2.36 * inch, 1.12 * inch, 0.60 * inch, 0.70 * inch]))
     A(Spacer(1, 3))
     A(Paragraph(
-        "Both branches are linear with no visible curvature, so neither "
-        "slope is a local estimate. <b>r = m<sub>h</sub> / m<sub>c</sub> = "
-        "2.771.</b> The intercepts differ by 0.11 &deg;C and the cooling one "
-        "sits 0.12 &deg;C above T<sub>0</sub>, consistent with the room "
-        "drifting over a two-hour session.", body))
-
-    # ------------------------------------------------------------------ 3
-    A(Paragraph("3. Derivation", h1))
-
-    A(Paragraph("3.1 PWM current averages", h2))
-    A(Paragraph(
-        "Over one PWM period &tau; the bridge delivers current I for a time "
-        "D&tau; and zero for the remaining (1&minus;D)&tau;, with duty "
-        "D = |u| / 255. Both integrands vanish outside the on-interval, so",
+        "Against signed u both slopes are positive, so the cooling entry is "
+        "already the magnitude |&chi;<sub>T,c</sub>|. The ratio is "
+        "<b>r = m<sub>h</sub> / m<sub>c</sub> = 0.5013 / 0.1809 = "
+        "2.771</b>, dimensionless because both slopes carry the same units.",
         body))
     A(Paragraph(
-        "&lt;I&gt;  = (1/&tau;) &int; I dt  = (1/&tau;) &middot; I &middot; "
-        "D&tau;  = <b>D I</b><br/>"
-        "&lt;I<super>2</super>&gt; = (1/&tau;) &int; I<super>2</super> dt = "
+        "<b>Curvature and choice of fit range.</b> Neither data set shows "
+        "visible curvature, so each branch was fitted over its full measured "
+        "range rather than a restricted sub-range; the ranges above are "
+        "simply the PWM values used in Part 3. The branches are fitted "
+        "separately because the slope changes abruptly at u = 0, not because "
+        "either bends. The intercepts differ by 0.11 &deg;C and the cooling "
+        "one sits 0.12 &deg;C above T<sub>0</sub>, consistent with the room "
+        "drifting over a two-hour session.", body))
+
+    # ------------------------------------------- Part 5.2
+    A(Paragraph("Part 5.2: PWM and the slope-ratio model", h1))
+
+    A(Paragraph("Step 1. The steady-state balance", h2))
+    A(Paragraph(
+        "With C the heat capacity of the object and G the effective passive "
+        "conductance to the room, C dT/dt = Q<sub>TEC</sub> &minus; "
+        "G(T &minus; T<sub>0</sub>). At steady state dT/dt = 0, so the "
+        "individual flows are not zero but their sum is, and "
+        "G(T &minus; T<sub>0</sub>) = Q<sub>TEC</sub>. Taking the two terms "
+        "in turn: <b>heating</b>, Peltier transport and Joule dissipation "
+        "both carry heat <i>into</i> the object while conduction carries heat "
+        "<i>out of</i> it to the cooler room; <b>cooling</b>, Peltier "
+        "transport carries heat <i>out of</i> the object, Joule dissipation "
+        "still carries heat <i>into</i> it, and conduction carries heat "
+        "<i>into</i> it from the warmer room.", body))
+
+    A(Paragraph("Step 2. PWM current averages", h2))
+    A(Paragraph(
+        "Over one PWM period &tau; the bridge delivers the on-state current I "
+        "for a time D&tau; and zero for the remaining (1&minus;D)&tau;, with "
+        "duty D = |u| / 255. Both integrands vanish outside the on-interval, "
+        "so each integral is just the integrand times D&tau;:", body))
+    A(Paragraph(
+        "&lt;I&gt;  = (1/&tau;) &int;<sub>0</sub><super>&tau;</super> I(t) dt "
+        " = (1/&tau;) &middot; I &middot; D&tau;  = <b>D I</b><br/>"
+        "&lt;I<super>2</super>&gt; = (1/&tau;) "
+        "&int;<sub>0</sub><super>&tau;</super> I<super>2</super>(t) dt = "
         "(1/&tau;) &middot; I<super>2</super> &middot; D&tau; = "
         "<b>D I<super>2</super></b>", mono))
     A(Paragraph(
@@ -191,60 +217,57 @@ def story():
         "commute, and for a two-level waveform the two differ by a factor "
         "1/D. Peltier transport follows &lt;I&gt; and Joule heating follows "
         "&lt;I<super>2</super>&gt;, and under PWM both are linear in D, so "
-        "the susceptibility dT/du is constant and the graph is straight. Had "
-        "the Joule term gone as D<super>2</super> the branches would curve "
-        "visibly; they do not. With a DAC supplying a steady current of "
-        "variable amplitude instead, &lt;I<super>2</super>&gt; = "
-        "&lt;I&gt;<super>2</super> would hold, so the distinction is a "
-        "property of PWM.", body))
+        "the susceptibility is constant and the branches are straight. Had "
+        "the Joule term gone as D<super>2</super> the susceptibility would "
+        "vary with duty and the branches would curve measurably; the measured "
+        "R<super>2</super> of 1.0000 and 0.9989 says they do not. With a DAC "
+        "supplying a steady current of variable amplitude instead, "
+        "&lt;I<super>2</super>&gt; = &lt;I&gt;<super>2</super> would hold, so "
+        "the distinction is a property of PWM.", body))
 
-    A(Paragraph("3.2 Steady-state energy balance", h2))
+    A(Paragraph("Step 3. The slope ratio", h2))
     A(Paragraph(
-        "With C the heat capacity of the object and G the conductance "
-        "between it and the room, C dT/dt = Q<sub>TEC</sub> &minus; "
-        "G(T &minus; T<sub>0</sub>). At steady state dT/dt = 0, so the "
-        "individual flows are not zero but their sum is, and "
-        "G(T &minus; T<sub>0</sub>) = Q<sub>TEC</sub>. With signed duty "
-        "d = u / 255, Peltier transport reverses with the current and Joule "
-        "heating does not, so Q<sub>TEC</sub> = d Q<sub>P</sub> + "
-        "|d| Q<sub>J</sub>. On the heating branch d &gt; 0 and both terms "
-        "deliver heat into the object; on the cooling branch d &lt; 0 and "
-        "Peltier removes heat while Joule still adds it. Both derivatives "
-        "below are positive while Q<sub>P</sub> &gt; Q<sub>J</sub>, and the "
-        "heating one is the larger. Hence", body))
+        "With signed duty d = u / 255 and D = |d|, Peltier transport reverses "
+        "with the current and Joule heating does not, so "
+        "Q<sub>TEC</sub> = d Q<sub>P</sub> + |d| Q<sub>J</sub>. Substituting "
+        "each branch into G(T &minus; T<sub>0</sub>) = Q<sub>TEC</sub> and "
+        "differentiating with respect to d:", body))
     A(Paragraph(
-        "T<sub>h</sub> &minus; T<sub>0</sub> = d (Q<sub>P</sub> + "
-        "Q<sub>J</sub>) / G &nbsp;&nbsp;&rarr;&nbsp;&nbsp; "
-        "<b>dT<sub>h</sub>/dd = (Q<sub>P</sub> + Q<sub>J</sub>) / G</b><br/>"
-        "T<sub>c</sub> &minus; T<sub>0</sub> = d (Q<sub>P</sub> &minus; "
-        "Q<sub>J</sub>) / G &nbsp;&nbsp;&rarr;&nbsp;&nbsp; "
-        "<b>dT<sub>c</sub>/dd = (Q<sub>P</sub> &minus; Q<sub>J</sub>) / G</b>",
-        mono))
-
-    A(Paragraph("3.3 Slope ratio and numerical result", h2))
+        "heating, d &gt; 0:&nbsp; G(T<sub>h</sub> &minus; T<sub>0</sub>) = "
+        "d(Q<sub>P</sub> + Q<sub>J</sub>) &nbsp;&rarr;&nbsp; T<sub>h</sub> "
+        "&minus; T<sub>0</sub> = d(Q<sub>P</sub> + Q<sub>J</sub>)/G "
+        "&nbsp;&rarr;&nbsp; <b>dT<sub>h</sub>/dd = (Q<sub>P</sub> + "
+        "Q<sub>J</sub>)/G</b><br/>"
+        "cooling, d &lt; 0:&nbsp; G(T<sub>c</sub> &minus; T<sub>0</sub>) = "
+        "d(Q<sub>P</sub> &minus; Q<sub>J</sub>) &nbsp;&rarr;&nbsp; "
+        "T<sub>c</sub> &minus; T<sub>0</sub> = d(Q<sub>P</sub> &minus; "
+        "Q<sub>J</sub>)/G &nbsp;&rarr;&nbsp; <b>dT<sub>c</sub>/dd = "
+        "(Q<sub>P</sub> &minus; Q<sub>J</sub>)/G</b>", mono))
     A(Paragraph(
-        "Since d = u / 255, each measured slope carries the same factor "
-        "1/255, and that factor and G are common to both branches, so both "
-        "cancel from the ratio:", body))
+        "Both are positive while Q<sub>P</sub> &gt; Q<sub>J</sub>, and the "
+        "heating one is larger. Since d = u / 255, each measured slope "
+        "carries the same factor 1/255, and that factor and G are common to "
+        "both branches, so both cancel from the ratio:", body))
     A(Paragraph(
         "r = m<sub>h</sub>/m<sub>c</sub> = (Q<sub>P</sub> + Q<sub>J</sub>) / "
         "(Q<sub>P</sub> &minus; Q<sub>J</sub>) &nbsp;&nbsp;&rArr;&nbsp;&nbsp; "
         "<b>Q<sub>J</sub>/Q<sub>P</sub> = (r &minus; 1)/(r + 1)</b>"
-        "&nbsp;&nbsp;&nbsp;&nbsp;check: r = 2 gives exactly 1/3<br/>"
-        "r = 2.771 gives Q<sub>J</sub>/Q<sub>P</sub> = 1.771 / 3.771 = "
-        "<b>0.470</b>", mono))
+        "&nbsp;&nbsp;&nbsp;&nbsp;check: r = 2 gives 1/3 exactly<br/>"
+        "r = 2.771:&nbsp; Q<sub>J</sub>/Q<sub>P</sub> = (2.771 &minus; 1) / "
+        "(2.771 + 1) = 1.771 / 3.771 = <b>0.470</b>", mono))
     A(Paragraph(
-        "Joule heat reaching the object face is about 47% of the Peltier "
-        "pumping. G cancels from r, which matters because G was never "
-        "measured.", body))
+        "Joule heat reaching the object face is 47.0% of the Peltier pumping. "
+        "Both are heat rates in watts, so the ratio is dimensionless. G "
+        "cancels from r, which matters because G was never measured.", body))
 
-    # ------------------------------------------------------------------ 4
-    A(Paragraph("4. Laird data sheet", h1))
+    # ------------------------------------------- Part 5.3
+    A(Paragraph("Part 5.3: Laird data-sheet calculation", h1))
     A(Paragraph(
-        "Source: Laird CP14-127-045-L2-W4.5, MFG part 58910-501, "
-        "SPECIFICATIONS table, hot side temperature 27.0 &deg;C column.",
+        "<b>Source.</b> Laird CP14-127-045-L2-W4.5, MFG part 58910-501, from "
+        "the SPECIFICATIONS table on the first page of the CP14-127-045 data "
+        "sheet, hot-side temperature T<sub>h</sub> = 27.0 &deg;C column.",
         body))
-    A(table([["Quantity", "Value", "Meaning, and the condition attached"],
+    A(table([["Quantity", "Value", "Meaning, and the operating condition attached"],
              ["R<sub>M</sub>", "1.50 &Omega;",
               "Ohmic resistance of the 127 couples in series, quoted at "
               "T<sub>h</sub> = 27 &deg;C and rising to 1.68 &Omega; at "
@@ -269,22 +292,26 @@ def story():
     A(Paragraph(
         "Q<sub>J,max</sub> = &frac12; I<sub>max</sub><super>2</super> "
         "R<sub>M</sub> = &frac12; (8.6 A)<super>2</super> (1.50 &Omega;) = "
-        "<b>55.47 W</b><br/>"
-        "Q<sub>P,max</sub> = Q<sub>c,max</sub> + Q<sub>J,max</sub> = 71.3 W + "
-        "55.47 W = <b>126.77 W</b><br/>"
-        "r<sub>Laird</sub> = (126.77 + 55.47) / (126.77 &minus; 55.47) = "
-        "<b>2.556</b>", mono))
+        "&frac12; (73.96 A<super>2</super>)(1.50 &Omega;) = <b>55.47 W</b>"
+        "<br/>"
+        "Q<sub>c,max</sub> = Q<sub>P,max</sub> &minus; Q<sub>J,max</sub> "
+        "&nbsp;&rarr;&nbsp; Q<sub>P,max</sub> = 71.3 W + 55.47 W = "
+        "<b>126.77 W</b><br/>"
+        "r<sub>Laird,max</sub> = (Q<sub>P,max</sub> + Q<sub>J,max</sub>) / "
+        "(Q<sub>P,max</sub> &minus; Q<sub>J,max</sub>) = (126.77 + 55.47) / "
+        "(126.77 &minus; 55.47) = 182.24 / 71.30 = <b>2.556</b>", mono))
     A(Paragraph(
-        "<b>Cross-check.</b> V<sub>max</sub>/I<sub>max</sub> = 13.9 / 8.6 = "
-        "1.616 &Omega;, 8% above the quoted R<sub>M</sub>, because at "
+        "Every quantity above is a heat rate in watts, so "
+        "r<sub>Laird,max</sub> is dimensionless and directly comparable with "
+        "the measured r. <b>Cross-check:</b> V<sub>max</sub>/I<sub>max</sub> "
+        "= 13.9 V / 8.6 A = 1.616 &Omega;, 8% above R<sub>M</sub>, because at "
         "&Delta;T<sub>max</sub> the module develops a Seebeck back-EMF: "
         "V<sub>max</sub> = I<sub>max</sub>R<sub>M</sub> + "
-        "S&middot;&Delta;T<sub>max</sub> gives S = 0.0142 V/K, a reasonable "
-        "coefficient for 127 bismuth telluride couples. The right rows were "
-        "read.", body))
+        "S&middot;&Delta;T<sub>max</sub> gives S = 0.0142 V/K, reasonable for "
+        "127 bismuth telluride couples. The right rows were read.", body))
 
-    # ------------------------------------------------------------------ 5
-    A(Paragraph("5. Comparison", h1))
+    # ------------------------------------------- Part 5.4 comparison
+    A(Paragraph("Part 5.4: Compare the ratios", h1))
     A(table([["", "r", "Q<sub>J</sub>/Q<sub>P</sub>", "Condition"],
              ["Measured, this apparatus", "2.771", "0.470",
               "PWM drive, finite &Delta;T, current set by the supply and "
@@ -306,13 +333,15 @@ def story():
         "8.6 A.",
         "<b>PWM, not steady DC.</b> The bench current is chopped; the data "
         "sheet assumes a steady one.",
-        "<b>Finite &Delta;T.</b> The data-sheet relation is stated at "
-        "&Delta;T = 0, while the plate ran 25 &deg;C above and 12 &deg;C "
-        "below ambient, where conduction through the module is absorbed "
-        "into G.",
-        "<b>Coefficients move with temperature.</b> R<sub>M</sub> rises from "
-        "1.50 to 1.68 &Omega; between 27 and 50 &deg;C, and one slope is "
-        "fitted across each whole branch.",
+        "<b>Finite &Delta;T and passive heat paths.</b> The data-sheet "
+        "relation is stated at &Delta;T = 0, while the plate ran 25 &deg;C "
+        "above and 12 &deg;C below ambient. There the module's own conduction "
+        "and the mounting and air paths are not negligible, and all of them "
+        "are absorbed into the single G.",
+        "<b>Coefficients move with temperature, and one slope is fitted per "
+        "branch.</b> R<sub>M</sub> rises from 1.50 to 1.68 &Omega; between 27 "
+        "and 50 &deg;C, so a single fit averages over a range in which the "
+        "coefficients are not strictly constant.",
     ]:
         A(Paragraph(text, bullet, bulletText="\u2022"))
     A(Spacer(1, 2))
@@ -324,40 +353,24 @@ def story():
         "object face that the data sheet does not carry, such as lead and "
         "contact resistance in series with the module.", body))
 
-    # ------------------------------------------------------------------ 6
-    A(Paragraph("6. Passive conduction", h1))
+    # ------------------------------------------- Part 5.4 conduction
+    A(Paragraph("Part 5.4: Passive conduction", h1))
     A(Paragraph(
-        "When the object is hotter than the room, heat flows out of it; when "
-        "it is colder, heat flows in. Either way the flow drives the object "
-        "back toward room temperature, so conduction opposes the TEC on both "
-        "branches, which is why it enters as &minus;G(T &minus; "
-        "T<sub>0</sub>) with a single positive G.", body))
+        "When the object is hotter than the room, passive heat flows <b>out "
+        "of</b> the object. When it is colder, passive heat flows <b>into</b> "
+        "it. Either way the flow drives the object back toward room "
+        "temperature, so conduction opposes the TEC on both branches, which "
+        "is why it enters as &minus;G(T &minus; T<sub>0</sub>) with a single "
+        "positive G.", body))
     A(Paragraph(
-        "It cannot explain the unequal slopes. The same G appears in the "
-        "denominator of both dT<sub>h</sub>/dd and dT<sub>c</sub>/dd, so it "
-        "sets how steep the branches are, a larger G flattening both, but it "
-        "cancels exactly from their ratio: a symmetric term cannot produce "
-        "an asymmetric result. The asymmetry survives only in the numerators, "
-        "where Q<sub>J</sub> is added on the heating branch and subtracted on "
-        "the cooling one.", body))
-
-    # ------------------------------------------------------------------ 7
-    A(Paragraph("7. Conclusion", h1))
-    A(Paragraph(
-        "Steady-state temperature is linear in signed PWM on both branches "
-        "(R<super>2</super> = 1.0000 heating, 0.9989 cooling), which is what "
-        "the PWM averages predict: Peltier transport follows &lt;I&gt; = DI "
-        "and Joule heating follows &lt;I<super>2</super>&gt; = "
-        "DI<super>2</super>, so both scale with duty and the susceptibility "
-        "stays constant. Had &lt;I<super>2</super>&gt; gone as "
-        "D<super>2</super>, the branches would curve. The slopes differ by "
-        "r = 2.771 because reversing the current reverses Peltier pumping "
-        "but not Joule heating, so the two add when heating and oppose when "
-        "cooling, giving Q<sub>J</sub>/Q<sub>P</sub> = (r &minus; 1)/(r + 1) "
-        "= 0.470. Conduction enters both branches through the same G and "
-        "cancels from the ratio, setting how steep the lines are but not "
-        "making them unequal. The Laird maximum-current figures predict "
-        "r = 2.556, within 8% of a condition this apparatus never reaches.",
+        "It cannot by itself explain the unequal slope magnitudes. The same G "
+        "appears in the denominator of both dT<sub>h</sub>/dd and "
+        "dT<sub>c</sub>/dd, so it sets how steep the branches are, a larger G "
+        "flattening both, but it cancels exactly from their ratio: a "
+        "symmetric term cannot produce an asymmetric result. The asymmetry "
+        "survives only in the numerators, where Q<sub>J</sub> is added on the "
+        "heating branch and subtracted on the cooling one, because Peltier "
+        "transport reverses with the current and Joule heating does not.",
         body))
 
     return s

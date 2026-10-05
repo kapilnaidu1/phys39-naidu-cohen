@@ -252,16 +252,18 @@ def part4():
         sys.exit(f"{OPEN_LOOP_CSV} has no long block for {missing}.")
 
     setup_rc()
-    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.4),
-                             gridspec_kw={"wspace": 0.18})
+    fig, axes = plt.subplots(2, 2, figsize=(10.5, 5.6), sharex="col",
+                             gridspec_kw={"height_ratios": [2.3, 1.0],
+                                          "hspace": 0.12, "wspace": 0.18})
     fig.patch.set_facecolor("white")
 
     print("  Simulation against measurement")
     print(f"  {'command':>9} {'span / s':>9} {'final meas':>11} "
           f"{'final sim':>10} {'diff':>8} {'rms resid':>10}")
     print("  " + "-" * 62)
-    for ax, (key, title) in zip(axes, [((25, True), "driven, u = +25 counts"),
-                                       ((0, True), "passive, u = 0")]):
+    for col, (key, title) in enumerate([((25, True), "driven, u = +25 counts"),
+                                        ((0, True), "passive, u = 0")]):
+        ax = axes[0][col]
         pts = chosen[key]
         arr = np.asarray(pts)
         tm, Tm = arr[:, 0] - arr[0, 0], arr[:, 1]
@@ -283,11 +285,25 @@ def part4():
                    label=f"$T_{{amb}} + \\chi u$ = {T_AMB + CHI * u:.2f} °C")
         ax.set_title(f"{title}      rms residual {rms:.3f} \u00b0C",
                      fontsize=11, color="#404040", pad=8)
-        ax.set_xlabel("Time since the step  (s)", color="#404040")
         ax.set_ylabel("Temperature  (°C)", color="#404040")
+        ax.tick_params(axis="x", which="both", bottom=True, labelbottom=False,
+                       length=3.5, color="#868686")
         leg = ax.legend(loc="best", frameon=True, fontsize=9)
         leg.get_frame().set_edgecolor("#BFBFBF")
         leg.get_frame().set_linewidth(0.8)
+
+        # Residuals. The A3 preservation list asks for these explicitly, and
+        # they show what an rms number cannot: whether the disagreement is
+        # random or structured.
+        ax = axes[1][col]
+        style(ax)
+        ax.axhline(0.0, color=GREY, linewidth=1.0, zorder=2)
+        ax.plot(tm, resid, color=MODEL, linewidth=1.1, zorder=3)
+        ax.set_ylabel("model &minus; meas  (\u00b0C)".replace("&minus;", "\u2212"),
+                      color="#404040")
+        ax.set_xlabel("Time since the step  (s)", color="#404040")
+        lim = max(0.35, float(np.max(np.abs(resid))) * 1.25)
+        ax.set_ylim(-lim, lim)
 
     fig.suptitle("Part 4: one-lump model against measured open-loop steps",
                  fontsize=13, color="#404040", y=0.975)
@@ -298,7 +314,7 @@ def part4():
              f"these traces: all three parameters come from Module 4 and the "
              f"Part 3 time-constant fit. Source: {OPEN_LOOP_CSV}.",
              fontsize=7.8, color=GREY, va="bottom")
-    fig.subplots_adjust(left=0.07, right=0.985, top=0.855, bottom=0.21)
+    fig.subplots_adjust(left=0.075, right=0.985, top=0.875, bottom=0.185)
     out = os.path.join(FIG_DIR, "open_loop_sim_vs_measured.png")
     fig.savefig(out, dpi=200, facecolor="white")
     plt.close(fig)
@@ -466,6 +482,27 @@ def part7():
         print(f"  {ki:7.3f} {z:7.3f} {kind:>13} "
               f"{SETPOINT - T[-1]:12.4f} {overshoot:10.3f} "
               f"{settle_text:>15}")
+
+    # The module asks for C, H and Pu recorded for one overdamped and one
+    # underdamped set. Only the ratios chi = Pu/H and tau = C/H matter, so H is
+    # free; H = 1 W/K makes the other two readable straight off.
+    H = 1.0
+    Pu = CHI * H
+    C = TAU * H
+    print(f"\n  Parameter sets, with H = {H:g} W/K chosen so that "
+          f"Pu = chi*H and C = tau*H:")
+    print(f"  {'case':>12} {'C/(J/K)':>8} {'H/(W/K)':>8} {'Pu/(W/ct)':>10} "
+          f"{'Kp':>5} {'Ki':>7} {'zeta':>6} {'trace matches prediction?':>28}")
+    print("  " + "-" * 92)
+    for ki, label in ((0.010, "overdamped"), (0.050, "underdamped")):
+        t, T, u, q = runs[ki]
+        z = zeta_of(kp, ki)
+        overshoot = max(0.0, float(np.max(T)) - SETPOINT)
+        seen = "overshoot {:.3f} C".format(overshoot) if overshoot > 1e-3 \
+            else "no overshoot"
+        agrees = "yes" if (z < 1) == (overshoot > 1e-3) else "NO"
+        print(f"  {label:>12} {C:8.1f} {H:8.2f} {Pu:10.4f} {kp:5.1f} "
+              f"{ki:7.3f} {z:6.3f}   {seen:>18}, {agrees}")
 
     print(f"\n  P-only settles to 0.1 C of setpoint: never, the droop is "
           f"{SETPOINT - T_p[-1]:.2f} C.")

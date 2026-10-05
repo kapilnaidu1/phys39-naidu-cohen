@@ -26,6 +26,21 @@ physics has two, so one of them is free.
 
 ---
 
+## Before class
+
+The page asks only that these existing files can be located and opened, and
+explicitly says not to make new work for this section.
+
+| File | Path |
+|---|---|
+| Module 4 steady-state temperature vs PWM | `data/module_04/steady_state.csv`, `data/module_04/full_run.csv` |
+| Module 5 droop vs gain | `data/module_05/droop.csv` |
+| Module 5 trace at a stable gain | `data/module_05/kp_0p25_run.csv` |
+| Module 5 trace near oscillation | `data/module_05/kp32_high_gain_run.csv`, the only run showing any overshoot |
+| Python environment | numpy and matplotlib only; no scipy is needed by anything here |
+
+---
+
 ## Pre-class questions
 
 **1. What physical part of the apparatus stores heat?** The aluminium block
@@ -154,7 +169,23 @@ dt = 0.05 s is used throughout, dt/&tau; = 8e-4.
 
 Nothing is fitted to these traces. &chi;, &tau; and T<sub>amb</sub> all come
 from Module 4 and section 3.
-Figure: `docs/figures/module_06/open_loop_sim_vs_measured.png`.
+
+**Run configuration**, for reproducibility:
+
+| | |
+|---|---|
+| Exact command | `python3 python/simulate_one_lump.py`, from the repository root |
+| Initial condition | T(0) set to the first measured sample of each step, not to T<sub>amb</sub> |
+| Saturation limit | &plusmn;255 counts, applied to u before it reaches the model |
+| Console output | `data/module_06/simulation_output.txt` |
+
+**The residuals are structured, not random.** Both panels of the figure show a
+smooth excursion of about &plusmn;0.3 &deg;C that changes sign once, rather
+than scatter at the 0.02 &deg;C noise level: the model leads the measurement
+early and lags it later. A single exponential with the right &tau; cannot do
+that, so the disagreement is a second time scale rather than measurement
+error. This is the same conclusion section 6 reaches from the K<sub>p</sub> =
+32 overshoot, arriving independently from open-loop data.
 
 ---
 
@@ -225,12 +256,25 @@ K<sub>p</sub> = 32, where it does. A fixed lag between the Peltier junction
 and the sensor only matters once the loop becomes fast enough to act on stale
 information, which puts that lag somewhere **between about 4 and 7 s**.
 
-The alternatives are weaker here. Discrete sampling at 1 Hz is a candidate at
-&tau;<sub>cl</sub> = 3.7 s, and cannot be separated from thermal lag with a
-1 Hz log, which is the honest limit of this data. Sensor noise is 0.020
-&deg;C, the same size as the effect, so it cannot produce a repeatable
-one-sided bump. Saturation is ruled out: the command peaked at 31 of 255
-counts.
+The page lists seven candidates. Taking each against our data:
+
+| Extension | Verdict for this apparatus |
+|---|---|
+| **Two thermal masses** | **Chosen.** The TEC junction and the block are not one object; the figure's structured residuals and the gain-threshold behaviour both point here. |
+| Sensor lag | Same signature as a second mass and not separable from it with our data. The thermistor is epoxied to the plate, so its own mass is small, which makes it the smaller part of the same effect. |
+| Time delay | A pure transport delay would show as a flat dead time before any response. Module 3 saw 35 s of apparent dead time, but that is the first part of an exponential with &tau; = 63 s, not a true delay. No evidence for one. |
+| Discrete controller update | Real and the strongest competitor: sampling at 1.97 Hz against &tau;<sub>cl</sub> = 3.7 s is only 7 samples per time constant. Cannot be separated from thermal lag at this logging rate. |
+| Actuator lag | The bridge switches at 490 Hz and the Peltier effect is essentially instantaneous; any lag here is milliseconds against seconds. Ruled out. |
+| PWM saturation | Ruled out by measurement: the command peaked at 31 of 255 counts, so the loop stayed linear. |
+| Measurement noise | 0.020 &deg;C peak to peak, the same size as the 0.041 &deg;C overshoot, and random. It cannot produce a repeatable one-sided bump at a fixed time after the step. |
+
+**Why a second mass rather than discrete sampling.** Both are consistent with
+the overshoot alone, but the open-loop residuals in section 4 separate them:
+those traces have no controller in them at all, so sampling cannot be
+responsible for their structure, and they still show a systematic second time
+scale. Discrete sampling may contribute to the closed-loop overshoot; it
+cannot explain the open-loop residual. **Settling this properly needs a faster
+log**, which is a Part II measurement rather than something to decide here.
 
 ---
 
@@ -260,6 +304,23 @@ P-only at the same gain never settles to 0.1 &deg;C: its droop is 4.22 &deg;C.
 **Integral action removes the droop entirely, and the overshoot appears
 exactly where &zeta; crosses 1.** Figure:
 `docs/figures/module_06/pi_vs_p_sim.png`.
+
+### One overdamped and one underdamped set, in full
+
+The module asks for C, H and P<sub>u</sub> recorded for each. Only
+&chi; = P<sub>u</sub>/H and &tau; = C/H affect the answer, so H is free;
+H = 1 W/K makes the other two readable directly as P<sub>u</sub> = &chi;H and
+C = &tau;H. Any other H scales all three together and changes nothing.
+
+| Case | C (J/K) | H (W/K) | P<sub>u</sub> (W/count) | K<sub>p</sub> | K<sub>i</sub> | &zeta; | Trace agrees with the prediction? |
+|---|---|---|---|---|---|---|---|
+| overdamped | 62.9 | 1.00 | 0.5013 | 2.0 | 0.010 | 1.783 | yes, no overshoot |
+| underdamped | 62.9 | 1.00 | 0.5013 | 2.0 | 0.050 | 0.797 | yes, 0.273 &deg;C overshoot |
+
+The prediction and the trace agree on both sides of &zeta; = 1, which is the
+check the module is asking for. It holds only while the model is linear and
+the command is unclamped, and both of these runs stay well inside that: peak
+command 17 counts of 255.
 
 ### Our apparatus cannot wind up
 

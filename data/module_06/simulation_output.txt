@@ -61,6 +61,12 @@ PART 7   Integral action, and what it costs
     0.050   0.797   underdamped      -0.0000      0.273           277 s
     0.200   0.399   underdamped       0.0000      2.374           271 s
 
+  Parameter sets, with H = 1 W/K chosen so that Pu = chi*H and C = tau*H:
+          case  C/(J/K)  H/(W/K)  Pu/(W/ct)    Kp      Ki   zeta    trace matches prediction?
+  --------------------------------------------------------------------------------------------
+    overdamped     62.9     1.00     0.5013   2.0   0.010  1.783         no overshoot, yes
+   underdamped     62.9     1.00     0.5013   2.0   0.050  0.797    overshoot 0.273 C, yes
+
   P-only settles to 0.1 C of setpoint: never, the droop is 4.22 C.
   Integral action removes the droop entirely. The cost is overshoot, which
   appears exactly where zeta drops below 1, and windup, which Part 8 covers.

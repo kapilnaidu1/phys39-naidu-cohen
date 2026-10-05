@@ -37,6 +37,7 @@ T_AMB = 21.54          # C, Module 4 zero-PWM temperature
 HEAT = "#C0392B"
 COOL = "#1F77B4"
 SET = "#595959"
+PRED = "#1F4E79"
 
 # (gain, label). Both are read out of the one log.
 PANELS = [(0.25, "low gain"), (32.0, "high gain")]
@@ -90,17 +91,29 @@ def main():
         sys.exit(f"{INPUT_CSV} has no enabled block for Kp = {missing}. "
                  f"Available: {sorted(segments)}")
 
+    # Same conventions as docs/figures/module_04 and the droop figure: white
+    # plot area, light grey gridlines, no top or right spine, the numbers as
+    # plain coloured text at the top left, a plain legend, and a small grey
+    # note under the whole figure. Nothing boxed or decorated.
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 10.5,
+        "font.family": "DejaVu Sans", "font.size": 10,
         "axes.edgecolor": "#868686", "axes.linewidth": 0.8,
         "xtick.direction": "out", "ytick.direction": "out",
         "xtick.color": "#595959", "ytick.color": "#595959",
     })
-    fig, axes = plt.subplots(2, 2, figsize=(11.0, 5.4), sharex="col",
-                             gridspec_kw={"height_ratios": [2.0, 1.0],
-                                          "hspace": 0.12, "wspace": 0.16})
+    fig, axes = plt.subplots(2, 2, figsize=(10.5, 5.6), sharex="col",
+                             gridspec_kw={"height_ratios": [2.1, 1.0],
+                                          "hspace": 0.13, "wspace": 0.145})
     fig.patch.set_facecolor("white")
 
+    def style(ax):
+        ax.set_facecolor("white")
+        ax.grid(True, which="major", color="#D9D9D9", linewidth=0.8)
+        ax.set_axisbelow(True)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+
+    summary = []
     for col, (kp, label) in enumerate(PANELS):
         rows = segments[kp]
         t0 = rows[0]["t"]
@@ -110,65 +123,78 @@ def main():
         L = kp * CHI_H
         settled = sum(r["T"] for r in rows[-60:]) / len(rows[-60:])
         droop = setpoint - settled
+        predicted = (setpoint - T_AMB) / (1.0 + L)
+        peak = max(r["pwm"] for r in rows)
 
         ax = axes[0][col]
-        ax.set_facecolor("white")
-        ax.grid(True, color="#D9D9D9", linewidth=0.8)
-        ax.set_axisbelow(True)
-        for side in ("top", "right"):
-            ax.spines[side].set_visible(False)
-        ax.axhline(setpoint, color=SET, linewidth=1.1, linestyle="--",
-                   zorder=2, label=f"setpoint {setpoint:.1f} °C")
-        ax.plot(t, temperature, color=HEAT, linewidth=1.4, zorder=3,
-                label="temperature")
-        ax.set_title(
-            f"{label}:  $K_p$ = {kp:g} PWM/°C,  L = {L:.2f}",
-            fontsize=12, color="#404040", pad=8)
-        ax.set_ylabel("Temperature  (°C)", color="#404040")
-        ax.text(0.98, 0.06,
-                f"settled {settled:.2f} °C,  droop {droop:.2f} °C",
-                transform=ax.transAxes, ha="right", fontsize=9.5,
-                color="#404040")
-        leg = ax.legend(loc="upper left", frameon=True, fontsize=9.5)
+        style(ax)
+        ax.axhline(setpoint, color=SET, linewidth=1.2, linestyle="--",
+                   zorder=2, label=f"Setpoint {setpoint:.1f} \u00b0C")
+        ax.plot(t, temperature, color=HEAT, linewidth=1.5, zorder=3,
+                label="Measured temperature")
+        ax.set_title(f"{label}:  $K_p$ = {kp:g} PWM per \u00b0C,  L = {L:.2f}",
+                     fontsize=11.5, color="#404040", pad=8)
+        ax.set_ylabel("Temperature  (\u00b0C)", color="#404040")
+
+        # Equation-style annotation at the top left, in the series colour,
+        # matching the Module 4 and droop figures.
+        ax.text(0.03, 0.95,
+                f"Settled:  T = {settled:.2f} \u00b0C,  droop = {droop:.2f} "
+                f"\u00b0C", transform=ax.transAxes, fontsize=9.5,
+                color=HEAT, va="top")
+        ax.text(0.03, 0.855,
+                f"Model 1/(1+L):  droop = {predicted:.2f} \u00b0C",
+                transform=ax.transAxes, fontsize=9.5, color=PRED, va="top")
+
+        # Leave headroom so the text never collides with the trace.
+        lo, hi = min(temperature), max(max(temperature), setpoint)
+        span = hi - lo
+        ax.set_ylim(lo - span * 0.08, hi + span * 0.30)
+
+        leg = ax.legend(loc="best", frameon=True, fontsize=9)
         leg.get_frame().set_edgecolor("#BFBFBF")
         leg.get_frame().set_linewidth(0.8)
 
         # PWM panel. Split into runs of one direction so the colour changes
         # only where the commanded direction changes.
         ax = axes[1][col]
-        ax.set_facecolor("white")
-        ax.grid(True, color="#D9D9D9", linewidth=0.8)
-        ax.set_axisbelow(True)
-        for side in ("top", "right"):
-            ax.spines[side].set_visible(False)
+        style(ax)
         run_t, run_p, run_heat = [t[0]], [rows[0]["pwm"]], rows[0]["heat"]
         for ti, r in zip(t[1:], rows[1:]):
             if r["heat"] != run_heat:
                 ax.plot(run_t, run_p, color=HEAT if run_heat else COOL,
-                        linewidth=1.3)
+                        linewidth=1.4)
                 run_t, run_p, run_heat = [ti], [r["pwm"]], r["heat"]
             else:
                 run_t.append(ti)
                 run_p.append(r["pwm"])
-        ax.plot(run_t, run_p, color=HEAT if run_heat else COOL, linewidth=1.3)
+        ax.plot(run_t, run_p, color=HEAT if run_heat else COOL, linewidth=1.4)
         # Autoscale rather than showing the full 0-255 range, which would
-        # flatten commands of a few counts into the axis line. The headroom
-        # note below carries the saturation information instead.
-        peak = max(r["pwm"] for r in rows)
-        ax.set_ylim(0, max(peak * 1.45, 5))
+        # flatten commands of a few counts onto the axis line. The note under
+        # the figure carries the saturation information instead.
+        ax.set_ylim(0, max(peak * 1.55, 5))
         ax.set_ylabel("PWM  (counts)", color="#404040")
         ax.set_xlabel("Time since this gain was applied  (s)", color="#404040")
-        ax.text(0.98, 0.84,
-                f"red heating, blue cooling. Peak {peak:.0f} of 255 counts, "
-                f"no saturation",
-                transform=ax.transAxes, ha="right", fontsize=9,
-                color="#595959")
+        ax.text(0.03, 0.90, f"Peak {peak:.0f} of 255 counts",
+                transform=ax.transAxes, fontsize=9.5, color=HEAT, va="top")
 
+        summary.append((kp, L, peak))
         print(f"  Kp = {kp:<6g} L = {L:5.2f}  {len(rows):5d} samples, "
               f"{t[-1]:6.0f} s   settled {settled:6.2f} C   "
-              f"droop {droop:5.2f} C")
+              f"droop {droop:5.2f} C   predicted {predicted:5.2f} C")
 
-    fig.subplots_adjust(left=0.07, right=0.985, top=0.91, bottom=0.10)
+    fig.suptitle("P-only control: temperature and command traces",
+                 fontsize=13.5, color="#404040", y=0.975)
+    fig.text(0.008, 0.012,
+             "Setpoint 30.0 \u00b0C, T_amb = 21.54 \u00b0C. Both panels are cut "
+             "from one continuous sweep, data/module_05/kp32_high_gain_run.csv; "
+             "time is re-zeroed where each gain was applied.\nThe PWM trace is "
+             "red while heating and blue while cooling, as in the strip chart. "
+             "Neither run saturates, so the loop stays proportional "
+             "throughout.\nThe model droop uses the Module 4 susceptibility and "
+             "is not fitted to these runs.",
+             fontsize=7.8, color="#595959", va="bottom")
+    fig.subplots_adjust(left=0.068, right=0.985, top=0.865, bottom=0.185)
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)
     fig.savefig(OUTPUT_PNG, dpi=200, facecolor="white")
     print(f"\nFigure written to {OUTPUT_PNG}")

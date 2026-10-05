@@ -1,0 +1,79 @@
+========================================================================
+PART 4   Open-loop simulation against measured traces
+========================================================================
+
+  chi   = 0.50127 C per PWM count   (Module 4, heating branch)
+  tau   = 62.9 s                   (Module 6 Part 3)
+  T_amb = 21.54 C                 (Module 4, zero command)
+  dt    = 0.05 s, so dt/tau = 7.95e-04
+  u is the signed PWM command in counts, clamped to +/-255
+
+  Timestep check: 300 s of a +25 count step from 21.54 C
+    dt / s    steps   T(300 s) / C   change from previous
+  --------------------------------------------------------
+      1.00      300      33.969418                       
+      0.50      600      33.967427             1.99e-03 C
+      0.10     3000      33.965823             1.60e-03 C
+      0.05     6000      33.965622             2.01e-04 C
+      0.01    30000      33.965461             1.61e-04 C
+  Halving dt below 0.05 s moves the answer by less than a microkelvin,
+  far under the 0.02 C noise floor, so 0.05 s is small enough.
+
+  Simulation against measurement
+    command  span / s  final meas  final sim     diff  rms resid
+  --------------------------------------------------------------
+        +25       298       33.99      33.97    -0.02      0.147
+         +0       308       21.60      21.58    -0.02      0.094
+
+  Figure: docs/figures/module_06/open_loop_sim_vs_measured.png
+
+========================================================================
+PART 5   P-only feedback in simulation, against Module 5
+========================================================================
+
+      Kp       L  sim droop   1/(1+L)  measured  sim/meas  peak PWM   sat?
+  ----------------------------------------------------------------------
+    0.25   0.125      7.518     7.518      7.66     0.981         2     no
+    0.50   0.251      6.765     6.765      6.94     0.975         4     no
+    1.00   0.501      5.635     5.635      5.50     1.025         8     no
+    2.00   1.003      4.225     4.225      4.25     0.994        17     no
+    4.00   2.005      2.815     2.815      2.82     0.998        34     no
+    8.00   4.010      1.689     1.689      1.67     1.011        68     no
+   16.00   8.020      0.938     0.938       nan                 135     no
+   32.00  16.041      0.496     0.496       nan                 255    yes
+
+  The simulated droop reproduces the algebraic 1/(1+L) result exactly, as it must:
+  both come from the same balance, one solved and one integrated.
+
+  Figure: docs/figures/module_06/p_control_sim.png
+
+========================================================================
+PART 7   Integral action, and what it costs
+========================================================================
+
+  Baseline P-only at Kp = 2 (L = 1.003): droop 4.225 C, no overshoot by construction.
+  Underdamped when (1+L)^2 < 4*tau*chi*Ki, i.e. Ki > 0.0318 counts/(C s).
+
+       Ki    zeta       damping  final droop  overshoot  settle to 0.1C
+  ----------------------------------------------------------------------
+    0.002   3.987    overdamped       2.6725      0.000           never
+    0.010   1.783    overdamped       0.3590      0.000           never
+    0.050   0.797   underdamped      -0.0000      0.273           277 s
+    0.200   0.399   underdamped       0.0000      2.374           271 s
+
+  P-only settles to 0.1 C of setpoint: never, the droop is 4.22 C.
+  Integral action removes the droop entirely. The cost is overshoot, which
+  appears exactly where zeta drops below 1, and windup, which Part 8 covers.
+
+  Windup. Holding 45 C needs 47 counts, and the bridge supplies 255, so
+  the real apparatus never saturates for long at a safe setpoint and never winds up. The
+  panel below imposes a 50-count limit, as Part 8 asks us to suppose.
+
+                  peak T / C  overshoot  peak integral  clamped for
+  ----------------------------------------------------------------
+        plain PI       46.46      +1.46          1204         313 s
+     anti-windup       45.26      +0.26           967          22 s
+
+  Figure: docs/figures/module_06/pi_vs_p_sim.png
+
+All three figures written to docs/figures/module_06

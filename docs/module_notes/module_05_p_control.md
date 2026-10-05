@@ -24,7 +24,7 @@ below uses the fitted value.
 | Item | Status |
 |---|---|
 | Module 4 susceptibility identified near room temperature | &chi;<sub>T,h</sub> = 0.50127, &#124;&chi;<sub>T,c</sub>&#124; = 0.18091 &deg;C/count |
-| Arduino safety shutdown still works | **Not re-tested before S9.** The sketch is byte-identical to the one the instructor witnessed tripping in Module 4 Part 1, and the latch was never cleared or edited since. Carried over rather than re-demonstrated, which is weaker evidence than a fresh test. |
+| Arduino safety shutdown still works | **Re-tested and passed, 5 October 2026.** Software limit lowered to about 30 &deg;C, plate warmed past it, latch tripped and both PWM outputs went to zero; limit then restored to 60 &deg;C. Same method as the Module 4 Part 1 check. Team test, not witnessed by the instructor this time, so Module 4's witnessed trip remains the stronger record. |
 | Setpoint chosen, e<sub>0</sub> calculated | 30.0 &deg;C, e<sub>0</sub> = 30.0 &minus; 21.54 = 8.46 &deg;C |
 | Sign convention recorded | positive u heats, negative u cools, Arduino receives P = &#124;u&#124; |
 

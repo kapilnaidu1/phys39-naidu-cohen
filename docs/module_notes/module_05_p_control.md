@@ -19,6 +19,17 @@ below uses the fitted value.
 
 ---
 
+## Before class
+
+| Item | Status |
+|---|---|
+| Module 4 susceptibility identified near room temperature | &chi;<sub>T,h</sub> = 0.50127, &#124;&chi;<sub>T,c</sub>&#124; = 0.18091 &deg;C/count |
+| Arduino safety shutdown still works | **Not re-tested before S9.** The sketch is byte-identical to the one the instructor witnessed tripping in Module 4 Part 1, and the latch was never cleared or edited since. Carried over rather than re-demonstrated, which is weaker evidence than a fresh test. |
+| Setpoint chosen, e<sub>0</sub> calculated | 30.0 &deg;C, e<sub>0</sub> = 30.0 &minus; 21.54 = 8.46 &deg;C |
+| Sign convention recorded | positive u heats, negative u cools, Arduino receives P = &#124;u&#124; |
+
+---
+
 ## Pre-class questions
 
 **1. T<sub>set</sub> = 30, T = 25: heat or cool?** Heat. e = +5 &deg;C so
@@ -43,8 +54,8 @@ or saturation.
 
 ## 1. Controller
 
-Control law, one update per measurement (~1 Hz, set by the Arduino's
-1000-sample average):
+Control law, one update per measurement (**1.97 Hz measured**, set by the
+Arduino's 500-sample average and its 500 ms reporting interval):
 
 ```python
 e = self.setpoint - temperature_c
@@ -52,6 +63,21 @@ u = self.kp * e
 heating = u >= 0.0
 p = max(0, min(255, int(round(abs(u)))))
 ```
+
+**Deviation worth stating.** Part 1 asks for an average of *about 1000* raw
+thermistor readings. `sampleCount` was reduced from 1000 to 500 on the morning
+of 30 September, before any Module 5 data was taken, so **every run in this
+note averages 500**. That is inside the 100 to 1000 band Module 6 Part 3 states
+for Modules 2 to 5, but it is half what Modules 4 and 5 ask for. The effect is
+a factor &radic;2 in the noise on a single reading, which is consistent with
+the 0.16 &deg;C floor used throughout. Restore 1000 before the next run.
+
+Reporting is at 2 Hz rather than 1, which the module permits: it warns only
+about being slower than once a second.
+
+The GUI plots all five quantities Part 1 lists: temperature, the setpoint as a
+line on the same axes, error on its own axes, PWM magnitude, and direction as
+the red/blue colouring of the PWM trace.
 
 Python decides what to ask for; the Arduino decides what to do. The Module 4
 software limit is unreachable from the GUI, so a runaway gain can oscillate or
@@ -91,14 +117,28 @@ nothing starting clamped.
 Steady state: drift over the final 60 s no larger than the 0.16 &deg;C noise
 floor. T<sub>ss</sub> is the mean of that minute.
 
-| K<sub>p</sub> | L | T<sub>ss</sub> | predicted | droop | predicted | ratio | PWM | K<sub>p</sub>&times;droop |
-|---|---|---|---|---|---|---|---|---|
-| 0.25 | 0.125 | 22.34 | 22.48 | 7.66 | 7.52 | 1.019 | 2 | 1.9 |
-| 0.50 | 0.251 | 23.06 | 23.24 | 6.94 | 6.76 | 1.026 | 3 | 3.5 |
-| 1.00 | 0.501 | 24.50 | 24.36 | 5.50 | 5.64 | 0.976 | 6 | 5.5 |
-| **2.00** | **1.003** | **25.75** | **25.78** | **4.25** | **4.22** | **1.006** | 8 | 8.5 |
-| 4.00 | 2.005 | 27.18 | 27.18 | 2.82 | 2.82 | 1.002 | 11 | 11.3 |
-| 8.00 | 4.010 | 28.33 | 28.31 | 1.67 | 1.69 | 0.989 | 13 | 13.4 |
+Setpoint 30.0 &deg;C for every row. Predicted
+P<sub>0</sub> = K<sub>p</sub>e<sub>0</sub> is what the gain would ask for
+starting from ambient.
+
+| K<sub>p</sub> | pred. P<sub>0</sub> | P<sub>0</sub>/P<sub>req</sub> | L | T<sub>ss</sub> | pred. T<sub>ss</sub> | droop | pred. droop | ratio | final PWM | K<sub>p</sub>&times;droop |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.25 | 2.1 | 0.13 | 0.125 | 22.34 | 22.48 | 7.66 | 7.52 | 1.019 | 2 | 1.9 |
+| 0.50 | 4.2 | 0.25 | 0.251 | 23.06 | 23.24 | 6.94 | 6.76 | 1.026 | 3 | 3.5 |
+| 1.00 | 8.5 | 0.50 | 0.501 | 24.50 | 24.36 | 5.50 | 5.64 | 0.976 | 6 | 5.5 |
+| **2.00** | **16.9** | **1.00** | **1.003** | **25.75** | **25.78** | **4.25** | **4.22** | **1.006** | 8 | 8.5 |
+| 4.00 | 33.8 | 2.00 | 2.005 | 27.18 | 27.18 | 2.82 | 2.82 | 1.002 | 11 | 11.3 |
+| 8.00 | 67.7 | 4.00 | 4.010 | 28.33 | 28.31 | 1.67 | 1.69 | 0.989 | 13 | 13.4 |
+| 16.00 | 135.4 | 8.01 | 8.020 | 29.10 | 29.06 | 0.90 | 0.94 | 0.957 | 27 | 14.4 |
+| 32.00 | 270.7 | 16.02 | 16.041 | 29.54 | 29.50 | 0.46 | 0.50 | 0.920 | 31 | 14.7 |
+
+**The range does what Part 3 asks.** P<sub>0</sub> starts at 0.13 of
+P<sub>required</sub> and ends at 16 times it, crossing 1 exactly at
+K<sub>p</sub> = 2 where L = 1. Only the top row would start outside 0 to 255,
+and it did not, because each gain was entered from the previous steady state
+rather than from ambient: at K<sub>p</sub> = 32 the run began 0.91 &deg;C from
+setpoint and asked for 29 counts, not 271. That is a deliberate consequence of
+sweeping rather than restarting, and it is why saturation was never reached.
 
 **Mean ratio 1.003, sd 0.017, worst point 2.6% off**, over a 32-fold range of
 gain. The prediction used the Module 4 susceptibility and was not fitted.
@@ -138,11 +178,14 @@ droop, 18% at the smallest.
 
 ## 5. High gain
 
-| K<sub>p</sub> | L | Settles? | T<sub>ss</sub> | predicted | Sustained amplitude | Overshoot | Saturation? |
-|---|---|---|---|---|---|---|---|
-| 8.00 | 4.01 | yes | 28.33 | 28.31 | none | none | no |
-| 16.00 | 8.02 | yes | 29.10 | 29.06 | none | none | no, PWM peaked at 27 |
-| 32.00 | 16.04 | yes | 29.54 | 29.50 | none | 0.041 &deg;C at t = 7 s | no, PWM peaked at 31 |
+| K<sub>p</sub> | L | Settles? | mean T | predicted | Amplitude | Period | Frequency | Overshoot | Saturation? |
+|---|---|---|---|---|---|---|---|---|---|
+| 8.00 | 4.01 | yes | 28.33 | 28.31 | none | n/a | n/a | none | no |
+| 16.00 | 8.02 | yes | 29.10 | 29.06 | none | n/a | n/a | none | no, PWM peaked at 27 |
+| 32.00 | 16.04 | yes | 29.54 | 29.50 | none | n/a | n/a | 0.041 &deg;C at t = 7 s | no, PWM peaked at 31 |
+
+Period and frequency are not applicable: there was no sustained oscillation at
+any gain to measure them on.
 
 **No sustained oscillation and no saturation at the highest gain tested.** Each
 run held at least 16 closed-loop time constants, final-60 s spread 0.020

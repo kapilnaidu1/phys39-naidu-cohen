@@ -134,6 +134,12 @@ def main():
                 label="Measured temperature")
         ax.set_title(f"{label}:  $K_p$ = {kp:g} PWM per \u00b0C,  L = {L:.2f}",
                      fontsize=11.5, color="#404040", pad=8)
+        # sharex hides the labels on this upper panel, since both panels run on
+        # the same clock and the axis is labelled once underneath. Keep the
+        # tick marks visible so the shared axis reads as deliberate rather
+        # than missing.
+        ax.tick_params(axis="x", which="both", bottom=True, labelbottom=False,
+                       length=3.5, color="#868686")
         ax.set_ylabel("Temperature  (\u00b0C)", color="#404040")
 
         # Equation-style annotation at the top left, in the series colour,

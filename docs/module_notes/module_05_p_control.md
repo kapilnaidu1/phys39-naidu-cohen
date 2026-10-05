@@ -146,12 +146,17 @@ gain. The prediction used the Module 4 susceptibility and was not fitted.
 **At L = 1.003 the droop is 4.25 &deg;C of an 8.46 &deg;C error: 50.2%
 surviving against 50% predicted.**
 
-**The last column is an independent check.** At steady state the commanded PWM
-must equal K<sub>p</sub>&times;droop, and it does at every gain to within one
-count, using no droop model at all. It also shows the mechanism: that product
-climbs 1.9 &rarr; 13.4 toward P<sub>required</sub> = 16.9. The loop always
-converges on the same command; gain only changes how much error it needs in
-order to ask for it.
+**The last column is a self-consistency check, not an independent one.**
+Earlier drafts of this note called it independent evidence. It is not: the
+controller computes `p = round(abs(kp * e))`, so PWM = K<sub>p</sub>&times;droop
+is an identity that holds at every instant whether or not the loop has settled,
+and it cannot fail. What it does verify is that the command, the error and the
+logging agree, which is worth confirming and is all it confirms.
+
+It is still useful for showing the mechanism. That product climbs 1.9 &rarr;
+13.4 toward P<sub>required</sub> = 16.9: the loop always converges on roughly
+the same command, and gain only changes how much error it needs in order to ask
+for it. That part is a statement about the apparatus.
 
 Traces: `kp_0p25_run.csv` (low gain), `kp_sweep_full_run.csv` (whole sweep).
 

@@ -224,15 +224,42 @@ the script applies the sign from the direction column), writes the figure to
 `docs/figures/module_04/`, and prints both slopes with fit ranges, R squared,
 the ratio r, and Qj/Qp.
 
-| | value | fit range | R squared |
-|---|---|---|---|
-| m_h | **0.5013** C per PWM count | u = 0 to +50 | 1.0000 |
-| m_c | **0.1809** C per PWM count | u = -65 to 0 | 0.9989 |
-| r = m_h/m_c | **2.771** | | |
+| | value | fit range | R squared | rms residual |
+|---|---|---|---|---|
+| m_h | **0.5013** C per PWM count | u = 0 to +50 | 0.999999 | 0.010 C over a 25.1 C span |
+| m_c | **0.1809** C per PWM count | u = -65 to 0 | 0.998912 | 0.138 C over an 11.8 C span |
+| r = m_h/m_c | **2.771** | | | |
 
-Note any visible curvature. The assignment expects heating to be the steeper
-branch and says a factor near 2 is an observation to investigate, not a
-required answer.
+The figure prints R squared to four decimals, which is the Excel convention and
+rounds the heating branch to 1.0000. **The honest numbers are above, and the
+rms residual is the more useful one** because it has units and can be compared
+with the noise floor.
+
+### Why the heating branch fits 14 times better than the cooling branch
+
+This is the first thing anyone will ask, and the answer is a prediction
+surviving rather than a measurement being lucky. Peltier pumping grows with
+current while Joule heating grows with current squared. On the heating branch
+the two add and both stay linear in duty; on the cooling branch they oppose, so
+the useful cooling effect is a linear term minus a term that grows faster, and
+the branch should bend. The branch predicted to be less linear is the one that
+is.
+
+### What the R squared does and does not measure
+
+**Eight of the ten points in `steady_state.csv` are asymptotes of an
+exponential fit, not direct readings** (the notes column records which). Each
+asymptote is estimated from several hundred samples, so it is a
+noise-suppressed quantity: scatter around a line through fitted asymptotes is
+much smaller than scatter through raw endpoint readings would be. The R squared
+above therefore measures the linearity of the apparatus **and** the quality of
+those exponential fits together, and cannot be separated into the two.
+
+The extrapolation itself is small. Every run waited between 3.3 and 5.2 time
+constants, so between 0.5% and 3.6% of each step remained when it was stopped.
+Extrapolating a few percent along a well-determined exponential is defensible;
+claiming the resulting straight line proves the apparatus linear to one part in
+a million is not.
 
 ---
 

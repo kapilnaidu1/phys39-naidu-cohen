@@ -65,8 +65,8 @@ are, so the comparison is of the controller and nothing else. The fourth wants
 
 | Quantity | Value | Source |
 |---|---|---|
-| &chi;<sub>T,h</sub> | 0.50127 &deg;C per PWM count | Module 4, R<sup>2</sup> = 1.0000 |
-| &#124;&chi;<sub>T,c</sub>&#124; | 0.18091 &deg;C per PWM count | Module 4, R<sup>2</sup> = 0.9989 |
+| &chi;<sub>T,h</sub> | 0.50127 &deg;C per PWM count | Module 4, rms residual 0.010 &deg;C, R<sup>2</sup> = 0.999999 |
+| &#124;&chi;<sub>T,c</sub>&#124; | 0.18091 &deg;C per PWM count | Module 4, rms residual 0.138 &deg;C, R<sup>2</sup> = 0.998912 |
 | &tau; | 62.9 &plusmn; 5.0 s | 8 steps fitted, Module 6 section 3 |
 | T<sub>amb</sub> | 21.54 &deg;C | Module 4 zero-command steady state |
 | Noise floor | 0.16 &deg;C p-p open loop, 0.02 &deg;C closed | Modules 4 and 5 |
@@ -109,6 +109,33 @@ transient in a specific, measured way.
 
 **Do not repeat** apparatus descriptions, circuit sketches, the safety
 demonstration, or code documentation, the same exclusions A2 had.
+
+---
+
+## Credibility: say these before a grader has to ask
+
+The agreement in Modules 4 and 5 is good enough to invite the question of
+whether it is too good. Three things should be stated plainly in the memo
+rather than left in a CSV comment:
+
+- **Quote rms residuals, not R squared to four decimals.** The heating branch
+  is 0.010 &deg;C rms over a 25 &deg;C span, which rounds to R<sup>2</sup> =
+  1.0000 and reads as fake. The cooling branch is 0.138 &deg;C. The 14-fold
+  difference is the Peltier/Joule asymmetry predicted in A2, not luck.
+- **Eight of ten Module 4 steady-state points are fitted asymptotes.** The
+  extrapolation is small, 0.5% to 3.6% of each step, but a fitted asymptote is
+  noise-suppressed, so the straight-line R squared measures the fits as well as
+  the apparatus.
+- **&tau; and those asymptotes come from the same fits**, so they are not
+  independent confirmations of each other. The independent test is the
+  simulation reproducing a whole trace it was never fitted to.
+
+The strongest argument that nothing is invented is the list of things that did
+not work: the structured &plusmn;0.3 &deg;C open-loop residuals, the 0.041
+&deg;C overshoot the model forbids, the 22% drift in &tau;, and the Laird
+comparison missing by 8% **in the direction opposite** to what current alone
+predicts. None of those is what a fabricated data set looks like. Lead with
+them.
 
 ---
 

@@ -141,6 +141,15 @@ every command, which is a prediction, and
 `docs/figures/module_06/tau_estimate.png` is the test. All eight collapse onto
 one exponential.
 
+**&tau; and the Module 4 steady-state points are not independent.** Both come
+from fitting T = T<sub>&infin;</sub> + (T<sub>0</sub>&minus;T<sub>&infin;</sub>)e<sup>&minus;t/&tau;</sup>
+to the same steps in the same file: Module 4 kept T<sub>&infin;</sub> and this
+section keeps &tau;. So the R<sup>2</sup> &gt; 0.998 reported here and the
+R<sup>2</sup> of the Module 4 straight line are two views of one set of fits,
+not two confirmations. What **is** independent is section 4: the simulation
+takes &chi; and &tau; and predicts the whole measured trace, including its
+shape, which neither fit was asked to reproduce.
+
 **Honest caveat.** &tau; drifts from 53.3 s at u = &minus;65 to 65.0 s at
 u = +38, about 22%. The plate is more sluggish hot than cold, so H and C are
 not quite constant across 10 to 45 &deg;C. This supersedes the 146 s quoted in

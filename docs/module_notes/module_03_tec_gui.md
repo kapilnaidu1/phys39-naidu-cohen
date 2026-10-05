@@ -159,6 +159,14 @@ runs on 16 and 23 September were 3 to 7 s long and were read at the time as
 12 V supply was not reaching the bridge. The supply was on. The intervals
 were too short. Hold drive for at least 90 s before drawing any conclusion.
 
+*Later check, 5 October.* The 35 s figure comes from this one run, whose duty
+was set by a trim pot the log describes as intermittent (lines 59 and 70 of
+the data file). The Module 4 steps of 30 September, commanded from Python,
+all show the temperature moving within 0.5 to 2 s of the command, so the 35 s
+lag is not reproduced. What caused it in this run is not established. The
+direction result above does not depend on it: falling 2.85 &deg;C below
+ambient requires cooling whatever the onset time.
+
 ### Why these runs are conclusive and the earlier ones were not
 
 Passive physics only ever moves the plate **toward** room temperature. So

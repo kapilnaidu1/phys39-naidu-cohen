@@ -8,7 +8,7 @@ steps, and check it against the Module 5 closed-loop runs.
     python3 python/estimate_tau.py          (run from the repository root)
 
 INPUT   data/module_04/full_run.csv          open-loop steps, constant command
-        data/module_05/kp32_high_gain_run.csv closed-loop runs, for the check
+        data/module_05/session_2026-09-30_full_log.csv closed-loop runs, for the check
 
 OUTPUT  docs/figures/module_06/tau_estimate.png
         a table of tau per step, printed
@@ -51,7 +51,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 OPEN_LOOP_CSV = "data/module_04/full_run.csv"
-CLOSED_LOOP_CSV = "data/module_05/kp32_high_gain_run.csv"
+CLOSED_LOOP_CSV = "data/module_05/session_2026-09-30_full_log.csv"
 OUTPUT_PNG = "docs/figures/module_06/tau_estimate.png"
 
 CHI_U = 0.50127        # C per PWM count, Module 4 heating branch
@@ -164,57 +164,68 @@ def main():
               f"which is C/H with no TEC drive at all")
 
     # ---- closed-loop check: tau_cl should be tau / (1 + L) ----
-    print(f"\nClosed-loop check against {CLOSED_LOOP_CSV}")
-    print("  A segment is only usable if it is a real step: the loop has to "
-          "move far enough,\n  and be watched for long enough, for an "
-          "exponential to be fitted at all.\n")
-    print(f"{'Kp':>7} {'L':>7} {'step/C':>7} {'span/tau_cl':>12} "
-          f"{'tau_cl':>8} {'tau/(1+L)':>10} {'ratio':>7}")
-    print("-" * 66)
+    # Only the 30 C heating runs are used, because L = Kp * chi needs the
+    # heating chi there; the 15 C cooling block would need the cooling chi.
+    # Kp = 9 is skipped (49 s, never settled), and Kp = 32 is cut at 210 s,
+    # after which the plate stops following the command (Module 5 note).
+    print(f"\nClosed-loop check against {CLOSED_LOOP_CSV}, 30 C heating runs only")
+    print("  Each fit uses the whole run at that gain. Most runs start close to "
+          "their final\n  value, so the step is small and the fit is poorly "
+          "conditioned; read this as a\n  check of the trend, not a second "
+          "measurement of tau.\n")
+    print(f"{'Kp':>7} {'L':>7} {'step/C':>7} {'tau_cl':>8} {'tau/(1+L)':>10} "
+          f"{'ratio':>7} {'R^2':>7}")
+    print("-" * 60)
     usable = []
-    for (kp_text, enabled), values in segments(
-            CLOSED_LOOP_CSV, ["kp", "p_enabled"], ["time_s", "temperature_C"]):
+    for (kp_text, enabled, sp_text), values in segments(
+            CLOSED_LOOP_CSV, ["kp", "p_enabled", "setpoint_C"],
+            ["time_s", "temperature_C"]):
         if enabled.strip() not in ("1", "true", "True"):
+            continue
+        if abs(float(sp_text) - 30.0) > 1e-6:
+            continue
+        kp = float(kp_text)
+        if kp == 9.0:
             continue
         arr = np.asarray(values)
         if len(arr) < MIN_POINTS:
             continue
         t, T = arr[:, 0] - arr[0, 0], arr[:, 1]
+        if kp == 32.0:
+            keep = t <= 210.0
+            t, T = t[keep], T[keep]
         tau_cl, _, r2 = fit_exponential(t, T)
-        if not 0.5 < tau_cl < 1200.0 or r2 < 0.9:
-            continue
-        kp = float(kp_text)
         predicted = tau_mean / (1.0 + kp * CHI_U)
         step = abs(T[-1] - T[0])
-        spans = t[-1] / predicted
-        good = step > 0.5 and spans > 1.5
-        if good:
-            usable.append(tau_cl / predicted)
-        print(f"{kp:7.2f} {kp * CHI_U:7.2f} {step:7.2f} {spans:12.1f} "
-              f"{tau_cl:8.1f} {predicted:10.1f} {tau_cl / predicted:7.2f}"
-              f"{'' if good else '   too small or too short to fit'}")
-
+        usable.append((kp, tau_cl / predicted))
+        print(f"{kp:7.2f} {kp * CHI_U:7.2f} {step:7.2f} {tau_cl:8.1f} "
+              f"{predicted:10.1f} {tau_cl / predicted:7.2f} {r2:7.3f}")
     if usable:
-        u = np.array(usable)
-        print(f"\n  Over the {len(u)} usable segments, measured tau_cl is "
-              f"{u.mean():.2f} +/- {u.std(ddof=1):.2f} times tau/(1+L).")
-    print("  Each gain was entered from the previous steady state, so most "
-          "steps are small;\n  this check confirms the trend rather than "
-          "measuring tau a second time.")
+        u = np.array([x[1] for x in usable])
+        print(f"\n  Over {len(u)} runs, measured tau_cl is {u.mean():.2f} "
+              f"+/- {u.std(ddof=1):.2f} times tau/(1+L), range "
+              f"{u.min():.2f} to {u.max():.2f}.")
 
-    # Mild systematic drift of tau with the command, worth stating rather than
-    # averaging away: it says the constant-coefficient assumption is only
-    # approximate over this range.
-    order = sorted(results, key=lambda r: r["pwm"] if r["heating"]
-                   else -r["pwm"])
-    print(f"\n  tau runs from {order[0]['tau']:.1f} s at u = "
-          f"{order[0]['pwm'] if order[0]['heating'] else -order[0]['pwm']:+d} "
-          f"to {order[-1]['tau']:.1f} s at u = "
-          f"{order[-1]['pwm'] if order[-1]['heating'] else -order[-1]['pwm']:+d}"
-          f" counts, a {100 * (order[-1]['tau'] / order[0]['tau'] - 1):.0f}% "
-          f"drift.\n  H and C are therefore not quite constant over the "
-          f"10 to 45 C range; the one-lump model is an approximation, not an "
-          f"identity.")
+    # tau is not the same on both branches, and the spread is worth stating
+    # rather than averaging away: it says the constant-coefficient one-lump
+    # model is only approximate over this range.
+    heat = sorted(r["tau"] for r in results if r["heating"])
+    cool = sorted(r["tau"] for r in results if not r["heating"])
+    if heat and cool:
+        print(f"\n  heating side (incl. zero command): {heat[0]:.1f} to "
+              f"{heat[-1]:.1f} s over {len(heat)} steps")
+        print(f"  cooling side: {cool[0]:.1f} to {cool[-1]:.1f} s over "
+              f"{len(cool)} steps, a {100 * (cool[-1] / cool[0] - 1):.0f}% "
+              f"spread")
+        print("  The mean above averages two branches that behave differently; "
+              "C and H are not\n  quite constant over the operating range.")
+    sizes = np.array([abs(r["t_inf"] - r["T"][0]) for r in results])
+    if len(sizes) > 2:
+        rr = np.corrcoef(sizes, taus)[0, 1]
+        print(f"  tau against step size: r = {rr:+.2f} over {len(sizes)} steps. "
+              f"Larger steps tend to\n  give longer tau, but with this few "
+              f"steps that is not firm, and the three\n  smallest steps are all "
+              f"cooling, so size and branch cannot be separated.")
 
     # ---------------------------- figure ----------------------------
     # Same conventions as the other figures: white plot area, light grey
@@ -283,8 +294,8 @@ def main():
                        fontsize=11.5, color="#404040", pad=8)
     drift = 100.0 * (max(taus) / min(taus) - 1.0)
     ax_right.text(0.03, 0.93,
-                  f"spread {min(taus):.0f} to {max(taus):.0f} s, {drift:.0f}%,"
-                  f" with no step-size dependence",
+                  f"spread {min(taus):.0f} to {max(taus):.0f} s, {drift:.0f}%;"
+                  f" heating side nearly constant",
                   transform=ax_right.transAxes, fontsize=9.5, color=GREY,
                   va="top")
     ax_right.set_ylim(0, max(taus) * 1.45)
@@ -292,13 +303,16 @@ def main():
     leg.get_frame().set_edgecolor("#BFBFBF")
     leg.get_frame().set_linewidth(0.8)
 
+    cool_taus = [r["tau"] for r in results if not r["heating"]]
+    cool_spread = (100.0 * (max(cool_taus) / min(cool_taus) - 1.0)
+                   if cool_taus else 0.0)
     fig.text(0.008, 0.015,
-             f"Each step is fitted to T = T_inf + (T_0 - T_inf) exp(-t/tau); "
-             f"every fit has R^2 > {min(r['r2'] for r in results):.3f}. "
-             f"Steps shorter than {MIN_SECONDS} s are excluded.\n"
-             f"A constant command moves where the temperature ends up but not "
-             f"how fast it gets there, so all eight are measurements of one "
-             f"number. Source: {OPEN_LOOP_CSV}.",
+             f"Each step is fitted to T = T_inf + (T_0 - T_inf) exp(-t/tau); the "
+             f"lowest R^2 is {min(r['r2'] for r in results):.4f}. Steps shorter "
+             f"than {MIN_SECONDS} s are excluded. Source: {OPEN_LOOP_CSV}.\n"
+             f"In the one-lump model every step would give the same tau. They "
+             f"do not: the heating side is nearly constant and the cooling side "
+             f"spreads {cool_spread:.0f}%.",
              fontsize=7.8, color=GREY, va="bottom")
     fig.subplots_adjust(left=0.075, right=0.985, top=0.91, bottom=0.21)
 

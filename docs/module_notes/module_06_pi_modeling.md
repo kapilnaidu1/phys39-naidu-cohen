@@ -36,7 +36,7 @@ explicitly says not to make new work for this section.
 | Module 4 steady-state temperature vs PWM | `data/module_04/steady_state.csv`, `data/module_04/full_run.csv` |
 | Module 5 droop vs gain | `data/module_05/droop.csv` |
 | Module 5 trace at a stable gain | `data/module_05/kp_0p25_run.csv` |
-| Module 5 trace near oscillation | `data/module_05/kp32_high_gain_run.csv`, the only run showing any overshoot |
+| Module 5 trace near oscillation | `data/module_05/session_2026-09-30_full_log.csv`, K<sub>p</sub> = 32, first 210 s; the only run showing any overshoot |
 | Python environment | numpy and matplotlib only; no scipy is needed by anything here |
 
 ---
@@ -60,8 +60,9 @@ data.
 an exponential approach rather than a ramp or a jump. Eight constant-command
 steps in `data/module_04/full_run.csv` fit
 T = T<sub>&infin;</sub> + (T<sub>0</sub>&minus;T<sub>&infin;</sub>)e<sup>&minus;t/&tau;</sup>
-with R<sup>2</sup> &gt; 0.998 and a common &tau;. Module 3 saw the same thing
-the crude way: no visible response for 35 s after commanding duty 28.
+with R<sup>2</sup> &gt; 0.998 and &tau; between 53 and 68 s, and the temperature starts
+moving within 0.5 to 2 s of every command, which is what a first-order lag
+does: an immediate start that slows as it approaches.
 
 **4. Why does the algebraic droop model not predict oscillation?** Because it
 contains no time derivative. It is the dT/dt = 0 limit of the balance, so it
@@ -89,11 +90,13 @@ predicted droop = 8.46 / 2.0025 = 4.225 C   ->   T_ss = 25.78 C
 measured  droop = 4.25 C                    ->   T_ss = 25.75 C
 ```
 
-Agreement to 0.6%. **One physical reason they differ:** the prediction uses a
-single &chi; fitted across the whole heating branch, while this run sits near
-17 counts where the local slope need not equal the branch average. Room drift
-over the session contributes as well, and section 3 shows &tau; itself moving
-22% across the command range, so the coefficients are not strictly constant.
+Agreement to 0.6%, 0.03 &deg;C. **One physical reason they may differ:**
+T<sub>amb</sub> is a single value measured in Module 4, before this sweep, and
+room temperature was not logged during it. The droop changes by
+1/(1+L) = 0.50 &deg;C per degree of ambient, so an effective ambient just 0.05
+&deg;C lower than 21.54 would account for the whole difference. With
+run-to-run reproducibility of 0.1 to 0.2 &deg;C (Module 5 section 4), this one
+run cannot resolve a difference this small.
 
 ---
 
@@ -141,6 +144,14 @@ every command, which is a prediction, and
 `docs/figures/module_06/tau_estimate.png` is the test. All eight collapse onto
 one exponential.
 
+**A closed-loop cross-check is too noisy to add anything.** Fitting an
+exponential to each 30 &deg;C P-control run and comparing with
+&tau;/(1+L) gives a ratio of 1.03 &plusmn; 0.38 over eight runs, range 0.49
+to 1.68 (`python/estimate_tau.py`). Most of those runs start within about 1
+&deg;C of where they end, so each fit is poorly conditioned. The trend is the
+right way, &tau;<sub>cl</sub> falling from 94 s at K<sub>p</sub> = 0.25 to
+3.0 s at K<sub>p</sub> = 32, but it is not a second measurement of &tau;.
+
 **&tau; and the Module 4 steady-state points are not independent.** Both come
 from fitting T = T<sub>&infin;</sub> + (T<sub>0</sub>&minus;T<sub>&infin;</sub>)e<sup>&minus;t/&tau;</sup>
 to the same steps in the same file: Module 4 kept T<sub>&infin;</sub> and this
@@ -150,9 +161,20 @@ not two confirmations. What **is** independent is section 4: the simulation
 takes &chi; and &tau; and predicts the whole measured trace, including its
 shape, which neither fit was asked to reproduce.
 
-**Honest caveat.** &tau; drifts from 53.3 s at u = &minus;65 to 65.0 s at
-u = +38, about 22%. The plate is more sluggish hot than cold, so H and C are
-not quite constant across 10 to 45 &deg;C. This supersedes the 146 s quoted in
+**Honest caveat.** &tau; is not the same at every command. On the heating
+side, including the zero-command decay, it is nearly constant: 65.0 to 65.8 s
+across four steps. On the cooling side it ranges from 53.3 to 67.7 s across
+four steps, a 27% spread, with the shortest at the strongest cooling command
+(u = &minus;65) but the longest at a weak one (u = &minus;16), so it is not a
+simple trend with command either. &tau; does correlate with step size,
+r = +0.62 over the eight steps: the three smallest steps (2.8 to 4.9 &deg;C)
+give the three shortest &tau;, the two largest (15 and 19 &deg;C) among the
+longest. With eight points that is not firm, and the three smallest steps are
+all cooling, so step size and branch cannot be separated here. A dependence on
+step size is what a second, slower thermal mass would produce, which fits
+section 4, but this data does not establish it. C and H are therefore not
+quite constant over the operating range, and 62.9 &plusmn; 5.0 s is an average
+over steps that behave differently. This supersedes the 146 s quoted in
 Module 3, which was measured on 16 September, before the A0 wiring fault was
 found.
 
@@ -188,12 +210,15 @@ from Module 4 and section 3.
 | Saturation limit | &plusmn;255 counts, applied to u before it reaches the model |
 | Console output | `data/module_06/simulation_output.txt` |
 
-**The residuals are structured, not random.** Both panels of the figure show a
-smooth excursion of about &plusmn;0.3 &deg;C that changes sign once, rather
-than scatter at the 0.02 &deg;C noise level: the model leads the measurement
-early and lags it later. A single exponential with the right &tau; cannot do
-that, so the disagreement is a second time scale rather than measurement
-error. This is the same conclusion section 6 reaches from the K<sub>p</sub> =
+**The residuals are structured, not random.** Model minus measurement runs
+from &minus;0.38 &deg;C at 15 s to +0.17 &deg;C at 119 s on the driven step,
+and from +0.15 &deg;C at 13 s to &minus;0.15 &deg;C at 124 s on the passive
+one: in both, a smooth excursion that changes sign once, against scatter of
+0.02 &deg;C. In both, **the measurement moves faster than the model at first
+and slower later**. A single exponential cannot do that against another single
+exponential, whatever its &tau;: the difference of two would keep one sign.
+So the disagreement is a second, faster time scale near the start of each
+step, not measurement error. This is the same conclusion section 6 reaches from the K<sub>p</sub> =
 32 overshoot, arriving independently from open-loop data.
 
 ---
@@ -209,14 +234,24 @@ which is the order the real controller uses.
 | 0.50 | 0.251 | 6.765 | 6.765 | 6.94 | 0.975 | 4 |
 | 1.00 | 0.501 | 5.635 | 5.635 | 5.50 | 1.025 | 8 |
 | 2.00 | 1.003 | 4.225 | 4.225 | 4.25 | 0.994 | 17 |
-| 4.00 | 2.005 | 2.815 | 2.815 | 2.82 | 0.998 | 34 |
-| 8.00 | 4.010 | 1.689 | 1.689 | 1.67 | 1.011 | 68 |
-| 16.00 | 8.020 | 0.938 | 0.938 | | | 135 |
-| 32.00 | 16.041 | 0.496 | 0.496 | | | 255, clamps 0.3 s |
+| 4.00 | 2.005 | 2.815 | 2.815 | 2.81 | 1.002 | 34 |
+| 8.00 | 4.010 | 1.689 | 1.689 | 1.57 | 1.076 | 68 |
+| 16.00 | 8.020 | 0.938 | 0.938 | 0.90 | 1.042 | 135 |
+| 32.00 | 16.041 | 0.496 | 0.496 | 0.46 | 1.079 | 255, clamps 0.3 s |
+
+Measured values are the corrected Module 5 set, recomputed from the full
+session log (Module 5 note section 3). Note the column is simulated over
+measured, the inverse of the Module 5 ratio.
 
 The simulation reproduces the algebraic 1/(1+L) exactly, as it must: both come
-from the same balance, one solved and one integrated. Agreement with
-measurement is 0.98 to 1.03 across a 32-fold range of gain.
+from the same balance, one solved and one integrated. Against measurement it
+agrees to within 2.5% up to K<sub>p</sub> = 4, and **over-predicts the droop
+by 4 to 8% at the three highest gains**. In degrees those misses are 0.04 to
+0.12 &deg;C, inside the 0.1 to 0.2 &deg;C run-to-run reproducibility of the
+session, so the data cannot say whether that is a real high-gain effect.
+The simulated K<sub>p</sub> = 32 run starts from ambient and clamps briefly;
+the measured one started at 29.09 &deg;C and never did. Steady-state droop does
+not depend on the starting point, so the comparison stands.
 Figure: `docs/figures/module_06/p_control_sim.png`.
 
 ---
@@ -253,29 +288,34 @@ needs.
 
 ### What our apparatus does that this forbids
 
-Module 5 found a **0.041 &deg;C overshoot at K<sub>p</sub> = 32**, peaking 7 s
-in, against a 0.020 &deg;C noise floor, and absent at every lower gain. The
-model says that is impossible, so something is missing.
+Module 5 found that at K<sub>p</sub> = 32 the trace **overshoots by 0.04
+&deg;C at 7 s and then undershoots by 0.05 &deg;C at 12 s**, returning to its
+settled value only by about 28 s, against a settled peak-to-peak of 0.02
+&deg;C. Nothing comparable appears at K<sub>p</sub> = 16. The model says
+crossing the settled value is impossible, so something is missing. **This was
+observed in one run only**; it has not been repeated.
 
 **The extension we judge most important: thermal lag between the TEC face and
-the thermistor,** that is, a second lump. The evidence is that the overshoot
-is gain-dependent in the right way. &tau;<sub>cl</sub> = &tau;/(1+L) is 7.0 s
-at K<sub>p</sub> = 16, where no overshoot appears, and 3.7 s at
-K<sub>p</sub> = 32, where it does. A fixed lag between the Peltier junction
-and the sensor only matters once the loop becomes fast enough to act on stale
-information, which puts that lag somewhere **between about 4 and 7 s**.
+the thermistor,** that is, a second lump. The overshoot fits that picture:
+&tau;<sub>cl</sub> = &tau;/(1+L) is 7.0 s at K<sub>p</sub> = 16, where none
+appears, and 3.7 s at K<sub>p</sub> = 32, where it does, and a fixed lag only
+matters once the loop is fast enough to act on stale information. *If* lag is
+the cause, it lies **between about 4 and 7 s**. That rests on one run at each
+gain, so it is a consistent reading rather than a measurement of the lag. The
+stronger evidence is the open-loop residuals below, which do not depend on the
+overshoot at all.
 
 The page lists seven candidates. Taking each against our data:
 
 | Extension | Verdict for this apparatus |
 |---|---|
 | **Two thermal masses** | **Chosen.** The TEC junction and the block are not one object; the figure's structured residuals and the gain-threshold behaviour both point here. |
-| Sensor lag | Same signature as a second mass and not separable from it with our data. The thermistor is epoxied to the plate, so its own mass is small, which makes it the smaller part of the same effect. |
-| Time delay | A pure transport delay would show as a flat dead time before any response. Module 3 saw 35 s of apparent dead time, but that is the first part of an exponential with &tau; = 63 s, not a true delay. No evidence for one. |
+| Sensor lag | Same signature as a second mass and not separable from it with our data. How the thermistor is attached to the plate is not recorded in this repository, so its own contribution cannot be estimated. |
+| Time delay | A pure transport delay would show as a flat dead time before any response. In every Module 4 step, commanded from Python, the temperature moves within 0.5 to 2.0 s of the command, so any delay is at most about 2 s. Module 3 recorded a 35 s onset delay once, but in a run whose duty was set by a trim pot its own log describes as intermittent, and it is not reproduced here. |
 | Discrete controller update | Real and the strongest competitor: sampling at 1.97 Hz against &tau;<sub>cl</sub> = 3.7 s is only 7 samples per time constant. Cannot be separated from thermal lag at this logging rate. |
 | Actuator lag | The bridge switches at 490 Hz and the Peltier effect is essentially instantaneous; any lag here is milliseconds against seconds. Ruled out. |
 | PWM saturation | Ruled out by measurement: the command peaked at 31 of 255 counts, so the loop stayed linear. |
-| Measurement noise | 0.020 &deg;C peak to peak, the same size as the 0.041 &deg;C overshoot, and random. It cannot produce a repeatable one-sided bump at a fixed time after the step. |
+| Measurement noise | 0.02 &deg;C settled peak to peak, against excursions of 0.04 and 0.05 &deg;C lasting several seconds each. Unlikely to be noise, but with a single occurrence it cannot be ruled out; repeating the K<sub>p</sub> = 32 step would settle it. |
 
 **Why a second mass rather than discrete sampling.** Both are consistent with
 the overshoot alone, but the open-loop residuals in section 4 separate them:
@@ -329,7 +369,7 @@ C = &tau;H. Any other H scales all three together and changes nothing.
 The prediction and the trace agree on both sides of &zeta; = 1, which is the
 check the module is asking for. It holds only while the model is linear and
 the command is unclamped, and both of these runs stay well inside that: peak
-command 17 counts of 255.
+command 16.9 counts overdamped and 20.2 counts underdamped, of 255.
 
 ### Our apparatus cannot wind up
 
@@ -426,6 +466,7 @@ same either way.
 - [x] windup thought-experiment answers: section 8
 - [ ] link to the pushed Git checkpoint: add the hash once pushed
 
-**Open.** The 1 Hz log cannot separate thermal lag from discrete sampling as
-the cause of the K<sub>p</sub> = 32 overshoot. A faster log would settle it,
-and that is a Part II question rather than something to guess at here.
+**Open.** The 1.97 Hz log cannot separate thermal lag from discrete sampling as
+the cause of the K<sub>p</sub> = 32 overshoot, and the overshoot itself was
+seen in one run. Repeating that step, ideally with a faster log, would settle
+both, and that is a Part II question rather than something to guess at here.

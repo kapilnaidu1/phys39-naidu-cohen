@@ -1,7 +1,9 @@
 kp,setpoint_c,final_t_c,final_pwm,notes
-0.25,30.0,22.34,2,settled; 60 s drift 0.000 C; low-gain representative trace
-0.50,30.0,23.06,3,settled; 60 s drift 0.000 C
-1.00,30.0,24.50,6,settled; 60 s drift +0.020 C
-2.00,30.0,25.75,8,settled; L=1.003; 50.2 pct of e0 survives vs 50 pct predicted
-4.00,30.0,27.18,11,settled; diff from prediction -0.01 C; PWM jitter sd 0.00
-8.00,30.0,28.33,13,settled; PWM 13-14 sd 0.28 counts; predicted jitter 1.3
+0.25,30.0,22.34,2,"settled; low-gain representative trace; final 60 s drift +0.010 C, p-p 0.04 C"
+0.50,30.0,23.06,3,"settled; final 60 s drift -0.055 C, p-p 0.05 C"
+1.00,30.0,24.50,6,"settled; final 60 s drift -0.008 C, p-p 0.04 C"
+2.00,30.0,25.75,8,"settled; L = 1.003; final 60 s drift -0.000 C, p-p 0.02 C"
+4.00,30.0,27.19,11,"previously recorded 27.18, which is the most common single reading in the final minute; the mean of that minute is 27.19; settled by the 0.16 C criterion but still rising 0.043 C per minute when the gain was changed, shortest run of the sweep at 166 s; final 60 s p-p 0.05 C"
+8.00,30.0,28.43,13,"previously recorded 28.33, which matches the final 60 s of kp_sweep_full_run.csv (28.335), a snapshot taken 114 s into this 278 s run; the plate rose a further 0.10 C after that and settles at 28.43 in the full log; final 60 s drift +0.002 C, p-p 0.02 C"
+16.00,30.0,29.10,14,"settled; entered at 28.36 C after a 49 s Kp = 9 transient that followed the 15 C cooling sign test, not from a prior steady state; final 60 s drift +0.002 C, p-p 0.02 C"
+32.00,30.0,29.54,15,"settled within the first 210 s; after about 216 s the plate stops following the command (see module note); value is the final 60 s of the valid window; final 60 s drift -0.000 C, p-p 0.02 C"

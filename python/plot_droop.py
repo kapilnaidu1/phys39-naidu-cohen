@@ -7,7 +7,8 @@ assignment requires.
 
     python3 python/plot_droop.py        (run from the repository root)
 
-INPUT   data/module_05/droop.csv
+INPUT   data/module_05/droop.csv, every value recomputed from
+        data/module_05/session_2026-09-30_full_log.csv
 OUTPUT  docs/figures/module_05/droop_vs_gain.png
         a table of measured vs predicted droop, printed
 
@@ -96,10 +97,10 @@ def main():
               f"{ratio:7.3f} {pwm:9.1f} {kp * d_meas:9.1f}")
 
     print()
-    print("  The last two columns are a consistency check independent of the")
-    print("  droop model: at steady state the commanded PWM should equal")
-    print("  Kp * droop. If those disagree, the loop is not actually settled,")
-    print("  or the command is being clamped.")
+    print("  The last two columns should agree to within rounding. That is not")
+    print("  evidence about the apparatus: the controller computes")
+    print("  p = round(abs(kp * e)), so PWM = Kp * droop holds at every instant,")
+    print("  settled or not. It only confirms the command and the log agree.")
 
     # ---- figure ----
     #
@@ -135,7 +136,10 @@ def main():
 
     ratios = [m / p for m, p in zip(meas, pred)]
     mean_r = sum(ratios) / len(ratios)
-    sd_r = (sum((r - mean_r) ** 2 for r in ratios) / len(ratios)) ** 0.5
+    # Sample standard deviation (n - 1): the spread is being estimated from a
+    # handful of points, so the population form would understate it.
+    sd_r = (sum((r - mean_r) ** 2 for r in ratios) / (len(ratios) - 1)) ** 0.5
+    rms_res = (sum((m - p) ** 2 for m, p in zip(meas, pred)) / len(meas)) ** 0.5
     ss_res = sum((m - p) ** 2 for m, p in zip(meas, pred))
     mbar = sum(meas) / len(meas)
     ss_tot = sum((m - mbar) ** 2 for m in meas)
@@ -144,7 +148,8 @@ def main():
     ax.text(0.03, 0.96,
             f"Model:  y = {e0:.2f} / (1 + {CHI_H:.4f}x)",
             transform=ax.transAxes, fontsize=9.5, color=PRED_COLOR, va="top")
-    ax.text(0.03, 0.905, f"R\u00b2 = {r2:.4f}",
+    ax.text(0.03, 0.905,
+            f"R\u00b2 = {r2:.4f},  rms residual {rms_res:.3f} \u00b0C",
             transform=ax.transAxes, fontsize=9.5, color=PRED_COLOR, va="top")
     ax.text(0.03, 0.85,
             f"measured / model = {mean_r:.3f} \u00b1 {sd_r:.3f}",
@@ -167,12 +172,12 @@ def main():
 
     fig.text(0.01, 0.015,
              f"Setpoint {sp0:.1f} \u00b0C, T_amb = {T_AMB:.2f} \u00b0C, "
-             f"e0 = {e0:.2f} \u00b0C. Each point is the mean of the final "
-             f"60 s of a settled run.\nThe model uses the Module 4 "
-             f"susceptibility and has no free parameters; it is not fitted "
-             f"to these data.",
+             f"e0 = {e0:.2f} \u00b0C. Each point is the mean of the final 60 s "
+             f"of its run (for Kp = 32, of its first 210 s).\nSource: "
+             f"data/module_05/session_2026-09-30_full_log.csv. The model uses the "
+             f"Module 4 susceptibility and is not fitted to these data.",
              fontsize=7.6, color="#595959", va="bottom")
-    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    fig.tight_layout(rect=(0, 0.09, 1, 1))
 
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)
     fig.savefig(OUTPUT_PNG, dpi=200, facecolor="white")

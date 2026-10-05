@@ -48,7 +48,7 @@ block.
 
 | Criterion | Points | What we have for it |
 |---|---|---|
-| P-control droop and instability evidence is quantitative and reproducible | 2 | Droop at eight gains, mean measured/predicted 1.003 &plusmn; 0.017; the K<sub>p</sub> = 32 overshoot, 0.041 &deg;C against a 0.020 &deg;C noise floor |
+| P-control droop and instability evidence is quantitative and reproducible | 2 | Droop at eight gains, measured/predicted 0.980 &plusmn; 0.039; the K<sub>p</sub> = 32 overshoot and undershoot, +0.04 and &minus;0.05 &deg;C against 0.02 &deg;C settled scatter, seen in one run |
 | One-lump balance, steady state, time constant, parameters and units correct; interpretation covers why droop is needed, &chi; = P<sub>u</sub>/H, and dimensionless gain | 2 | Module 6 sections 1 to 3; Module 5 section 6 answers all three |
 | **P and PI use comparable conditions and quantitative transient metrics** | 2 | Same K<sub>p</sub> = 2, same setpoint, same start; droop, overshoot, settling time and &zeta; tabulated |
 | **Integral action, anti-windup, thermal lag, and a model limitation explained** | 2 | Module 6 sections 6 to 8. All four, not three |
@@ -65,14 +65,16 @@ are, so the comparison is of the controller and nothing else. The fourth wants
 
 | Quantity | Value | Source |
 |---|---|---|
-| &chi;<sub>T,h</sub> | 0.50127 &deg;C per PWM count | Module 4, rms residual 0.010 &deg;C, R<sup>2</sup> = 0.999999 |
-| &#124;&chi;<sub>T,c</sub>&#124; | 0.18091 &deg;C per PWM count | Module 4, rms residual 0.138 &deg;C, R<sup>2</sup> = 0.998912 |
+| &chi;<sub>T,h</sub> | 0.50127 &deg;C per PWM count as submitted; 0.4965 to 0.5030 recomputed from the raw log by three methods | Module 4 section 4, raw-data audit |
+| &#124;&chi;<sub>T,c</sub>&#124; | 0.18091 as submitted; 0.1786 to 0.1826 from the raw log | Module 4 section 4 |
+| r | 2.771 as submitted; 2.720 to 2.816 from the raw log, so about &plusmn;0.05 | Module 4 section 4 |
 | &tau; | 62.9 &plusmn; 5.0 s | 8 steps fitted, Module 6 section 3 |
 | T<sub>amb</sub> | 21.54 &deg;C | Module 4 zero-command steady state |
 | Noise floor | 0.16 &deg;C p-p open loop, 0.02 &deg;C closed | Modules 4 and 5 |
 | Setpoint used throughout | 30.0 &deg;C, e<sub>0</sub> = 8.46 &deg;C | Module 5 |
-| Droop agreement | mean 1.003, sd 0.017, 8 gains | Module 5 section 3 |
-| K<sub>p</sub> = 32 overshoot | 0.041 &deg;C at t = 7 s | Module 5 section 5 |
+| Droop agreement | 0.980 &plusmn; 0.039 over 8 gains; 1.005 &plusmn; 0.020 up to K<sub>p</sub> = 4, all three above that 4 to 7% low | Module 5 sections 3 and 4 |
+| Run-to-run reproducibility | about 0.1 to 0.2 &deg;C | Module 5 section 4 |
+| K<sub>p</sub> = 32 transient | +0.04 &deg;C at 7 s, &minus;0.05 &deg;C at 12 s, one run | Module 5 section 5 |
 | Open-loop model rms residual | 0.147 &deg;C driven, 0.094 &deg;C passive | Module 6 section 4 |
 | Windup, limit 50 counts | +1.46 &deg;C plain, +0.26 &deg;C anti-windup | Module 6 section 7 |
 
@@ -81,16 +83,23 @@ are, so the comparison is of the controller and nothing else. The fourth wants
 ## The argument, in the order it should be told
 
 1. Module 4 measured &chi;. Module 5 closed the loop and found droop that
-   1/(1+L) predicts to 0.3% on average with no fitting.
+   1/(1+L) predicts to within 2.6% up to L = 2 with no fitting; the three
+   highest gains come out 4 to 7% low, which is within the session's 0.1 to
+   0.2 &deg;C run-to-run reproducibility.
 2. The same measurement gives &tau; = 62.9 s, so the model has both
    parameters it needs and still none are free.
-3. Simulated open loop lands within 0.02 &deg;C of two measured steps.
-4. Simulated P reproduces the measured droop across a 32-fold gain range.
+3. Simulated open loop ends within 0.02 &deg;C of two measured steps, but on
+   the way it misses by up to 0.38 &deg;C in a structured way.
+4. Simulated P reproduces the measured droop to 2.5% up to K<sub>p</sub> = 4
+   and over-predicts it by 4 to 8% at the three highest gains.
 5. PI removes the droop entirely, at the cost of overshoot once &zeta; < 1.
 6. **The model is wrong in two places, and we can say where.** The P-only
-   model forbids overshoot; ours overshoots at K<sub>p</sub> = 32. The
-   open-loop residuals are structured rather than random. Both point at a
-   second thermal mass.
+   model forbids overshoot; ours overshoots and undershoots at
+   K<sub>p</sub> = 32, in the one run made there. The
+   open-loop residuals are structured rather than random. Both are
+   consistent with a second thermal mass; the residuals are the stronger
+   evidence, because those traces contain no controller, so discrete
+   sampling cannot explain them.
 7. Windup is a real failure mode but not one this apparatus can reach:
    holding 45 &deg;C needs 47 of 255 counts.
 
@@ -120,19 +129,28 @@ rather than left in a CSV comment:
 
 - **Quote rms residuals, not R squared to four decimals.** The heating branch
   is 0.010 &deg;C rms over a 25 &deg;C span, which rounds to R<sup>2</sup> =
-  1.0000 and reads as fake. The cooling branch is 0.138 &deg;C. The 14-fold
-  difference is the Peltier/Joule asymmetry predicted in A2, not luck.
-- **Eight of ten Module 4 steady-state points are fitted asymptotes.** The
-  extrapolation is small, 0.5% to 3.6% of each step, but a fitted asymptote is
-  noise-suppressed, so the straight-line R squared measures the fits as well as
-  the apparatus.
+  1.0000 and reads as fake. The cooling branch is 0.138 &deg;C. Neither branch
+  curves (a quadratic term is not significant on either), so the 14-fold
+  difference is scatter whose cause is not established. Do not explain it as
+  the Peltier/Joule asymmetry: under PWM both terms are linear in duty, which
+  is A2's own result.
+- **Module 4's steady-state points are partly extrapolated, and one has no
+  data.** Only four of the eight runs in the log met the steady-state
+  criterion; the other four were still moving 0.25 to 0.54 &deg;C per minute,
+  and their extrapolated values shift by up to 1.3 &deg;C with the fitting
+  window, which was never recorded. The +50 point (46.6 &deg;C) has no run in
+  the repository at all. State all of this, and quote r as about 2.77
+  &plusmn; 0.05 rather than to four figures.
 - **&tau; and those asymptotes come from the same fits**, so they are not
   independent confirmations of each other. The independent test is the
-  simulation reproducing a whole trace it was never fitted to.
+  simulation predicting a whole trace it was never fitted to: it gets the
+  endpoint to 0.02 &deg;C and misses the path by up to 0.38 &deg;C.
 
 The strongest argument that nothing is invented is the list of things that did
-not work: the structured &plusmn;0.3 &deg;C open-loop residuals, the 0.041
-&deg;C overshoot the model forbids, the 22% drift in &tau;, and the Laird
+not work: the structured open-loop residuals of up to 0.38 &deg;C, the
+overshoot and undershoot the model forbids, the 27% spread in &tau; across the
+cooling steps, the corrected K<sub>p</sub> = 8 point moving *away* from the
+model, and the Laird
 comparison missing by 8% **in the direction opposite** to what current alone
 predicts. None of those is what a fabricated data set looks like. Lead with
 them.

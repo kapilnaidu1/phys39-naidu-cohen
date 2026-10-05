@@ -37,10 +37,10 @@ PART 5   P-only feedback in simulation, against Module 5
     0.50   0.251      6.765     6.765      6.94     0.975         4     no
     1.00   0.501      5.635     5.635      5.50     1.025         8     no
     2.00   1.003      4.225     4.225      4.25     0.994        17     no
-    4.00   2.005      2.815     2.815      2.82     0.998        34     no
-    8.00   4.010      1.689     1.689      1.67     1.011        68     no
-   16.00   8.020      0.938     0.938       nan                 135     no
-   32.00  16.041      0.496     0.496       nan                 255    yes
+    4.00   2.005      2.815     2.815      2.81     1.002        34     no
+    8.00   4.010      1.689     1.689      1.57     1.076        68     no
+   16.00   8.020      0.938     0.938      0.90     1.042       135     no
+   32.00  16.041      0.496     0.496      0.46     1.079       255    yes
 
   The simulated droop reproduces the algebraic 1/(1+L) result exactly, as it must:
   both come from the same balance, one solved and one integrated.

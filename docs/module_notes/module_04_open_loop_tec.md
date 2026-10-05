@@ -33,8 +33,10 @@ constants is minutes.
 **2. Why wait?** An exponential approach is steepest at the start, so an early
 reading is not a small error but a systematically low one, low by different
 amounts at different PWM values. That biases the *slope*, which is what this
-module measures. Module 3 saw no response at all for 35 s after commanding
-duty 28.
+module measures. Module 3 recorded no response for 35 s after commanding
+duty 28, but the Module 4 steps do not reproduce that: every one responds
+within 0.5 to 2 s of the command. The Module 3 run had its duty set by a trim
+pot that its own log describes as intermittent.
 
 **3. Why do the slopes differ?** Measured in Module 3: +1.821 &deg;C/s heating
 against &minus;0.269 cooling at full drive, a factor of 6.8, and 3.7 at duty
@@ -136,8 +138,8 @@ the earlier draft of this note got wrong.
 
 | Direction | Target steady temperature | PWM that produces it |
 |---|---|---|
-| Heat | **45 C +/- 2 C** | **PWM 50**, settled 46.6 C |
-| Cool | **10 C +/- 1 C** | **PWM 65**, settled 9.75 C |
+| Heat | **45 C +/- 2 C** | **PWM 50**, recorded as 46.6 C. **No raw data for this run exists in the repository**; see section 4 |
+| Cool | **10 C +/- 1 C** | **PWM 65**, final minute 9.81 C in `full_run.csv`, settled by the criterion |
 
 Those two PWM values ARE the maximum useful magnitudes. The two will differ,
 and heating's will be much the smaller of the two.
@@ -235,15 +237,22 @@ rounds the heating branch to 1.0000. **The honest numbers are above, and the
 rms residual is the more useful one** because it has units and can be compared
 with the noise floor.
 
-### Why the heating branch fits 14 times better than the cooling branch
+### The cooling branch scatters 14 times more, and that is not explained
 
-This is the first thing anyone will ask, and the answer is a prediction
-surviving rather than a measurement being lucky. Peltier pumping grows with
-current while Joule heating grows with current squared. On the heating branch
-the two add and both stay linear in duty; on the cooling branch they oppose, so
-the useful cooling effect is a linear term minus a term that grows faster, and
-the branch should bend. The branch predicted to be less linear is the one that
-is.
+The heating points sit within 0.010 &deg;C rms of their line, the cooling
+points within 0.138 &deg;C. An earlier version of this section explained the
+difference as the cooling branch bending, because Joule heating grows as
+current squared. **That was wrong, and is withdrawn.** Under PWM the bridge
+switches a fixed current on and off, so &lt;I&gt; = DI and
+&lt;I<sup>2</sup>&gt; = DI<sup>2</sup> are both linear in duty, which is the
+result of A2's own derivation: neither branch should curve.
+
+Nor does it. Adding a quadratic term to the cooling fit lowers the rms only
+from 0.138 to 0.101 &deg;C, F(1,2) = 1.7 against a 5% critical value of 18.5,
+and the residuals alternate in sign along the branch (&minus;+&minus;+&minus;),
+which is scatter rather than a bend. So the cooling branch is straight but
+noisier, and **why it is noisier is not established by this data.** The
+heating residuals alternate the same way, at a fourteenth of the size.
 
 ### What the R squared does and does not measure
 
@@ -255,11 +264,60 @@ much smaller than scatter through raw endpoint readings would be. The R squared
 above therefore measures the linearity of the apparatus **and** the quality of
 those exponential fits together, and cannot be separated into the two.
 
-The extrapolation itself is small. Every run waited between 3.3 and 5.2 time
-constants, so between 0.5% and 3.6% of each step remained when it was stopped.
-Extrapolating a few percent along a well-determined exponential is defensible;
-claiming the resulting straight line proves the apparatus linear to one part in
-a million is not.
+An earlier version of this paragraph said only 0.5% to 3.6% of each step
+remained when it was stopped, on the basis of a single 63 s time constant.
+**That is withdrawn.** The raw log shows the +12 run still rising 0.54 &deg;C
+per minute when stopped, about three times faster than a single 63 s
+exponential with that much left would allow; Module 6 finds a second, slower
+time scale that explains it. The audit below shows what that does to the
+extrapolated values.
+
+### Raw-data audit, 5 October
+
+`python/steady_state_from_raw.py` recomputes every point directly from
+`full_run.csv` and writes `data/module_04/steady_state_from_raw.csv`.
+`steady_state.csv`, which A2 was built from, is left unchanged.
+
+| u | final 60 s, measured | drift per min | settled? | extrapolated asymptote, by fitting window | submitted |
+|---|---|---|---|---|---|
+| &minus;65 | 9.81 | +0.05 | yes | 9.80 to 9.85 | 9.75 |
+| &minus;49 | 13.00 | &minus;0.06 | yes | 12.92 to 12.96 | 12.99 |
+| &minus;32 | 15.99 | &minus;0.11 | yes | 15.83 to 15.90 | 15.83 |
+| &minus;16 | 19.06 | &minus;0.25 | **no** | 18.66 to 18.96 | 18.90 |
+| 0 | 21.65 | &minus;0.11 | yes | 21.52 to 21.60 | 21.54 |
+| +12 | 26.95 | +0.54 | **no** | 27.13 to 28.39 | 27.57 |
+| +25 | 33.87 | +0.27 | **no** | 34.02 to 34.23 | 34.07 |
+| +38 | 40.36 | +0.27 | **no** | 40.55 to 40.74 | 40.61 |
+| +50 | **no run in the log** | | | | 46.60 |
+
+What this establishes:
+
+- **Only four of the eight runs met the module's steady-state criterion.**
+  The other four were still moving 0.25 to 0.54 &deg;C per minute when
+  stopped, so their values are extrapolations, not readings.
+- **Those extrapolations depend on an undocumented choice.** Fitting the whole
+  run, or only its last 200, 150 or 120 s, moves the +12 asymptote across
+  1.26 &deg;C. The submitted values are closest to a 200 s window, within 0.02
+  to 0.07 &deg;C on the heating side, but which window was used was never
+  recorded.
+- **The +50 point has no data behind it here.** The plate never exceeds
+  40.48 &deg;C anywhere in `full_run.csv`. The run may have been logged in a
+  file that was not kept; that should be checked before the point is used
+  again.
+- **Two submitted values match truncated snapshots rather than the end of the
+  run.** &minus;65 is recorded as 9.75, which is the last reading in
+  `cooling_trace_01.csv`, a snapshot that stops at 384 s; the run continued
+  to 481 s and its final minute averages 9.81. The same thing happened with
+  K<sub>p</sub> = 8 in Module 5.
+
+**What survives.** Using only points present in the log, the ratio comes out
+r = 2.720 from the measured final minutes, 2.765 from whole-run asymptotes and
+2.816 from 200 s asymptotes, against 2.771 submitted; Q<sub>J</sub>/Q<sub>P</sub>
+ranges 0.462 to 0.476 against 0.470. **A2's physical conclusion holds.** What
+does not hold is the precision implied by R<sup>2</sup> = 1.0000: the honest
+uncertainty on r from the choice of method alone is about &plusmn;0.05, and
+the heating line's rms residual is 0.02 to 0.25 &deg;C depending on method,
+not 0.010.
 
 ---
 
@@ -309,14 +367,18 @@ Qp_max = Qc_max + Qj_max     = 126.77 W
 r_Laird,max                  = 2.556
 ```
 
-Cross-check that the right rows were read: V_max/I_max = 13.9/8.6 = 1.616 ohm,
-8% above R_M. That is the Seebeck back-EMF at dT_max, giving S = 0.0142 V/K,
-sensible for 127 bismuth telluride couples.
+All values re-read from the course-hosted data sheet on 5 October and
+confirmed; the SPECIFICATIONS table is on page 3. A Seebeck cross-check that
+used to sit here, S = (V_max - I_max R_M)/dT_max = 0.0142 V/K, has been
+withdrawn: it used R_M at 27 C for a condition where the module averages about
+-8 C, and the result moves by a factor of three with that unknown resistance.
+See `docs/assessments/a2_open_loop_tec.md` section 4.
 
 **Comparison: 2.771 measured against 2.556, agreement to 8%**, closer than
 this comparison deserves. They are not expected to agree: D = 1 does not imply
-I = I_max (the bench current is set by supply voltage and limit, H-bridge drop,
-wiring and R_M); our current is chopped rather than steady DC; the data sheet
+I = I_max (12 V across 1.50 ohm gives at most about 8.0 A, before the bridge
+drop, wiring and back-EMF; the bench current itself was not measured); our
+current is chopped rather than steady DC; the data sheet
 holds at dT = 0 while the plate ran 25 C above and 12 C below ambient; and the
 coefficients move with temperature.
 

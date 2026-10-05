@@ -119,19 +119,26 @@ r_Laird,max = (Qp_max + Qj_max) / (Qp_max - Qj_max)
             = 2.556
 ```
 
-### Cross-check worth including
+### Data-sheet check
 
-`V_max / I_max = 13.9 / 8.6 = 1.616 ohm`, which is **8% above** the quoted
-`R_M = 1.50 ohm`. That is not an inconsistency. At `dT_max` the module
-develops a Seebeck back-EMF, so
+**Verified against the data sheet, 5 October.** All four values, plus
+V<sub>max</sub> = 13.9 V and the 35 and 50 &deg;C resistances, were read again
+from the course-hosted PDF and match. The SPECIFICATIONS table is on **page
+3** of the three-page sheet.
 
-```
-V_max = I_max * R_M + S * dT_max
-    S = (13.9 V - 8.6 A * 1.50 ohm) / 70.5 K = 0.0142 V/K
-```
-
-which is a sensible Seebeck coefficient for a 127-couple bismuth telluride
-module. It confirms we read the right rows.
+**A cross-check that was here has been withdrawn.** It computed a Seebeck
+coefficient from V<sub>max</sub> = I<sub>max</sub>R<sub>M</sub> +
+S&middot;&Delta;T<sub>max</sub>, using R<sub>M</sub> = 1.50 &Omega;. But 1.50
+&Omega; is the resistance with the whole module at 27 &deg;C, and
+V<sub>max</sub> is quoted at &Delta;T<sub>max</sub>, where the cold face is
+near &minus;44 &deg;C and the module averages about &minus;8 &deg;C. The sheet
+gives no resistance at that temperature, and the answer depends heavily on it:
+1.50 &Omega; gives S = 0.014 V/K, while a straight-line extension of the
+sheet's own 27 to 50 &deg;C trend down to &minus;8 &deg;C (an assumption, for
+illustration only) gives 1.22 &Omega; and S = 0.048 V/K. A check that moves by
+a factor of three with an unknown input cannot confirm anything, and the
+earlier claim that 0.014 V/K was "reasonable" for 127 couples was not
+supported.
 
 ## 5. Comparison *(part of 2 pts with item 6)*
 
@@ -147,11 +154,15 @@ and the write-up should say so rather than claim a prediction confirmed.
 **Why they should not be expected to match.**
 
 - **D = 1 does not mean I = I_max.** Full duty only means the bridge is
-  continuously on. The actual current is set by supply voltage and current
-  limit, H-bridge forward drop, wiring resistance and `R_M`. With a 12 V
-  supply and about 1.6 ohm of loaded module plus bridge drop and wiring, the
-  bench current is well under 8.6 A, so we never operate at the data-sheet
-  condition.
+  continuously on. The actual current is set by the supply voltage, the
+  H-bridge drop, wiring resistance, `R_M` and the module's own back-EMF. The
+  supply is rated 12 V with no adjustable current limit; its measured voltage
+  was not written down. 12 V across R_M = 1.50 ohm gives **at most about
+  8.0 A**, 7% below I_max, and less once the other drops are included. So full
+  duty does not reach I_max, but the margin set by the supply alone is small,
+  and **the bench current was never measured**. An earlier version said "well
+  under 8.6 A" using a 1.6 ohm figure taken from the withdrawn Seebeck
+  cross-check; that was not supported.
 - **PWM, not steady DC.** Our current is chopped. Section 3a shows the
   cycle averages are `<I> = DI` and `<I^2> = DI^2`, so the Peltier and Joule
   contributions scale together with duty; the data sheet assumes a steady

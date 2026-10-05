@@ -7,10 +7,19 @@ evidence list asks for as figures rather than raw CSV.
 
     python3 python/plot_p_control_traces.py      (run from the repository root)
 
-INPUT   data/module_05/kp32_high_gain_run.csv
-        One continuous log that carries the whole gain sweep. Each gain is a
-        contiguous block of rows with the same kp and p_enabled = 1, so the
+INPUT   data/module_05/session_2026-09-30_full_log.csv
+        The complete live log of the 30 September session, copied from
+        p_control_run.csv with every value unchanged (Git stores it with LF
+        line endings where the GUI wrote CRLF). The kp_*_run.csv files are
+        earlier snapshots of this same log and stop partway through. Each gain
+        is a contiguous block of rows with the same kp and setpoint, so the
         panels are cut out of the one file rather than stitched from several.
+
+VALID WINDOW FOR Kp = 32
+        From about 216 s after Kp = 32 was applied, the plate falls steadily
+        while the commanded heating climbs to 149 counts: the plate stops
+        following the command. Only the first 210 s are plotted, and the
+        settled value is taken from that window. See the Module 5 note.
 
 OUTPUT  docs/figures/module_05/p_control_traces.png
 
@@ -28,7 +37,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-INPUT_CSV = "data/module_05/kp32_high_gain_run.csv"
+INPUT_CSV = "data/module_05/session_2026-09-30_full_log.csv"
 OUTPUT_PNG = "docs/figures/module_05/p_control_traces.png"
 
 CHI_H = 0.50127        # C per PWM count, Module 4 heating branch
@@ -39,8 +48,11 @@ COOL = "#1F77B4"
 SET = "#595959"
 PRED = "#1F4E79"
 
-# (gain, label). Both are read out of the one log.
-PANELS = [(0.25, "low gain"), (32.0, "high gain")]
+SETPOINT = 30.0        # C, every panel uses the heating setpoint
+SETTLE_WINDOW = 60.0   # s, the settled value is the mean of this final span
+
+# (gain, label, last valid second after the gain was applied or None)
+PANELS = [(0.25, "low gain", None), (32.0, "high gain", 210.0)]
 
 
 def read_segments(path):
@@ -64,7 +76,7 @@ def read_segments(path):
                 }
             except (KeyError, ValueError, TypeError):
                 continue
-            k = (row["kp"], row["on"])
+            k = (row["kp"], row["on"], row["set"])
             if k != key:
                 if current:
                     blocks.append((key, current))
@@ -75,8 +87,8 @@ def read_segments(path):
             blocks.append((key, current))
 
     longest = {}
-    for (kp, on), rows in blocks:
-        if not on or len(rows) < 2:
+    for (kp, on, setpoint), rows in blocks:
+        if not on or len(rows) < 2 or abs(setpoint - SETPOINT) > 1e-6:
             continue
         span = rows[-1]["t"] - rows[0]["t"]
         if kp not in longest or span > longest[kp][0]:
@@ -86,7 +98,7 @@ def read_segments(path):
 
 def main():
     segments = read_segments(INPUT_CSV)
-    missing = [kp for kp, _ in PANELS if kp not in segments]
+    missing = [kp for kp, _, _ in PANELS if kp not in segments]
     if missing:
         sys.exit(f"{INPUT_CSV} has no enabled block for Kp = {missing}. "
                  f"Available: {sorted(segments)}")
@@ -114,14 +126,17 @@ def main():
             ax.spines[side].set_visible(False)
 
     summary = []
-    for col, (kp, label) in enumerate(PANELS):
+    for col, (kp, label, limit) in enumerate(PANELS):
         rows = segments[kp]
         t0 = rows[0]["t"]
+        if limit is not None:
+            rows = [r for r in rows if r["t"] - t0 <= limit]
         t = [r["t"] - t0 for r in rows]
         temperature = [r["T"] for r in rows]
         setpoint = rows[-1]["set"]
         L = kp * CHI_H
-        settled = sum(r["T"] for r in rows[-60:]) / len(rows[-60:])
+        tail = [r["T"] for r in rows if r["t"] >= rows[-1]["t"] - SETTLE_WINDOW]
+        settled = sum(tail) / len(tail)
         droop = setpoint - settled
         predicted = (setpoint - T_AMB) / (1.0 + L)
         peak = max(r["pwm"] for r in rows)
@@ -192,13 +207,13 @@ def main():
     fig.suptitle("P-only control: temperature and command traces",
                  fontsize=13.5, color="#404040", y=0.975)
     fig.text(0.008, 0.012,
-             "Setpoint 30.0 \u00b0C, T_amb = 21.54 \u00b0C. Both panels are cut "
-             "from one continuous sweep, data/module_05/kp32_high_gain_run.csv; "
-             "time is re-zeroed where each gain was applied.\nThe PWM trace is "
-             "red while heating and blue while cooling, as in the strip chart. "
-             "Neither run saturates, so the loop stays proportional "
-             "throughout.\nThe model droop uses the Module 4 susceptibility and "
-             "is not fitted to these runs.",
+             "Setpoint 30.0 \u00b0C, T_amb = 21.54 \u00b0C. Source: "
+             "data/module_05/session_2026-09-30_full_log.csv. Time is re-zeroed "
+             "where each gain was applied.\nSettled value is the mean of the final "
+             "60 s shown. Kp = 32 is shown for its first 210 s only: after about "
+             "216 s the plate stops following the command.\nNeither panel "
+             "saturates. PWM is red while heating, blue while cooling. The model "
+             "droop uses the Module 4 susceptibility and is not fitted.",
              fontsize=7.8, color="#595959", va="bottom")
     fig.subplots_adjust(left=0.068, right=0.985, top=0.865, bottom=0.185)
     os.makedirs(os.path.dirname(OUTPUT_PNG), exist_ok=True)

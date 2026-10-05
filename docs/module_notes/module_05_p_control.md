@@ -235,7 +235,21 @@ at one uniform temperature, and there is no saturation.
 
 **(2) &chi; = P<sub>u</sub>/H, with units.** Open the loop: at steady state
 0 = P<sub>u</sub>u &minus; H(T&minus;T<sub>amb</sub>), so &chi; = dT/du =
-P<sub>u</sub>/H. Units (W/count)/(W/K) = K/count.
+P<sub>u</sub>/H, equivalently **P<sub>u</sub> = H&chi;<sub>T,u</sub>**. Units
+(W/count)/(W/K) = K/count.
+
+*Relating this to the Module 4 slopes.* For heating the Arduino receives
+u = P &gt; 0, so &chi;<sub>T,h</sub> = dT/dP = P<sub>u</sub>/H. For cooling it
+still receives the positive magnitude P = &minus;u, so dT/dP =
+&minus;P<sub>u</sub>/H and the cooling magnitude is
+&#124;&chi;<sub>T,c</sub>&#124; = P<sub>u</sub>/H. **The one-lump model with a
+single P<sub>u</sub> therefore predicts the two magnitudes to be equal.** Ours
+are 0.50127 and 0.18091, a factor of 2.77 apart. That is not a failure of the
+algebra, it is Module 4's result arriving here: Peltier transport reverses with
+the current and Joule heating does not, so the two add when heating and oppose
+when cooling. A single P<sub>u</sub> is only valid within one direction, and
+every droop prediction below uses the heating value because every run sits
+above ambient.
 
 - P<sub>u</sub> doubles &rarr; &chi; doubles
 - H doubles &rarr; &chi; halves
@@ -262,6 +276,15 @@ upward the feedback is strong and the fraction approaches 1/L. The
 classification cannot be made from K<sub>p</sub> alone: K<sub>p</sub> = 2 is
 comparable heating but weak cooling, where the same gain gives L = 0.36.
 
+*Where the remaining 2 to 3% comes from.* The ratios scatter between 0.964 and
+1.026 with no trend in L, so this is noise rather than a missing term. The
+steady-state criterion itself accounts for most of it: a point is accepted once
+its drift over the final minute is no larger than the 0.16 &deg;C noise floor,
+and 0.16/8.46 = **1.9% of e<sub>0</sub>**, against an observed standard
+deviation of 1.7% and a worst case of 2.6%. The rest is room drift over a
+two-hour session moving T<sub>amb</sub>, and a single &chi; fitted across the
+whole heating branch while each run settles at a different point on it.
+
 ### First-order expectation
 
 &theta; = T &minus; T<sub>ss</sub> obeys &theta;(t) = &theta;(0)e<sup>&minus;t/&tau;<sub>cl</sub></sup>
@@ -270,10 +293,18 @@ monotonically and **cannot oscillate at any gain**, and &tau;<sub>cl</sub>
 falls as K<sub>p</sub> rises, so higher gain should settle both closer and
 faster. Both were observed.
 
-Oscillation, had we seen it, would falsify the one-lump picture rather than the
-control law. Candidates: thermal lag between TEC and thermistor, a second
-thermal mass, 1 Hz sampling against a 63 s time constant, noise amplified by
-gain, or saturation making the loop nonlinear.
+No sustained oscillation appeared at any gain. **A single 0.041 &deg;C
+overshoot did appear at K<sub>p</sub> = 32** (section 5), which this model
+forbids outright: one state variable gives one real negative eigenvalue, so
+&theta; keeps its sign while shrinking and the trace cannot cross
+T<sub>ss</sub> at all. Something is therefore missing from the one-lump
+picture, and it is the model rather than the control law that is at fault.
+Candidates: thermal lag between the TEC face and the thermistor, a second
+thermal mass, 1 Hz sampling against &tau;<sub>cl</sub> = 3.7 s at that gain,
+noise amplified by gain, or saturation making the loop nonlinear. Saturation is
+ruled out, since the command peaked at 31 of 255 counts. The rest is worked
+through in
+[`module_06_pi_modeling.md`](module_06_pi_modeling.md) section 6.
 
 ---
 

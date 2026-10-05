@@ -311,7 +311,7 @@ approach it. Discrete sampling is another: at 1.97 Hz that is about 7 samples
 per closed-loop time constant. Telling them apart needs a faster log than this
 one.
 
-### The K<sub>p</sub> = 32 run stops being valid at about 216 s
+### The K<sub>p</sub> = 32 run ends at about 216 s, when the supply was switched off
 
 From about 216 s after K<sub>p</sub> = 32 was applied, the plate falls
 steadily while the commanded heating rises: 29.54 &deg;C at 216 s, 28.52 at
@@ -333,15 +333,18 @@ What the log does establish:
 - **It does not fall like the zero-command decays of Module 4.** With
   &tau; = 62.9 s toward 21.54 &deg;C, the plate would have been at 23.65
   &deg;C 84 s after onset and 21.85 &deg;C after 204 s; it was at 26.42 and
-  25.35. It cooled several times more slowly than that. Whether that means
-  some heat was still arriving, or that the unpowered module conducts heat
-  differently from one held at zero command, the log cannot say.
+  25.35. It cooled several times more slowly than that.
 
-So the loss is downstream of the Arduino: the supply, the bridge, or the TEC
-wiring. From the file's modification time the fall began at about 11:39 on
-30 September and the log ends at 11:42. **The cause is not established by the
-data and should be filled in from memory if anyone remembers what happened at
-the bench then.**
+**Cause: the 12 V actuator supply was switched off** at the end of the
+session, about 11:39 on 30 September by the file's modification time, with
+the GUI still running. The Arduino is powered over USB, so it kept measuring,
+kept logging, and kept commanding heat, with no supply behind the bridge to
+deliver it. That accounts for every observation above.
+
+With the supply off, no drive current reached the module. The slower decay
+therefore reflects the module sitting unpowered, which differs from the Module
+4 zero-command decays, where the bridge was powered and holding both outputs
+low. Why that changes the decay rate has not been tested.
 
 Every K<sub>p</sub> = 32 number in this note therefore comes from the first
 210 s only. The earlier versions happened to use a snapshot that ended at
@@ -521,8 +524,9 @@ is worked through in
 
 - Instructor approval of the gain range was obtained retrospectively.
 - Saturation was never reached, so the clamped regime is untested.
-- **Why the K<sub>p</sub> = 32 run stops tracking at about 216 s** is not
-  established (section 5). Only its first 210 s are used.
+- The K<sub>p</sub> = 32 run has only 210 s of valid data, because the 12 V
+  supply was switched off at about 216 s (section 5). Repeating that step
+  would also show whether its overshoot and undershoot recur.
 - `sampleCount` was 500 for this session where Part 1 asks for about 1000
   (section 1). Restore 1000 before the next run.
 - Run-to-run reproducibility is about 0.1 to 0.2 &deg;C, and room temperature

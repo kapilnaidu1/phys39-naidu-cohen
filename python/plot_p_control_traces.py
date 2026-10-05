@@ -16,10 +16,11 @@ INPUT   data/module_05/session_2026-09-30_full_log.csv
         panels are cut out of the one file rather than stitched from several.
 
 VALID WINDOW FOR Kp = 32
-        From about 216 s after Kp = 32 was applied, the plate falls steadily
-        while the commanded heating climbs to 149 counts: the plate stops
-        following the command. Only the first 210 s are plotted, and the
-        settled value is taken from that window. See the Module 5 note.
+        At about 216 s after Kp = 32 was applied, the 12 V actuator supply was
+        switched off at the end of the session with the GUI still running.
+        The plate then falls while the Arduino, on USB, keeps commanding heat.
+        Only the first 210 s are plotted, and the settled value is taken from
+        that window. See the Module 5 note.
 
 OUTPUT  docs/figures/module_05/p_control_traces.png
 
@@ -211,7 +212,7 @@ def main():
              "data/module_05/session_2026-09-30_full_log.csv. Time is re-zeroed "
              "where each gain was applied.\nSettled value is the mean of the final "
              "60 s shown. Kp = 32 is shown for its first 210 s only: after about "
-             "216 s the plate stops following the command.\nNeither panel "
+             "216 s the 12 V supply was switched off.\nNeither panel "
              "saturates. PWM is red while heating, blue while cooling. The model "
              "droop uses the Module 4 susceptibility and is not fitted.",
              fontsize=7.8, color="#595959", va="bottom")

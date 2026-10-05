@@ -300,10 +300,12 @@ What this establishes:
   1.26 &deg;C. The submitted values are closest to a 200 s window, within 0.02
   to 0.07 &deg;C on the heating side, but which window was used was never
   recorded.
-- **The +50 point has no data behind it here.** The plate never exceeds
-  40.48 &deg;C anywhere in `full_run.csv`. The run may have been logged in a
-  file that was not kept; that should be checked before the point is used
-  again.
+- **The +50 point has no data behind it.** The plate never exceeds 40.48
+  &deg;C anywhere in `full_run.csv`, and the team does not believe a log of
+  that run exists. Part 2 asks for the heating PWM that holds 45 &plusmn; 2
+  &deg;C at steady state; without this run there is no recorded evidence for
+  that endpoint. The highest heating point with data is +38, at 40.36 &deg;C
+  measured and still rising.
 - **Two submitted values match truncated snapshots rather than the end of the
   run.** &minus;65 is recorded as 9.75, which is the last reading in
   `cooling_trace_01.csv`, a snapshot that stops at 384 s; the run continued

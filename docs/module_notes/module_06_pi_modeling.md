@@ -428,11 +428,15 @@ anti-windup, a factor of 5.6 from the same gains and the same plant.
 
 ## 9. Cross-check against the supplied program
 
-Run after our own simulator, as the module requires, with our parameters
-entered as C = 62.9, H = 1, P<sub>u</sub> = 0.5013. **H is free:** only
-&chi; = P<sub>u</sub>/H and &tau; = C/H affect the answer, so setting H = 1
-makes the other two readable at a glance. The supplied interface asks for
+Run after our own simulator, as the module requires, on 5 October. **H is
+free:** only &chi; = P<sub>u</sub>/H and &tau; = C/H affect the answer, so H = 1
+W/K makes the other two readable at a glance. The supplied interface asks for
 three numbers where the physics has two.
+
+Entered in every run: T<sub>amb</sub> = 21.54 &deg;C, initial temperature
+21.54 &deg;C, C = 62.9 J/K, H = 1 W/K, P<sub>u</sub> = 0.5013 W/count,
+K<sub>p</sub> = 2, Euler step 0.25 s, duration 900 s. What changed between
+runs is in the table below.
 
 | Case | Ours | Supplied program |
 |---|---|---|
@@ -444,12 +448,73 @@ three numbers where the physics has two.
 | Windup, limit 50: time clamped | 313 s | 34.7% of 900 s = 312 s |
 | Windup, limit 50: anti-windup | clamped 22 s | clamped 0.0% |
 
-Everything agrees except the last row, and that is an implementation
-difference rather than an error: both use conditional integration, but the
-supplied version holds the integral early enough that the command never
-reaches the clamp at all, while ours allows 22 s of clamping first. The
-physical conclusion, that anti-windup removes most of the overshoot, is the
-same either way.
+**Why the last row differs, from the two programs' code.** Both use
+conditional integration, which the supplied program states in its own
+docstring. They test different things:
+
+- The supplied program computes the command the *next* integral step would
+  produce, and refuses that step if it would push the command past the limit
+  (`python/Lab_6_first_order_p_pi_simulation_realtime.py`, lines 110 to 122).
+  The integral is stopped before saturation, so the command never reaches the
+  clamp.
+- Ours holds the integral only once the command is *already* clamped
+  (`python/simulate_one_lump.py`, `run_pi`), so the command enters saturation
+  first and stays there 22 s before the hold takes effect.
+
+Neither is wrong; the supplied version is the more conservative. The physical
+conclusion, that anti-windup removes most of the overshoot, is the same either
+way. Its saturation figure is the fraction of time steps on which the
+unclamped command exceeds the limit (lines 75 and 152), so at a fixed 0.25 s
+step 34.7% is 312 s of the 900 s run.
+
+### Screenshots of the supplied program
+
+Six runs, all with the parameters above. The program's opening run with its
+own default parameters (&tau; = 80 s, &chi; = 0.12) is not included, since it
+describes no part of this apparatus.
+
+**1. P only, K<sub>p</sub> = 2, setpoint 30 &deg;C, limit 255.** Predicted and
+simulated P droop both 4.225 &deg;C, saturation 0.0%: the same droop our
+simulator and the algebra give.
+
+![P only, Kp = 2](../figures/module_06/supplied_sim/1_p_only_kp2.png)
+
+**2. PI, K<sub>i</sub> = 0.05, setpoint 30 &deg;C, limit 255, anti-windup
+on.** &zeta; = 0.797, "underdamped", PI droop &minus;0.000 &deg;C, saturation
+0.0%. Integral action removes the droop, with a small overshoot.
+
+![PI, Ki = 0.05](../figures/module_06/supplied_sim/2_pi_ki0p05.png)
+
+**3. PI, K<sub>i</sub> = 0, setpoint 30 &deg;C, limit 255.** &zeta; = &infin;,
+"first order because Ki = 0", PI droop 4.225 &deg;C. PI with no integral term
+reproduces run 1 exactly, which is the program's own check number 2.
+
+![PI, Ki = 0](../figures/module_06/supplied_sim/3_pi_ki0_equals_p.png)
+
+**4. PI, K<sub>i</sub> = 0, setpoint 45 &deg;C, limit 50, anti-windup off.**
+Droop 11.715 &deg;C, saturation 0.0%. This is P control at the windup
+setpoint: K<sub>p</sub>e<sub>0</sub> = 2 &times; 23.46 = 47 counts, just under
+the 50-count limit, so without an integral the command never clamps. It is the
+baseline for runs 5 and 6, and shows that the saturation in run 5 comes from
+the integral term alone.
+
+![Setpoint 45, limit 50, Ki = 0](../figures/module_06/supplied_sim/4_setpoint45_limit50_ki0.png)
+
+**5. PI, K<sub>i</sub> = 0.05, setpoint 45 &deg;C, limit 50, anti-windup
+off.** Saturation 34.7%, final droop &minus;0.000 &deg;C. The command sits on
+the 50-count limit for about 312 s and the error trace dips below zero before
+recovering: windup overshoot.
+
+![Windup, plain PI](../figures/module_06/supplied_sim/5_windup_plain.png)
+
+**6. Same as 5, anti-windup on.** Saturation 0.0%, final droop &minus;0.000
+&deg;C. The integral is never allowed to drive the command into the clamp. The
+error comes down to zero with no dip that can be resolved on this plot's 23
+&deg;C scale, against the clear dip in run 5. The program does not report an
+overshoot value, so the size of any remaining overshoot is not known from
+these screenshots.
+
+![Windup, anti-windup on](../figures/module_06/supplied_sim/6_windup_antiwindup.png)
 
 ---
 
@@ -464,6 +529,8 @@ same either way.
 - [x] PI simulation against P-only: section 7
 - [x] why the one-lump model does not oscillate, and what ours does: section 6
 - [x] windup thought-experiment answers: section 8
+- [x] supplied program run with our parameters, six screenshots:
+  section 9, `docs/figures/module_06/supplied_sim/`
 - [ ] link to the pushed Git checkpoint: add the hash once pushed
 
 **Open.** The 1.97 Hz log cannot separate thermal lag from discrete sampling as

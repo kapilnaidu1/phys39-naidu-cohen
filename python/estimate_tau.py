@@ -167,7 +167,7 @@ def main():
     # Only the 30 C heating runs are used, because L = Kp * chi needs the
     # heating chi there; the 15 C cooling block would need the cooling chi.
     # Kp = 9 is skipped (49 s, never settled), and Kp = 32 is cut at 210 s,
-    # after which the plate stops following the command (Module 5 note).
+    # when the 12 V supply was switched off (Module 5 note).
     print(f"\nClosed-loop check against {CLOSED_LOOP_CSV}, 30 C heating runs only")
     print("  Each fit uses the whole run at that gain. Most runs start close to "
           "their final\n  value, so the step is small and the fit is poorly "

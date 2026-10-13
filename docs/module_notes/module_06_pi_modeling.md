@@ -8,7 +8,11 @@ paper for the module itself.
 [`python/Lab_6_first_order_p_pi_simulation_realtime.py`](../../python/Lab_6_first_order_p_pi_simulation_realtime.py)
 (the supplied program, used only to check our own; see section 9).
 Figures in `docs/figures/module_06/`, console output in
-`data/module_06/simulation_output.txt`.
+`data/module_06/simulation_output.txt`. Part 7 on the apparatus:
+[`python/tec_pi_control_gui.py`](../../python/tec_pi_control_gui.py),
+[`python/plot_goldilocks_experiment.py`](../../python/plot_goldilocks_experiment.py),
+[`python/sampling_delay_check.py`](../../python/sampling_delay_check.py)
+(section 11).
 
 **Measured parameters, all three carried in from earlier modules:**
 
@@ -531,9 +535,112 @@ these screenshots.
 - [x] windup thought-experiment answers: section 8
 - [x] supplied program run with our parameters, six screenshots:
   section 9, `docs/figures/module_06/supplied_sim/`
+- [x] PI controller on the apparatus and the six experimental Goldilocks
+  plots with step-response metrics (A3 Question 2): section 11
 - [ ] link to the pushed Git checkpoint: add the hash once pushed
 
-**Open.** The 1.97 Hz log cannot separate thermal lag from discrete sampling as
-the cause of the K<sub>p</sub> = 32 overshoot, and the overshoot itself was
-seen in one run. Repeating that step, ideally with a faster log, would settle
-both, and that is a Part II question rather than something to guess at here.
+**Open, now answered by section 11.** The Module 5 note left open whether the
+K<sub>p</sub> = 32 overshoot was real and whether discrete sampling could
+cause it. At K<sub>p</sub> = 64 the overshoot is 1.69 &deg;C with clear
+ringing, far above noise, and a sampled one-lump model cannot produce more
+than 0.03 &deg;C of it.
+
+**&tau; still comes from 500-sample data.** Part 3 asks for 1000-sample
+averaging, and every step in section 3 used 500. On 13 October the instructor
+said not to redo the Module 4 measurements, to keep the existing &tau;, and to
+use 1000 samples from now on, which the Module 6 runs do.
+
+---
+
+## 11. Part 7: PI control on the apparatus, and the six Goldilocks runs
+
+13 October 2026. Controller: [`python/tec_pi_control_gui.py`](../../python/tec_pi_control_gui.py),
+whose `pi_step()` holds every line that computes e, q, u<sub>P</sub>,
+u<sub>I</sub> and the clamped command. The instructor reviewed it on 13
+October. Sketch: [`arduino/module_06/tec_pi_safety`](../../arduino/module_06/tec_pi_safety/tec_pi_safety.ino),
+the Module 4 safety sketch with 1000-sample averaging.
+
+**What the controller does each reading.** Δt is the actual time since the
+previous accepted reading (0.56 to 0.61 s here), q<sub>n+1</sub> =
+q<sub>n</sub> + e<sub>n</sub>Δt, u = K<sub>p</sub>e + K<sub>i</sub>q<sub>n+1</sub>,
+clamped to &plusmn;255. Anti-windup is conditional integration: the new q is
+refused when the command it gives is past the limit and the error pushes it
+farther out. That test is the same as `controller_command()` in the course
+simulator; the two agreed on 200,000 random cases. Mode, Zero integral, PWM
+limit and anti-windup can only be changed with control off.
+
+**Protocol, the same for all six.** Setpoints 30 and 35 &deg;C, PWM limit 255,
+anti-windup on, integral zeroed before each run. Each run settles at 30, steps
+to 35, steps back to 30. Raw data:
+`data/module_06/pi_run_20261013_094149.csv`. Bench record, including the 12 V
+TEC voltage and the instructor's extra K<sub>i</sub> = 2, 5, 10 tries (not
+used): `data/module_06/bench_log_2026-10-13.md`.
+
+| Run | Controller | K<sub>p</sub> | K<sub>i</sub> | End of stage at 30 / 35 / 30 (&deg;C) | Overshoot up / down (&deg;C) |
+|---|---|---|---|---|---|
+| 1 | P | 2 | 0 | 25.76 / 28.25 / 25.76 | 0.02 / 0.01 |
+| 2 | P | 16 | 0 | 29.05 / 33.52 / 29.12 | 0.02 / 0.03 |
+| 3 | P | 64 | 0 | 29.74 / 34.59 / 29.76 | **1.69 / 0.07** |
+| 4 | PI | 12 | 0.05 | 29.66 / 34.71 / 30.08 | 0.02 / 0.01 |
+| 5 | PI | 12 | 0.2 | 29.97 / 35.02 / 29.93 | 0.02 / 0.02 |
+| 6 | PI | 12 | 1.0 | 30.00 / 35.00 / 30.00 | **0.71 / 1.30** |
+
+Each value is the mean of the last 30 s of the stage. Overshoots of 0.03
+&deg;C and below are at the noise level (0.005 to 0.02 &deg;C standard
+deviation). Drift over the last 60 s of each stage is under 0.08 &deg;C/min
+except Run 2's last stage, &minus;0.33 &deg;C/min, which was ended after 78 s.
+Run 4 was still creeping at +0.07 &deg;C/min at both 30 and 35, as a small
+K<sub>i</sub> should. (Run 3's first stage lasted only 59 s, so its 60 s
+window includes the approach; over its last 30 s it is flat.)
+
+**Figures** (`python/plot_goldilocks_experiment.py`): one per run in
+`docs/figures/module_06/goldilocks/`, all on the same axes (&minus;30 to 610 s
+from the 30 &rarr; 35 step, 25 to 37 &deg;C), temperature with setpoint above
+and signed applied PWM below; `overlay_p_and_pi.png` puts the three P and
+three PI runs on one figure each; `high_gain_steps.png` zooms on the four
+steps the metrics are quoted for.
+
+![Six runs](../figures/module_06/goldilocks/overlay_p_and_pi.png)
+
+**Step-response metrics, highest-gain runs** (A3 Question 2, Part 2). Rise is
+10 % to 90 % of the change; settling is the last time T leaves the final value
+&plusmn;2 % of the change (about &plusmn;0.1 &deg;C); period is twice the mean
+spacing of crossings of the final value with 0.05 &deg;C hysteresis, given
+when there are at least three crossings. All six runs are in
+`data/module_06/goldilocks_metrics.csv`.
+
+| Run, step | Rise 10-90 % | Overshoot | Settling &plusmn;2 % | ss error | Period |
+|---|---|---|---|---|---|
+| 3 (P, K<sub>p</sub> 64), 30 &rarr; 35 | 2.1 s | 1.69 &deg;C, 35 % | 21 s | +0.41 &deg;C | 9 s |
+| 3, 35 &rarr; 30 | 4.0 s | 0.07 &deg;C, 1 % | 15 s | +0.24 &deg;C | n/a (2 crossings) |
+| 6 (PI, K<sub>i</sub> 1.0), 30 &rarr; 35 | 8.2 s | 0.71 &deg;C, 14 % | 56 s | 0.00 &deg;C | n/a (1 crossing) |
+| 6, 35 &rarr; 30 | 12.5 s | 1.30 &deg;C, 26 % | 68 s | 0.00 &deg;C | n/a (1 crossing) |
+
+Run 3 hit the &plusmn;255 limit for 4 readings on the way up and 3 on the way
+down, so its first 2 s are clipped, not linear. No other run saturated.
+
+**What the six show.**
+
+- P: raising K<sub>p</sub> shrinks the droop and speeds the response, as the
+  one-lump model says (Run 1 droop 4.24 &deg;C, Run 2 0.88 &deg;C, Run 3 0.24
+  &deg;C on the way down). Run 3 then overshoots by 35 % and rings with a
+  9 s period, which the one-lump P model forbids (section 6).
+- PI removes the droop: Runs 5 and 6 end within 0.07 &deg;C of the setpoint,
+  where P at K<sub>p</sub> = 16 (Run 2) stopped 0.88 to 1.48 &deg;C short.
+  Run 4 shows the slow end of that: u<sub>I</sub> climbs for minutes and the
+  plate is still 0.29 &deg;C short of 35 after 300 s.
+- Raising K<sub>i</sub> at fixed K<sub>p</sub> trades speed for overshoot:
+  rise 58 s, 24 s, 8 s on the way up across Runs 4 to 6, overshoot 0.02, 0.02,
+  0.71 &deg;C.
+- Heating and cooling are not symmetric. Run 6 overshoots 0.71 &deg;C going
+  up and 1.30 &deg;C coming down; the cooling branch has the smaller &chi;
+  (0.18 against 0.50 &deg;C per count).
+
+**Sampling does not explain the Run 3 ringing.**
+`python/sampling_delay_check.py` runs the one-lump plant (&tau; 62.9 s,
+measured &chi;) under the controller as it actually runs: read every 0.563 s,
+command rounded, clipped at &plusmn;255 and held, with the delay from reading
+to command anywhere from 0 to one full sample. The largest overshoot it gives
+is 0.03 &deg;C, against 1.69 &deg;C measured. Something with its own lag
+between the TEC and the thermistor is needed, which is what Part II's
+two-lump model adds.

@@ -1,0 +1,130 @@
+Arduino Serial Monitor output, 13 October 2026, copied verbatim as pasted.
+Sketch: arduino/module_06/tec_pi_safety (1000-sample averaging).
+Purpose: on-state TEC voltage check. The meter gave no reading; the drive
+itself worked. The first lines are left over from before the board reset.
+
+Te0, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.06, Time (s): 760.16, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.07, Time (s): 759.60, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.06, Time (s): 760.16, PWM: 0, Heat/Cool: 1
+
+# Phys 39 Module 6: TEC serial-command control with safety limit. Naidu / Cohen
+# Averaging: 1000 ADC readings per temperature, reported every 500 ms
+# Sensor: 100 kOhm thermistor, TDK B57861S0104F040V24, R25 = 100.0 kOhm, Beta = 4540 K, upper leg = 100.0 kOhm
+# Calibration in use: PWM on pin 9 = COOL
+# Commands: SET PWM <0-255> DIR <HEAT|COOL>
+#           TEST LIMIT <degC>   (lowers the limit, for the shutdown test)
+#           CLEAR SAFETY        (releases the latch, restores the limit)
+# PWM starts at 0 and stays there until a valid command arrives.
+# SOFTWARE TEMPERATURE LIMIT: 60.0 C. Above it, both H-bridge outputs are driven LOW and latched.
+# Hardware thermal switch near 70 C remains the independent final protection.
+
+Temperature (C): 22.03, Time (s): 1.02, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.03, Time (s): 1.59, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.03, Time (s): 2.15, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.02, Time (s): 2.71, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.02, Time (s): 3.28, PWM: 0, Heat/Cool: 1
+Temperature (C): 22.01, Time (s): 3.84, PWM: 0, Heat/Cool: 1
+# OK: PWM 255 DIR COOL  (PWM on pin 9)
+Temperature (C): 22.00, Time (s): 4.40, PWM: 255, Heat/Cool: 0
+Temperature (C): 21.92, Time (s): 4.97, PWM: 255, Heat/Cool: 0
+Temperature (C): 21.60, Time (s): 5.53, PWM: 255, Heat/Cool: 0
+Temperature (C): 21.12, Time (s): 6.09, PWM: 255, Heat/Cool: 0
+Temperature (C): 20.58, Time (s): 6.65, PWM: 255, Heat/Cool: 0
+Temperature (C): 20.02, Time (s): 7.22, PWM: 255, Heat/Cool: 0
+Temperature (C): 19.44, Time (s): 7.78, PWM: 255, Heat/Cool: 0
+Temperature (C): 18.87, Time (s): 8.34, PWM: 255, Heat/Cool: 0
+Temperature (C): 18.30, Time (s): 8.91, PWM: 255, Heat/Cool: 0
+Temperature (C): 17.75, Time (s): 9.47, PWM: 255, Heat/Cool: 0
+Temperature (C): 17.21, Time (s): 10.03, PWM: 255, Heat/Cool: 0
+Temperature (C): 16.68, Time (s): 10.60, PWM: 255, Heat/Cool: 0
+Temperature (C): 16.17, Time (s): 11.16, PWM: 255, Heat/Cool: 0
+Temperature (C): 15.68, Time (s): 11.72, PWM: 255, Heat/Cool: 0
+Temperature (C): 15.20, Time (s): 12.29, PWM: 255, Heat/Cool: 0
+Temperature (C): 14.73, Time (s): 12.85, PWM: 255, Heat/Cool: 0
+Temperature (C): 14.28, Time (s): 13.41, PWM: 255, Heat/Cool: 0
+Temperature (C): 13.84, Time (s): 13.98, PWM: 255, Heat/Cool: 0
+Temperature (C): 13.41, Time (s): 14.54, PWM: 255, Heat/Cool: 0
+Temperature (C): 12.99, Time (s): 15.10, PWM: 255, Heat/Cool: 0
+Temperature (C): 12.58, Time (s): 15.67, PWM: 255, Heat/Cool: 0
+Temperature (C): 12.18, Time (s): 16.23, PWM: 255, Heat/Cool: 0
+Temperature (C): 11.78, Time (s): 16.79, PWM: 255, Heat/Cool: 0
+Temperature (C): 11.40, Time (s): 17.35, PWM: 255, Heat/Cool: 0
+Temperature (C): 11.02, Time (s): 17.92, PWM: 255, Heat/Cool: 0
+Temperature (C): 10.65, Time (s): 18.48, PWM: 255, Heat/Cool: 0
+Temperature (C): 10.28, Time (s): 19.05, PWM: 255, Heat/Cool: 0
+Temperature (C): 9.92, Time (s): 19.61, PWM: 255, Heat/Cool: 0
+Temperature (C): 9.55, Time (s): 20.17, PWM: 255, Heat/Cool: 0
+Temperature (C): 9.20, Time (s): 20.74, PWM: 255, Heat/Cool: 0
+Temperature (C): 8.86, Time (s): 21.30, PWM: 255, Heat/Cool: 0
+Temperature (C): 8.51, Time (s): 21.86, PWM: 255, Heat/Cool: 0
+Temperature (C): 8.17, Time (s): 22.42, PWM: 255, Heat/Cool: 0
+Temperature (C): 7.83, Time (s): 22.99, PWM: 255, Heat/Cool: 0
+Temperature (C): 7.50, Time (s): 23.55, PWM: 255, Heat/Cool: 0
+Temperature (C): 7.17, Time (s): 24.11, PWM: 255, Heat/Cool: 0
+Temperature (C): 6.85, Time (s): 24.68, PWM: 255, Heat/Cool: 0
+Temperature (C): 6.53, Time (s): 25.24, PWM: 255, Heat/Cool: 0
+Temperature (C): 6.22, Time (s): 25.80, PWM: 255, Heat/Cool: 0
+Temperature (C): 5.90, Time (s): 26.37, PWM: 255, Heat/Cool: 0
+Temperature (C): 5.60, Time (s): 26.93, PWM: 255, Heat/Cool: 0
+Temperature (C): 5.29, Time (s): 27.49, PWM: 255, Heat/Cool: 0
+Temperature (C): 4.99, Time (s): 28.06, PWM: 255, Heat/Cool: 0
+Temperature (C): 4.69, Time (s): 28.62, PWM: 255, Heat/Cool: 0
+Temperature (C): 4.39, Time (s): 29.18, PWM: 255, Heat/Cool: 0
+Temperature (C): 4.10, Time (s): 29.75, PWM: 255, Heat/Cool: 0
+Temperature (C): 3.81, Time (s): 30.31, PWM: 255, Heat/Cool: 0
+Temperature (C): 3.52, Time (s): 30.87, PWM: 255, Heat/Cool: 0
+Temperature (C): 3.25, Time (s): 31.44, PWM: 255, Heat/Cool: 0
+Temperature (C): 2.96, Time (s): 32.00, PWM: 255, Heat/Cool: 0
+Temperature (C): 2.69, Time (s): 32.56, PWM: 255, Heat/Cool: 0
+Temperature (C): 2.42, Time (s): 33.13, PWM: 255, Heat/Cool: 0
+Temperature (C): 2.14, Time (s): 33.69, PWM: 255, Heat/Cool: 0
+Temperature (C): 1.88, Time (s): 34.25, PWM: 255, Heat/Cool: 0
+Temperature (C): 1.61, Time (s): 34.82, PWM: 255, Heat/Cool: 0
+Temperature (C): 1.35, Time (s): 35.38, PWM: 255, Heat/Cool: 0
+Temperature (C): 1.09, Time (s): 35.94, PWM: 255, Heat/Cool: 0
+Temperature (C): 0.83, Time (s): 36.51, PWM: 255, Heat/Cool: 0
+Temperature (C): 0.57, Time (s): 37.07, PWM: 255, Heat/Cool: 0
+Temperature (C): 0.32, Time (s): 37.63, PWM: 255, Heat/Cool: 0
+Temperature (C): 0.07, Time (s): 38.20, PWM: 255, Heat/Cool: 0
+Temperature (C): -0.19, Time (s): 38.76, PWM: 255, Heat/Cool: 0
+Temperature (C): -0.43, Time (s): 39.32, PWM: 255, Heat/Cool: 0
+Temperature (C): -0.68, Time (s): 39.88, PWM: 255, Heat/Cool: 0
+Temperature (C): -0.91, Time (s): 40.45, PWM: 255, Heat/Cool: 0
+Temperature (C): -1.15, Time (s): 41.01, PWM: 255, Heat/Cool: 0
+Temperature (C): -1.38, Time (s): 41.57, PWM: 255, Heat/Cool: 0
+# OK: PWM 0 DIR COOL  (PWM on pin none)
+Temperature (C): -1.58, Time (s): 42.18, PWM: 0, Heat/Cool: 0
+Temperature (C): -1.49, Time (s): 42.74, PWM: 0, Heat/Cool: 0
+Temperature (C): -1.23, Time (s): 43.31, PWM: 0, Heat/Cool: 0
+Temperature (C): -0.89, Time (s): 43.87, PWM: 0, Heat/Cool: 0
+Temperature (C): -0.51, Time (s): 44.43, PWM: 0, Heat/Cool: 0
+Temperature (C): -0.13, Time (s): 45.00, PWM: 0, Heat/Cool: 0
+Temperature (C): 0.25, Time (s): 45.56, PWM: 0, Heat/Cool: 0
+Temperature (C): 0.61, Time (s): 46.12, PWM: 0, Heat/Cool: 0
+Temperature (C): 0.97, Time (s): 46.69, PWM: 0, Heat/Cool: 0
+Temperature (C): 1.31, Time (s): 47.25, PWM: 0, Heat/Cool: 0
+Temperature (C): 1.63, Time (s): 47.81, PWM: 0, Heat/Cool: 0
+Temperature (C): 1.95, Time (s): 48.37, PWM: 0, Heat/Cool: 0
+Temperature (C): 2.24, Time (s): 48.94, PWM: 0, Heat/Cool: 0
+Temperature (C): 2.52, Time (s): 49.50, PWM: 0, Heat/Cool: 0
+Temperature (C): 2.80, Time (s): 50.06, PWM: 0, Heat/Cool: 0
+Temperature (C): 3.06, Time (s): 50.63, PWM: 0, Heat/Cool: 0
+Temperature (C): 3.31, Time (s): 51.19, PWM: 0, Heat/Cool: 0
+Temperature (C): 3.55, Time (s): 51.75, PWM: 0, Heat/Cool: 0
+Temperature (C): 3.78, Time (s): 52.31, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.01, Time (s): 52.88, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.23, Time (s): 53.44, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.43, Time (s): 54.00, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.62, Time (s): 54.57, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.79, Time (s): 55.13, PWM: 0, Heat/Cool: 0
+Temperature (C): 4.96, Time (s): 55.69, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.05, Time (s): 56.26, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.17, Time (s): 56.82, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.31, Time (s): 57.38, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.40, Time (s): 57.95, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.49, Time (s): 58.51, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.58, Time (s): 59.07, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.67, Time (s): 59.63, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.76, Time (s): 60.20, PWM: 0, Heat/Cool: 0
+Temperature (C): 5.84, Time (s): 60.76, PWM: 0, Heat/Cool: 0

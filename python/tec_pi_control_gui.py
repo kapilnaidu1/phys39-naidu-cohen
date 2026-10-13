@@ -97,7 +97,8 @@ GAP_WARNING_S = 2.0             # readings normally arrive about 0.5 s apart
 # command sent to the TEC.
 CHI_HEAT = 0.50127              # C per PWM count, Module 4 heating branch
 CHI_COOL = 0.18091              # C per PWM count, Module 4 cooling magnitude
-T_AMBIENT = 21.54               # C, Module 4 zero-command steady state
+T_AMBIENT = 22.38               # C, plate at PWM 0 on 13 October before
+                                # the runs (Module 4 measured 21.54)
 TAU_S = 62.9                    # s, Module 6 fit to the Module 5 steps,
                                 # which used 500-sample averaging
 
@@ -427,9 +428,12 @@ class PIControlWindow(QtWidgets.QMainWindow):
         self.u_plot.addItem(self.lim_hi, ignoreBounds=True)
         self.u_plot.addItem(self.lim_lo, ignoreBounds=True)
         self.ureq_curve = self.u_plot.plot(
-            pen=pg.mkPen(UREQ_COLOR, width=1.5, style=QtCore.Qt.DotLine))
-        self.up_curve = self.u_plot.plot(pen=pg.mkPen(UP_COLOR, width=1.6))
-        self.ui_curve = self.u_plot.plot(pen=pg.mkPen(UI_COLOR, width=1.6))
+            pen=pg.mkPen(UREQ_COLOR, width=1.5, style=QtCore.Qt.DotLine),
+            connect="finite")
+        self.up_curve = self.u_plot.plot(pen=pg.mkPen(UP_COLOR, width=1.6),
+                                         connect="finite")
+        self.ui_curve = self.u_plot.plot(pen=pg.mkPen(UI_COLOR, width=1.6),
+                                         connect="finite")
         self.uapp_curve = self.u_plot.plot(pen=pg.mkPen(UAPP_COLOR, width=2))
         self.u_plot.setXLink(self.temp_plot)
 
@@ -467,8 +471,18 @@ class PIControlWindow(QtWidgets.QMainWindow):
         return self.ki if self.mode == "PI" else 0.0
 
     def _sync_widgets(self):
+        # On macOS a disabled radio button or check box is drawn as if it
+        # were unticked, which made P and anti-windup look switched off
+        # during the 13 October runs. Those three are locked by ignoring the
+        # mouse and keyboard instead, so they keep showing their real state.
         for w in self.per_run_widgets:
-            w.setEnabled(not self.control_on)
+            if w in (self.p_radio, self.pi_radio, self.aw_box):
+                w.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents,
+                               self.control_on)
+                w.setFocusPolicy(QtCore.Qt.NoFocus if self.control_on
+                                 else QtCore.Qt.StrongFocus)
+            else:
+                w.setEnabled(not self.control_on)
         self.ki_spin.setEnabled(self.mode == "PI")
         self.pred_label.setText(prediction_text(
             self.mode, self.kp, self._effective_ki(), self.setpoint))
@@ -515,7 +529,19 @@ class PIControlWindow(QtWidgets.QMainWindow):
     def on_run_changed(self, value):
         self.run_label = int(value)
 
+    def _show_locked_settings(self):
+        """Put the mode and anti-windup boxes back to the values in force."""
+        for w, state in ((self.pi_radio, self.mode == "PI"),
+                         (self.p_radio, self.mode == "P"),
+                         (self.aw_box, self.anti_windup)):
+            w.blockSignals(True)
+            w.setChecked(state)
+            w.blockSignals(False)
+
     def on_mode_toggled(self, pi_checked):
+        if self.control_on:             # locked while running
+            self._show_locked_settings()
+            return
         self.mode = "PI" if pi_checked else "P"
         if self.mode == "P":
             self.q = 0.0                # P mode carries no integral state
@@ -523,6 +549,9 @@ class PIControlWindow(QtWidgets.QMainWindow):
         self._sync_widgets()
 
     def on_anti_windup_toggled(self, on):
+        if self.control_on:             # locked while running
+            self._show_locked_settings()
+            return
         self.anti_windup = bool(on)
 
     def on_zero_integral(self):
@@ -610,10 +639,16 @@ class PIControlWindow(QtWidgets.QMainWindow):
               f"{self.q:+8.2f}  uP = {u_P:+7.1f}  uI = {u_I:+7.1f}  "
               f"u = {sent:+4d}  [{state}]")
 
+        # Plot only: with control OFF nothing is sent, so u_P, u_I and u_req
+        # are left blank on screen rather than drawn as if they were driving
+        # the TEC. The CSV row below still records them.
+        nan = float("nan")
+        on = self.control_on
         b = self.buf
         for k, v in (("t", time_s), ("T", T), ("set", self.setpoint),
-                     ("e", e), ("uP", u_P), ("uI", u_I), ("ureq", u_req),
-                     ("uapp", u_app if self.control_on else 0.0)):
+                     ("e", e), ("uP", u_P if on else nan),
+                     ("uI", u_I if on else nan), ("ureq", u_req if on else nan),
+                     ("uapp", u_app if on else 0.0)):
             b[k].append(v)
         while b["t"] and (time_s - b["t"][0]) > WINDOW_SECONDS:
             for d in b.values():

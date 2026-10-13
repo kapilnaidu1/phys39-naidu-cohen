@@ -226,7 +226,7 @@ class PControlWindow(QtWidgets.QMainWindow):
         self.enable_box = QtWidgets.QCheckBox("P control ON")
         self.enable_box.toggled.connect(self.on_enable_toggled)
 
-        self.stop_btn = QtWidgets.QPushButton("STOP  \u2014  PWM to 0")
+        self.stop_btn = QtWidgets.QPushButton("STOP, PWM to 0")
         self.stop_btn.clicked.connect(self.on_stop)
 
         # pyqtgraph turns auto-ranging OFF the moment you scroll or drag a
@@ -424,8 +424,8 @@ class PControlWindow(QtWidgets.QMainWindow):
         time_s, temperature_c, pwm, heat_cool = measurement
 
         # ---- the loop closes here -------------------------------------
-        # One control update per measurement. The Arduino reports about once
-        # a second after averaging 1000 samples, so that sets the loop rate;
+        # One control update per measurement. The Module 4 sketch reports
+        # every 500 ms from a 500-sample average, so that sets the loop rate;
         # there is no point computing a new command more often than the
         # measurement it is based on.
         if self.p_enabled:

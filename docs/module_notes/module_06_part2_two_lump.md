@@ -265,6 +265,12 @@ in 0.02 steps); ρ<sub>I</sub> is 0.11 either way.
   damped at G = 5, rings at G = 1 and is unstable at G = 0.5.
 - The growing runs (S4, S5) stay inside the PWM limit for the 600 s shown, so
   their growth is the linear instability itself, not saturation.
+- Moving C<sub>T</sub>/C to either extreme at G = 2, K<sub>i</sub> = 1.0
+  raises K<sub>i,crit</sub> and suppresses the ringing: C<sub>T</sub>/C = 0.1
+  gives ρ<sub>I</sub> = 0.19 and 0.9 gives 0.13, each with a single overshoot
+  of about 0.3 &deg;C and settling in 53 s and 106 s, against 0.55 &deg;C and
+  169 s at 0.35. With most of the capacitance in one lump, one of the two
+  states barely matters and the loop behaves almost like one lump again.
 
 ---
 

@@ -274,6 +274,54 @@ in 0.02 steps); ρ<sub>I</sub> is 0.11 either way.
 
 ---
 
+## Six Goldilocks plots, steps 1 and 2: one shared parameter set
+
+**Step 1, measured quantities.** `two_lump`, `measured`: T<sub>amb</sub> =
+21.54 &deg;C, &chi;<sub>c</sub> = 0.181, &chi;<sub>h</sub> = 0.501 &deg;C/PWM,
+&tau; = 62.9 s, V<sub>TEC</sub> = 12.0 V (instructor's value, not measured),
+R<sub>M</sub> = 1.50 &Omega; (data sheet), PWM limit 255. The simulator derives
+C = 74.0 J/K, H = 1.176 W/K, P<sub>u,c</sub> = 0.213 W/PWM, r = 2.77. Starting
+estimates for the internal structure: G = 2 W/K, C<sub>T</sub>/C = 0.35.
+
+**Step 2, fix G and C<sub>T</sub>/C on the high-gain P run.** P control,
+K<sub>p</sub> = 64, step from 29.74 to a 35 &deg;C setpoint, the conditions of
+Run 3. Run 3 peaked at 36.28 &deg;C and settled at 34.59 &deg;C: a 35 %
+overshoot followed by several decaying swings.
+
+| G (W/K) | ζ<sub>2L,P</sub> | Simulated peak | Overshoot | Time of peak | Ringing period |
+|---|---|---|---|---|---|
+| 2 | 0.29 | 36.83 &deg;C | 46 % | 16.4 s | 30 s |
+| 3 | 0.33 | 36.44 &deg;C | 38 % | 13.3 s | 25 s |
+| **3.5** | **0.35** | **36.29 &deg;C** | **35 %** | **12.3 s** | **23 s** |
+| 4 | 0.37 | 36.15 &deg;C | 32 % | 11.5 s | 21 s |
+| Run 3, measured | | 36.28 &deg;C | 35 % | about 5 s | 9 s |
+
+Each G was run in the GUI; the numbers are from the simulator code with the
+same settings. Raising G raises ζ<sub>2L,P</sub> and reduces the overshoot, so
+G was moved up from 2 until the overshoot matched.
+
+**Chosen and locked: G = 3.5 W/K, C<sub>T</sub>/C = 0.35.** C<sub>T</sub>/C was
+not changed: at the G values that give a 35 % overshoot, moving it between 0.2
+and 0.5 changes the period only from about 19 to 24 s.
+
+**The disagreement.** With the overshoot matched, the model rings about 2.5
+times too slowly: peak at 12 s against about 5 s, period 23 s against 9 s. No
+G and C<sub>T</sub>/C in the ranges tried give both a 35 % overshoot and a 9 s
+period; G large enough for a 9 s period (around 17 W/K) gives only a few
+percent overshoot. Whatever lags behind the TEC in the real apparatus is
+faster than a second lump holding a third of the plate's heat capacity. A
+small, fast lag, such as the thermistor and its mounting, fits that better,
+but this data does not identify it.
+
+With these values K<sub>p,crit</sub> = 6.2 PWM/&deg;C (ζ<sub>2L,P</sub> = 1 on
+the heating side). Run 1 (K<sub>p</sub> = 2, ζ = 1.43) is below it, Run 2
+(K<sub>p</sub> = 16, ζ = 0.67) and Run 3 (K<sub>p</sub> = 64, ζ = 0.35) are
+above it. For the PI runs at K<sub>p</sub> = 12, K<sub>i,crit</sub> = 3.25, so
+ρ<sub>I</sub> = 0.015, 0.06 and 0.31 for K<sub>i</sub> = 0.05, 0.2 and 1.0: all
+three are predicted stable.
+
+---
+
 **Simulator quirks found.** The K<sub>i</sub> slider moves in steps of 0.02
 and the program re-applies it on every redraw, so a typed 0.05 becomes 0.06.
 Any field whose enabled state changes (switching measured / direct constants,

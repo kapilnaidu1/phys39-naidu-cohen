@@ -149,3 +149,53 @@ W/PWM, r = 2.77 and showed &tau; = 62.9 s. It settled with an error of about
 4.2 &deg;C, near 25.8 &deg;C. The droop formula gives 4.23 &deg;C (25.77
 &deg;C), and Run 1 measured 25.76 &deg;C at the same gain. The check passes,
 so no one-lump rerun is needed.
+
+---
+
+## In-class step 2: three one-lump PI comparisons
+
+`one_lump`, `pi`, anti-windup on, start at 21.54 &deg;C, setpoint 30 &deg;C,
+600 s per run. Each run was done in the GUI (screenshots checked against the
+numbers below). The numbers come from the same simulator code run with the
+same settings, so they are exact rather than read off a plot. ζ is the
+simulator's ζ<sub>1L,PI</sub> = (H + P<sub>u</sub>K<sub>p</sub>)/(2&radic;(C
+P<sub>u</sub>K<sub>i</sub>)).
+
+| Comparison | K<sub>p</sub> | K<sub>i</sub> | C (J/K) | ζ | Peak (&deg;C) | Within 0.1 &deg;C of 30 from |
+|---|---|---|---|---|---|---|
+| 1. raise K<sub>i</sub> | 12 | 0.06 | 74.0 | 2.55 | none; still 0.07 short at 600 s | 503 s |
+| | 12 | 0.2 | 74.0 | 1.40 | 30.02 | 43 s |
+| | 12 | 1.0 | 74.0 | 0.63 | 31.60 | 82 s |
+| 2. raise K<sub>p</sub> | 4 | 0.2 | 74.0 | 0.60 | 31.30 | 187 s |
+| | 12 | 0.2 | 74.0 | 1.40 | 30.02 | 43 s |
+| | 32 | 0.2 | 74.0 | 3.39 | none; PWM at 255 at first | 201 s |
+| 3. raise C (direct constants) | 12 | 0.2 | 75 | 1.38 | 30.02 | 45 s |
+| | 12 | 0.2 | 150 | 0.98 | 30.58 | 199 s |
+
+Comparison 3 used H = 1.20 W/K, P<sub>u,c</sub> = 0.21 W/PWM and r = 2.75 for
+both runs, the values the GUI rounded to on switching to direct constants, so
+only C differs between them.
+
+**What each shows.**
+
+1. Raising K<sub>i</sub> lowers ζ (ζ &prop; 1/&radic;K<sub>i</sub>). At
+   ζ = 0.63 the plate overshoots by 1.6 &deg;C; at 1.40 by only 0.02 &deg;C;
+   at 2.55 the integral is so slow that the last part of the droop takes
+   minutes to remove, like Run 4.
+2. Raising K<sub>p</sub> raises ζ (the numerator H + P<sub>u</sub>K<sub>p</sub>
+   grows). Too much damping is not better: at K<sub>p</sub> = 32 there is no
+   overshoot but the final 0.15 &deg;C takes over three minutes.
+3. Doubling C at fixed H doubles &tau; and lowers ζ by &radic;2, from 1.38
+   to 0.98: more thermal mass gives a slower, less damped response. The
+   final temperature is the same, because the steady state depends on H and
+   P<sub>u</sub>, not on C.
+
+The ζ = 0.98 run still overshoots by 0.58 &deg;C. ζ near 1 does not guarantee
+no overshoot for PI, because the controller adds a zero: the integral keeps
+pushing until the error changes sign.
+
+**Simulator quirks found.** The K<sub>i</sub> slider moves in steps of 0.02
+and the program re-applies it on every redraw, so a typed 0.05 becomes 0.06.
+Any field whose enabled state changes (switching measured / direct constants,
+one_lump / two_lump, p / pi) is rounded to its slider step at that moment.
+Set the dropdowns first, then type values, then check them.

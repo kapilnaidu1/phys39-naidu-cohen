@@ -307,8 +307,8 @@ and 0.5 changes the period only from about 19 to 24 s.
 **The disagreement.** With the overshoot matched, the model rings about 2.5
 times too slowly: peak at 12 s against about 5 s, period 23 s against 9 s. No
 G and C<sub>T</sub>/C in the ranges tried give both a 35 % overshoot and a 9 s
-period; G large enough for a 9 s period (around 17 W/K) gives only a few
-percent overshoot. Whatever lags behind the TEC in the real apparatus is
+period. A period near 9 s needs G of roughly 17 W/K (from the model's natural
+frequency), and at G = 20 W/K the overshoot is only 2 %. Whatever lags behind the TEC in the real apparatus is
 faster than a second lump holding a third of the plate's heat capacity. A
 small, fast lag, such as the thermistor and its mounting, fits that better,
 but this data does not identify it.

@@ -554,7 +554,12 @@ use 1000 samples from now on, which the Module 6 runs do.
 
 ## 11. Part 7: PI control on the apparatus, and the six Goldilocks runs
 
-13 October 2026. Controller: [`python/tec_pi_control_gui.py`](../../python/tec_pi_control_gui.py),
+13 and 14 October 2026. On 14 October the instructor asked for the high-gain
+P and PI runs to be pushed into saturation, so Runs 3 and 6 were repeated at
+K<sub>p</sub> = 200 and K<sub>i</sub> = 20 (section 11b). The 13 October
+K<sub>p</sub> = 64 and K<sub>i</sub> = 1.0 runs below are kept as "earlier
+high-gain runs" (3a, 6a); the six retained runs are 1, 2, 4, 5 from 13 October
+and 3, 6 from 14 October. Controller: [`python/tec_pi_control_gui.py`](../../python/tec_pi_control_gui.py),
 whose `pi_step()` holds every line that computes e, q, u<sub>P</sub>,
 u<sub>I</sub> and the clamped command. The instructor reviewed it on 13
 October. Sketch: [`arduino/module_06/tec_pi_safety`](../../arduino/module_06/tec_pi_safety/tec_pi_safety.ino),
@@ -580,10 +585,10 @@ used): `data/module_06/bench_log_2026-10-13.md`.
 |---|---|---|---|---|---|
 | 1 | P | 2 | 0 | 25.76 / 28.25 / 25.76 | 0.02 / 0.01 |
 | 2 | P | 16 | 0 | 29.05 / 33.52 / 29.12 | 0.02 / 0.03 |
-| 3 | P | 64 | 0 | 29.74 / 34.59 / 29.76 | **1.69 / 0.07** |
+| 3a | P | 64 | 0 | 29.74 / 34.59 / 29.76 | **1.69 / 0.07** |
 | 4 | PI | 12 | 0.05 | 29.66 / 34.71 / 30.08 | 0.02 / 0.01 |
 | 5 | PI | 12 | 0.2 | 29.97 / 35.02 / 29.93 | 0.02 / 0.02 |
-| 6 | PI | 12 | 1.0 | 30.00 / 35.00 / 30.00 | **0.71 / 1.30** |
+| 6a | PI | 12 | 1.0 | 30.00 / 35.00 / 30.00 | **0.71 / 1.30** |
 
 Each value is the mean of the last 30 s of the stage. Overshoots of 0.03
 &deg;C and below are at the noise level (0.005 to 0.02 &deg;C standard
@@ -603,7 +608,8 @@ steps the metrics are quoted for.
 
 ![Six runs](../figures/module_06/goldilocks/overlay_p_and_pi.png)
 
-**Step-response metrics, highest-gain runs** (A3 Question 2, Part 2). Rise is
+**Step-response metrics, earlier high-gain runs 3a and 6a** (the highest
+gains that still settled; the A3 numbers for Runs 3 and 6 are in 11b). Rise is
 10 % to 90 % of the change; settling is the last time T leaves the final value
 &plusmn;2 % of the change (about &plusmn;0.1 &deg;C); period is twice the mean
 spacing of crossings of the final value with 0.05 &deg;C hysteresis, given
@@ -612,32 +618,32 @@ when there are at least three crossings. All six runs are in
 
 | Run, step | Rise 10-90 % | Overshoot | Settling &plusmn;2 % | ss error | Period |
 |---|---|---|---|---|---|
-| 3 (P, K<sub>p</sub> 64), 30 &rarr; 35 | 2.1 s | 1.69 &deg;C, 35 % | 21 s | +0.41 &deg;C | 9 s |
-| 3, 35 &rarr; 30 | 4.0 s | 0.07 &deg;C, 1 % | 15 s | +0.24 &deg;C | n/a (2 crossings) |
-| 6 (PI, K<sub>i</sub> 1.0), 30 &rarr; 35 | 8.2 s | 0.71 &deg;C, 14 % | 56 s | 0.00 &deg;C | n/a (1 crossing) |
-| 6, 35 &rarr; 30 | 12.5 s | 1.30 &deg;C, 26 % | 68 s | 0.00 &deg;C | n/a (1 crossing) |
+| 3a (P, K<sub>p</sub> 64), 30 &rarr; 35 | 2.1 s | 1.69 &deg;C, 35 % | 21 s | +0.41 &deg;C | 9 s |
+| 3a, 35 &rarr; 30 | 4.0 s | 0.07 &deg;C, 1 % | 15 s | +0.24 &deg;C | n/a (2 crossings) |
+| 6a (PI, K<sub>i</sub> 1.0), 30 &rarr; 35 | 8.2 s | 0.71 &deg;C, 14 % | 56 s | 0.00 &deg;C | n/a (1 crossing) |
+| 6a, 35 &rarr; 30 | 12.5 s | 1.30 &deg;C, 26 % | 68 s | 0.00 &deg;C | n/a (1 crossing) |
 
-Run 3 hit the &plusmn;255 limit for 4 readings on the way up and 3 on the way
+Run 3a hit the &plusmn;255 limit for 4 readings on the way up and 3 on the way
 down, so its first 2 s are clipped, not linear. No other run saturated.
 
-**What the six show.**
+**What the 13 October runs show.**
 
 - P: raising K<sub>p</sub> shrinks the droop and speeds the response, as the
   one-lump model says (Run 1 droop 4.24 &deg;C, Run 2 0.88 &deg;C, Run 3 0.24
-  &deg;C on the way down). Run 3 then overshoots by 35 % and rings with a
+  &deg;C on the way down, Run 3a). Run 3a then overshoots by 35 % and rings with a
   9 s period, which the one-lump P model forbids (section 6).
-- PI removes the droop: Runs 5 and 6 end within 0.07 &deg;C of the setpoint,
+- PI removes the droop: Runs 5 and 6a end within 0.07 &deg;C of the setpoint,
   where P at K<sub>p</sub> = 16 (Run 2) stopped 0.88 to 1.48 &deg;C short.
   Run 4 shows the slow end of that: u<sub>I</sub> climbs for minutes and the
   plate is still 0.29 &deg;C short of 35 after 300 s.
 - Raising K<sub>i</sub> at fixed K<sub>p</sub> trades speed for overshoot:
-  rise 58 s, 24 s, 8 s on the way up across Runs 4 to 6, overshoot 0.02, 0.02,
+  rise 58 s, 24 s, 8 s on the way up across Runs 4, 5, 6a, overshoot 0.02, 0.02,
   0.71 &deg;C.
-- Heating and cooling are not symmetric. Run 6 overshoots 0.71 &deg;C going
+- Heating and cooling are not symmetric. Run 6a overshoots 0.71 &deg;C going
   up and 1.30 &deg;C coming down; the cooling branch has the smaller &chi;
   (0.18 against 0.50 &deg;C per count).
 
-**Sampling does not explain the Run 3 ringing.**
+**Sampling does not explain the Run 3a ringing.**
 `python/sampling_delay_check.py` runs the one-lump plant (&tau; 62.9 s,
 measured &chi;) under the controller as it actually runs: read every 0.563 s,
 command rounded, clipped at &plusmn;255 and held, with the delay from reading
@@ -645,3 +651,52 @@ to command anywhere from 0 to one full sample. The largest overshoot it gives
 is 0.03 &deg;C, against 1.69 &deg;C measured. Something with its own lag
 between the TEC and the thermistor is needed, which is what Part II's
 two-lump model adds.
+
+### 11b. High-gain repeats, 14 October: Runs 3 and 6 into saturation
+
+Same apparatus, sketch, GUI, setpoints (30, 35, 30 &deg;C), PWM limit 255 and
+anti-windup. Raw data: `data/module_06/pi_run_20261014_111720.csv`. Bench
+record: `data/module_06/bench_log_2026-10-14.md`.
+
+**Run 3, P, K<sub>p</sub> = 200.** L = &chi;K<sub>p</sub> = 100. The plate
+never settles: in every stage it oscillates without decaying, and the command
+swings across most of the &plusmn;255 range, reaching the limit on the 35
+&deg;C stage. Over the last 90 s of each stage:
+
+| Stage | Mean of cycle | Range | Peak to peak | Period | Readings at &plusmn;255 |
+|---|---|---|---|---|---|
+| 30 &deg;C | 30.09 &deg;C | 29.19 to 31.07 &deg;C | 1.88 &deg;C | 6.2 s | 0 % |
+| 35 &deg;C | 35.14 &deg;C | 33.91 to 36.53 &deg;C | 2.62 &deg;C | 6.3 s | 10 % |
+| back to 30 &deg;C | 30.10 &deg;C | 29.25 to 31.04 &deg;C | 1.79 &deg;C | 6.2 s | 0 % |
+
+Step up: 10-90 % rise 2.8 s, first peak 37.25 &deg;C (2.10 &deg;C, 41 %
+above the cycle mean). Step down: rise 3.2 s, first dip 1.00 &deg;C (20 %)
+below the cycle mean. The cycle means sit 0.10 to 0.15 &deg;C above the
+setpoint, so the average droop has gone; one-lump P predicts 0.08 &deg;C.
+
+**Run 6, PI, K<sub>p</sub> = 12, K<sub>i</sub> = 20.** One-lump
+ζ = 0.14; two-lump ρ<sub>I</sub> = 6.15, far past the stability boundary. The
+oscillation grows and then holds a fixed size once the command reaches the
+&plusmn;255 limit each half cycle; anti-windup refused the integral step on
+about 17 % of readings in the last 90 s of each stage. Over that window:
+
+| Stage | Mean of cycle | Range | Peak to peak | Period |
+|---|---|---|---|---|
+| 30 &deg;C | 30.59 &deg;C | 25.85 to 36.46 &deg;C | 10.61 &deg;C | 18.5 s |
+| 35 &deg;C | 35.53 &deg;C | 30.42 to 41.32 &deg;C | 10.90 &deg;C | 18.0 s |
+| back to 30 &deg;C | 30.80 &deg;C | 25.63 to 36.49 &deg;C | 10.86 &deg;C | 18.8 s |
+
+Each step starts in the middle of a 10 &deg;C swing, larger than the 5 &deg;C
+step, so rise time and overshoot are not defined. Highest temperature 42.52
+&deg;C, in the first cycle. Two irregularities, both in the data: control was
+on for 15 s with K<sub>i</sub> = 0 before 20 was entered, so the integral
+started at 38 &deg;C s (u<sub>I</sub> = 760 at once); and control was off for
+25 s at the end of the 35 &deg;C stage. The 35 &deg;C stage is taken to end
+where control went off.
+
+**Sampling still does not explain it.** `python/sampling_delay_check.py`
+also runs the Part II two-lump model (shared parameter set) at K<sub>p</sub> =
+200 under the sampled, rounded, clipped controller. With up to half a sample of
+extra delay it settles to within 0.06 &deg;C; even with a full extra sample
+it holds only 0.3 to 0.4 &deg;C peak to peak, against 1.9 &deg;C measured.
+

@@ -1,0 +1,1 @@
+time_s,temperature_C,pwm,heat_cool,setpoint_C,error_C,dt_s,q_Cs,u_P,u_I,u_req,u_applied,pwm_sent,saturated,q_held,mode,kp,ki,pwm_limit,anti_windup,control_on,run

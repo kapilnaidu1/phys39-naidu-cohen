@@ -321,9 +321,9 @@ class PIControlWindow(QtWidgets.QMainWindow):
 
         self.set_spin = dspin(5.0, 55.0, 0.5, 1, self.setpoint, " °C")
         self.set_spin.valueChanged.connect(self.on_setpoint_changed)
-        self.kp_spin = dspin(0.0, 200.0, 0.25, 3, self.kp)
+        self.kp_spin = dspin(0.0, 500.0, 0.25, 3, self.kp)
         self.kp_spin.valueChanged.connect(self.on_kp_changed)
-        self.ki_spin = dspin(0.0, 10.0, 0.005, 4, self.ki)
+        self.ki_spin = dspin(0.0, 50.0, 0.005, 4, self.ki)
         self.ki_spin.valueChanged.connect(self.on_ki_changed)
 
         self.limit_spin = QtWidgets.QSpinBox()

@@ -106,7 +106,7 @@ setpoint, T is already above it, and the heat stored in C<sub>T</sub> keeps
 flowing into the block after the command has dropped. T<sub>m</sub> carries on
 past the setpoint, then the controller over-corrects the other way. The larger
 the gain, the more heat goes in before the measurement catches up, which is
-why Run 3 at K<sub>p</sub> = 64 overshot by 1.69 &deg;C and rang while Run 2
+why Run 3a at K<sub>p</sub> = 64 overshot by 1.69 &deg;C and rang while Run 2
 at K<sub>p</sub> = 16 did not.
 
 **5. Rate-constant form.** Dividing the measured-lump equation by
@@ -133,7 +133,7 @@ With our measured-mode numbers (C = 74.0 J/K, H = 1.176 W/K) and the starting
 split C<sub>T</sub>/C = 0.35, C<sub>m</sub> = 48.1 J/K, so k<sub>m</sub> =
 0.024 s<sup>&minus;1</sup> (about 41 s). k<sub>21</sub> depends on G, which we
 have not measured; the starting guess G = 2 W/K gives 0.042
-s<sup>&minus;1</sup> (about 24 s). Matching Run 3 in class fixes G.
+s<sup>&minus;1</sup> (about 24 s). Matching a high-gain run fixes G.
 
 ---
 
@@ -283,10 +283,11 @@ R<sub>M</sub> = 1.50 &Omega; (data sheet), PWM limit 255. The simulator derives
 C = 74.0 J/K, H = 1.176 W/K, P<sub>u,c</sub> = 0.213 W/PWM, r = 2.77. Starting
 estimates for the internal structure: G = 2 W/K, C<sub>T</sub>/C = 0.35.
 
-**Step 2, fix G and C<sub>T</sub>/C on the high-gain P run.** P control,
-K<sub>p</sub> = 64, step from 29.74 to a 35 &deg;C setpoint, the conditions of
-Run 3. Run 3 peaked at 36.28 &deg;C and settled at 34.59 &deg;C: a 35 %
-overshoot followed by several decaying swings.
+**Step 2, fix G and C<sub>T</sub>/C on a high-gain P run.** Done on 14
+October, before the high-gain runs were repeated, using the 13 October
+K<sub>p</sub> = 64 run (now called 3a): step from 29.74 to a 35 &deg;C
+setpoint, peak 36.28 &deg;C, settled at 34.59 &deg;C, a 35 % overshoot followed
+by decaying ringing.
 
 | G (W/K) | ζ<sub>2L,P</sub> | Simulated peak | Overshoot | Time of peak | Ringing period |
 |---|---|---|---|---|---|
@@ -294,7 +295,7 @@ overshoot followed by several decaying swings.
 | 3 | 0.33 | 36.44 &deg;C | 38 % | 13.3 s | 25 s |
 | **3.5** | **0.35** | **36.29 &deg;C** | **35 %** | **12.3 s** | **23 s** |
 | 4 | 0.37 | 36.15 &deg;C | 32 % | 11.5 s | 21 s |
-| Run 3, measured | | 36.28 &deg;C | 35 % | about 5 s | 9 s |
+| Run 3a, measured | | 36.28 &deg;C | 35 % | about 5 s | 9 s |
 
 Each G was run in the GUI; the numbers are from the simulator code with the
 same settings. Raising G raises ζ<sub>2L,P</sub> and reduces the overshoot, so
@@ -302,31 +303,30 @@ G was moved up from 2 until the overshoot matched.
 
 **Chosen and locked: G = 3.5 W/K, C<sub>T</sub>/C = 0.35.** C<sub>T</sub>/C was
 not changed: at the G values that give a 35 % overshoot, moving it between 0.2
-and 0.5 changes the period only from about 19 to 24 s.
+and 0.5 changes the period only from about 19 to 24 s. The new K<sub>p</sub> =
+200 run could not have been used for this step: it oscillates without
+decaying, and a two-state P loop always decays (below), so no choice of G and
+C<sub>T</sub>/C reproduces it.
 
-**The disagreement.** With the overshoot matched, the model rings about 2.5
-times too slowly: peak at 12 s against about 5 s, period 23 s against 9 s. No
-G and C<sub>T</sub>/C in the ranges tried give both a 35 % overshoot and a 9 s
-period. A period near 9 s needs G of roughly 17 W/K (from the model's natural
-frequency), and at G = 20 W/K the overshoot is only 2 %. Whatever lags behind the TEC in the real apparatus is
-faster than a second lump holding a third of the plate's heat capacity. A
-small, fast lag, such as the thermistor and its mounting, fits that better,
-but this data does not identify it.
+**The first disagreement.** With the overshoot matched, the model rings about
+2.5 times too slowly: peak at 12 s against about 5 s, period 23 s against 9 s.
+A period near 9 s needs G of roughly 17 W/K (from the model's natural
+frequency), and at G = 20 W/K the overshoot is only 2 %. Whatever lags behind
+the TEC in the real apparatus is faster than a second lump holding a third of
+the plate's heat capacity.
 
 With these values K<sub>p,crit</sub> = 6.2 PWM/&deg;C (ζ<sub>2L,P</sub> = 1 on
-the heating side). Run 1 (K<sub>p</sub> = 2, ζ = 1.43) is below it, Run 2
-(K<sub>p</sub> = 16, ζ = 0.67) and Run 3 (K<sub>p</sub> = 64, ζ = 0.35) are
-above it. For the PI runs at K<sub>p</sub> = 12, K<sub>i,crit</sub> = 3.25, so
-ρ<sub>I</sub> = 0.015, 0.06 and 0.31 for K<sub>i</sub> = 0.05, 0.2 and 1.0: all
-three are predicted stable.
+the heating side). Run 1 (K<sub>p</sub> = 2, ζ = 1.43) is below it; Run 2
+(K<sub>p</sub> = 16, ζ = 0.67) is above it; Run 3 (K<sub>p</sub> = 200,
+ζ = 0.20) is far above it. For the PI runs at K<sub>p</sub> = 12,
+K<sub>i,crit</sub> = 3.25 PWM/(&deg;C s), so ρ<sub>I</sub> = 0.015, 0.061 and
+6.15 for K<sub>i</sub> = 0.05, 0.2 and 20.
 
 **Step 3, K<sub>p</sub> sweep with the locked parameters** (P, step 29.74 to
 35 &deg;C). ζ<sub>2L,P</sub> = 1.43, 1.01, 0.67, 0.35 at K<sub>p</sub> = 2, 6,
 16, 64: monotonic, about critical, small overshoot, large overshoot with
 ringing. At K<sub>p</sub> = 2 the model settles near 28.3 &deg;C; Run 1 settled
-at 28.25 &deg;C at the same gain and setpoint. At K<sub>p</sub> = 16 the model
-overshoots a little (about 6 %) where Run 2 showed none (0.02 &deg;C, noise
-level), a second, smaller disagreement.
+at 28.25 &deg;C at the same gain and setpoint.
 
 ---
 
@@ -346,111 +346,99 @@ J/K, H = 1.18 W/K, P<sub>u,c</sub> = 0.213 W/PWM, r = 2.77), with G = 3.5 W/K
 and C<sub>T</sub>/C = 0.35, a 255 PWM limit and anti-windup on; only the
 controller mode, K<sub>p</sub> and K<sub>i</sub> change.
 
-**Matched conditions.** Each simulation starts at the temperature the plate
-had when control was switched on in that run and uses the same setpoints
-(30, 35, 30 &deg;C) and stage lengths. The figures use the experimental axes:
-&minus;30 to 610 s from the 30 &rarr; 35 step, 25 to 38 &deg;C. Two
-differences remain: the model updates its command every 0.05 s without
-rounding, where the bench controller updated every 0.56 s in whole counts, and
-both lumps start at the same temperature.
+**Matched conditions.** Each simulation replays its run: it starts at the
+plate temperature and integral state when control was switched on and follows
+the same setpoints for the same durations, including the 25 s with control off
+in Run 6. Two differences remain: the model updates its command every 0.05 s
+without rounding, where the bench controller updated every 0.56 s in whole
+counts, and both lumps start at the same temperature.
 
-Figures: `docs/figures/module_06/goldilocks_sim/run1_sim.png` to
-`run6_sim.png`, and `sim_vs_experiment.png` with each measured run under its
-simulation. All metrics, simulated and measured: 
-`data/module_06/goldilocks_sim_metrics.csv`.
+Figures: `docs/figures/module_06/goldilocks_sim/overlay_p_and_pi_sim.png`
+(the same layout as the course reference figure and the experimental
+`overlay_p_and_pi.png`), `run1_sim.png` to `run6_sim.png`, and
+`sim_vs_experiment.png` with each measured run under its simulation. All
+metrics, simulated and measured: `data/module_06/goldilocks_sim_metrics.csv`.
 
 ![Six experiments against one model](../figures/module_06/goldilocks_sim/sim_vs_experiment.png)
 
-**Stability numbers for the shared set** (heating side, as the simulator
-displays them): K<sub>p,crit</sub> = 6.2 PWM/&deg;C; K<sub>i,crit</sub> = 3.25
-PWM/(&deg;C s) at K<sub>p</sub> = 12.
+**Runs 1, 2, 4 and 5** (settled responses; end of each stage):
 
-| Run | Gains | Stability | Simulated end values (30 / 35 / 30) | Measured | Overshoot up / down, sim | measured |
+| Run | Gains | Stability | Simulated (30 / 35 / 30 &deg;C) | Measured | Overshoot up / down, sim | measured |
 |---|---|---|---|---|---|---|
-| 1 | P, K<sub>p</sub> 2 | ζ<sub>2L,P</sub> 1.43, below K<sub>p,crit</sub> | 25.77 / 28.26 / 25.79 | 25.76 / 28.25 / 25.76 | none / none | none / none |
-| 2 | P, K<sub>p</sub> 16 | ζ<sub>2L,P</sub> 0.67, above | 29.06 / 33.51 / 29.06 | 29.05 / 33.52 / 29.12 | 5.8 % / 2.9 % | none / none |
-| 3 | P, K<sub>p</sub> 64 | ζ<sub>2L,P</sub> 0.35, far above | 29.75 / 34.59 / 29.74 | 29.74 / 34.59 / 29.76 | 34.5 % / 12.7 % | 34.8 % / 1.4 % |
+| 1 | P, K<sub>p</sub> 2 | ζ<sub>2L,P</sub> 1.43 | 25.77 / 28.26 / 25.79 | 25.76 / 28.25 / 25.76 | none / none | none / none |
+| 2 | P, K<sub>p</sub> 16 | ζ<sub>2L,P</sub> 0.67 | 29.06 / 33.51 / 29.06 | 29.05 / 33.52 / 29.12 | 5.8 % / 2.9 % | none / none |
 | 4 | PI, K<sub>i</sub> 0.05 | ρ<sub>I</sub> 0.015 | 29.66 / 34.69 / 30.08 | 29.66 / 34.71 / 30.08 | none / none | none / none |
 | 5 | PI, K<sub>i</sub> 0.2 | ρ<sub>I</sub> 0.061 | 29.97 / 35.01 / 29.89 | 29.97 / 35.02 / 29.93 | 3.1 % / 5.1 % | none / none |
-| 6 | PI, K<sub>i</sub> 1.0 | ρ<sub>I</sub> 0.307 | 30.03 / 34.98 / 30.00 | 30.00 / 35.00 / 30.00 | 43.7 % / 50.6 % | 14.2 % / 26.0 % |
 
-In the model, as on the bench, Run 3's command sits at the &plusmn;255 limit
-for about 3 s after each step; no other run reaches it. "None" means under
-1 %, which for these 4 to 5 &deg;C steps is below about
-0.05 &deg;C and partly reflects stages that were still creeping when they
-ended.
+"None" means under 1 %, below about 0.05 &deg;C for these steps.
 
-| Run, step | Rise 10-90 %, sim / measured | Settling &plusmn;2 %, sim / measured | Period, sim / measured |
-|---|---|---|---|
-| 1 up | 66 / 74 s | 115 / 110 s | |
-| 2 up | 12 / 13 s | 35 / 42 s | |
-| 3 up | 4.5 / 2.1 s | 36 / 21 s | 24 / 9 s |
-| 4 up | 22 / 58 s | 212 / 225 s | |
-| 5 up | 17 / 24 s | 44 / 52 s | |
-| 6 up | 10 / 8 s | 104 / 56 s | 65 s / one crossing only |
+**Runs 3 and 6** (high gain; last 90 s of the 35 &deg;C stage):
 
-**Classification.** From the closed-loop roots with the shared parameters
-(heating side): Run 1 stable non-oscillatory (two real roots); Runs 2 and 3
-stable underdamped (complex pair, ζ 0.67 and 0.35); Runs 4 and 5 stable with a
-well-damped complex pair (ζ 0.77) and a slow real root that dominates the
-approach, so effectively non-oscillatory; Run 6 stable underdamped (ζ 0.39).
-None is marginal or unstable, and none was on the bench. Measured: Runs 1, 2,
-4 and 5 non-oscillatory to within the 0.01 to 0.02 &deg;C noise, Runs 3 and 6
-underdamped.
+| Run | Gains | Stability | | Simulated | Measured |
+|---|---|---|---|---|---|
+| 3 | P, K<sub>p</sub> 200 | ζ<sub>2L,P</sub> 0.20 | first overshoot | 41 % | 41 % |
+| | | | after that | decays, settled in 32 s | does not decay |
+| | | | swing, period | none (0.25 &deg;C p-p) | 2.6 &deg;C p-p, 6.3 s |
+| 6 | PI, K<sub>i</sub> 20 | ρ<sub>I</sub> 6.15 | swing | 30.3 to 41.4 &deg;C (11.1 p-p) | 30.4 to 41.3 &deg;C (10.9 p-p) |
+| | | | period | 32 s | 18 s |
+| | | | command | &plusmn;255 every half cycle | reaches &plusmn;255 every half cycle |
+
+**Classification.** From the closed-loop roots with the shared parameters:
+Run 1 stable non-oscillatory (two real roots). Runs 2 and 3 stable
+underdamped (complex pair, ζ 0.67 and 0.20). Runs 4 and 5 stable, with a
+well-damped complex pair (ζ 0.77) and a slow real root that sets the
+approach, so effectively non-oscillatory. Run 6 unstable in the linear model
+(a complex pair with positive real part on both the heating and cooling
+sides), so the swings grow until the &plusmn;255 limit bounds them.
+Measured: Runs 1, 2, 4, 5 non-oscillatory to within 0.01 to 0.02 &deg;C;
+Run 3 a sustained oscillation of constant size, marginally stable at best,
+which **the model does not permit** (a two-state P loop always decays); Run 6
+unstable and bounded by the actuator, which the model does permit.
 
 ### The four comparison prompts (draft for A3 Questions 3 and 5)
 
-**1. Best reproductions.** P: Run 1, whose end values agree to 0.03 &deg;C and
-whose settling time (115 against 110 s) and rise (66 against 74 s) are close.
-PI: Run 4, end values within 0.02 &deg;C, no overshoot in either, settling
-212 against 225 s; its simulated rise is faster (22 against 58 s) because the
-model reaches the last few tenths of a degree sooner. All six end values agree
-to within 0.06 &deg;C, so the steady state, including P droop and its removal
-by PI, is reproduced everywhere.
+**1. Best reproductions.** P: Run 1, end values within 0.03 &deg;C, rise 66
+against 74 s, settling 115 against 110 s. PI: Run 4, end values within 0.02
+&deg;C, no overshoot in either, settling 212 against 225 s. Run 6 is the most
+striking: the model predicts its bounded oscillation to within 0.2 &deg;C in
+size, though too slowly.
 
-**2. The three P responses.** They are ordered by falling
-ζ<sub>2L,P</sub> = 1.43, 0.67, 0.35 and rising K<sub>p</sub> relative to
-K<sub>p,crit</sub> = 6.2: below it the response is monotonic and slow with a
-large droop (Run 1, 4.2 &deg;C at 30); above it the model predicts overshoot
-that grows as ζ falls. Measured, the response gets faster at each step (rise
-74, 13, 2 s) and the droop shrinks (4.24, 0.88, 0.24 &deg;C at the end of the
-last stage). Run 3 overshoots and rings as predicted; Run 2, predicted to
-overshoot by 6 %, did not overshoot measurably.
+**2. The three P responses.** Ordered by falling ζ<sub>2L,P</sub> = 1.43,
+0.67, 0.20, with K<sub>p</sub> below, above and far above K<sub>p,crit</sub> =
+6.2. Measured, the response speeds up (rise 74, 13, 3 s) and the droop shrinks
+(4.24, 0.88 &deg;C, then a cycle mean within 0.15 &deg;C of the setpoint).
+Run 1 matches the model. Run 2 is predicted to overshoot by 6 % and did not
+overshoot measurably. Run 3's first overshoot matches (41 % against 41 %),
+but where the model then decays, the plate keeps oscillating.
 
-**3. The three PI responses.** At fixed K<sub>p</sub> = 12, ρ<sub>I</sub>
-rises 0.015, 0.061, 0.307. Measured, the rise gets faster (58, 24, 8 s up) and
-overshoot appears only at the largest (0.02, 0.02, then 0.71 &deg;C up and
-1.30 &deg;C down). The settling time first falls, because the integral finishes
-the job sooner, then rises again as overshoot takes over (225, 52, 56 s up;
-110, 47, 68 s down). The model follows the same order but makes Run 6
-overshoot two to three times too much (44 against 14 % up, 51 against
-26 % down).
+**3. The three PI responses.** At fixed K<sub>p</sub> = 12, ρ<sub>I</sub> =
+0.015, 0.061, 6.15. Runs 4 and 5 are well inside the stable region and settle
+without measurable overshoot; Run 4 is slow (0.29 &deg;C short after 300 s).
+Run 6 is six times past the boundary and oscillates by 11 &deg;C, held there
+by saturation. The earlier Run 6a at K<sub>i</sub> = 1.0 (ρ<sub>I</sub> =
+0.31) sat between: 14 to 26 % overshoot, settled in about a minute.
 
-**4. Agreement, disagreement, choice.** Agreement: one parameter set, fixed
-once on Run 3, reproduces all six steady states, the size of the P droop at
-every gain, the slow integral creep of Run 4, and the order of every response
-feature with gain. Disagreement: the model's oscillation is about 2.5 times too
-slow (Run 3 period 24 against 9 s, first peak at 12 against about 5 s), and
-when the loop is moderately underdamped it predicts more overshoot than was
-measured (Runs 2, 5 and 6). No G and C<sub>T</sub>/C give both Run 3's 35 %
-overshoot and its 9 s period, which falsifies this two-lump model in detail:
-the lag in the apparatus is faster, and smaller, than a second lump holding a
-third of the heat capacity. The one-lump P model is falsified outright by
-Run 3, since it cannot overshoot at any gain. Gain choice: for P, K<sub>p</sub>
-= 16 (Run 2) is the best compromise, 13 s rise with no measurable overshoot,
-but it leaves 0.9 to 1.5 &deg;C of droop. For PI, K<sub>p</sub> = 12 with
-K<sub>i</sub> = 0.2 (Run 5): no steady-state error, 24 s rise, overshoot
-within the noise and settling in about 50 s. K<sub>i</sub> = 0.05 is too slow
-(still 0.29 &deg;C short after 300 s) and K<sub>i</sub> = 1.0 overshoots by up
-to 1.3 &deg;C.
+**4. Agreement, disagreement, choice.** Agreement: one parameter set
+reproduces every steady state to within 0.06 &deg;C, the droop at every P
+gain, Run 4's integral creep, Run 3's first overshoot, and Run 6's
+saturation-bounded swing. Disagreements: the model's oscillations are too slow
+(Run 6 period 32 against 18 s, Run 3a 23 against 9 s); it predicts overshoot
+in Runs 2 and 5 that was not measured; and it cannot produce Run 3's
+sustained oscillation at all. That last one falsifies the two-lump model at
+high P gain. The 0.56 s sampling does not rescue it
+(`python/sampling_delay_check.py`: at most 0.06 &deg;C peak to peak with up to
+half a sample of extra delay, against 1.9 &deg;C measured). Gain choice: P,
+K<sub>p</sub> = 16 (ζ = 0.67): 13 s rise, no measurable overshoot, but 0.9
+to 1.5 &deg;C droop. PI, K<sub>p</sub> = 12 with K<sub>i</sub> = 0.2
+(ρ<sub>I</sub> = 0.06): no steady-state error, 24 s rise, overshoot at the
+noise level, settled in about 50 s.
 
-**A physical effect a better model should include.** A small, fast lag between
-the TEC face and the thermistor reading: the thermistor's own heat capacity and
-its thermal contact with the plate, in effect a third, small lump. That is the
-kind of lag that would give fast ringing (a 9 s period) without the large
-slow second mass this model needs to produce the overshoot.
-`python/sampling_delay_check.py` already showed that the 0.56 s sampling alone
-cannot produce the ringing.
+**A physical effect a better model should include.** A small, fast lag
+between the TEC face and the thermistor reading, such as the thermistor's own
+heat capacity and its contact with the plate: a third state. A loop with
+three lags can sustain oscillation under P control at high enough gain, which
+the two-lump model cannot, and a small fast lag would ring faster than the
+large slow second lump this model needs.
 
 ---
 

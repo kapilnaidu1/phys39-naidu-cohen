@@ -229,6 +229,45 @@ one of the two states barely matters.
 
 ---
 
+## In-class step 4: two-lump PI stability
+
+Same common set with G = 2 W/K, K<sub>p</sub> = 18 PWM/&deg;C, `pi`,
+anti-windup on, 1 &deg;C step so the PWM never saturates (largest command 64
+counts). ρ<sub>I</sub> = K<sub>i</sub>/K<sub>i,crit</sub> with K<sub>i,crit</sub>
+from Routh-Hurwitz, as displayed. Rise is 10-90 %, settling is the last time
+T<sub>m</sub> leaves 30 &plusmn; 0.02 &deg;C (2 % of the step), period is the
+spacing of the first two peaks. Every run was done in the GUI and matched;
+numbers are from the simulator code with the same settings.
+
+| Run | K<sub>i</sub> | G | K<sub>i,crit</sub> | ρ<sub>I</sub> | Rise | First overshoot | Successive peaks above 30 (&deg;C) | Settling | Period |
+|---|---|---|---|---|---|---|---|---|---|
+| S1 | 0.26 | 2 | 2.34 | 0.11 | 16.4 s | 0.18 &deg;C | 0.18, 0.01 | 61 s | 72 s |
+| S2 | 1.0 | 2 | 2.34 | 0.43 | 12.7 s | 0.55 &deg;C | 0.55, 0.09, 0.02 | 169 s | 84 s |
+| S3 | 2.1 | 2 | 2.34 | 0.90 | 10.4 s | 0.92 &deg;C | 0.92, 0.73, 0.58, 0.47 | not within 900 s | 72 s |
+| S4 | 2.5 | 2 | 2.34 | 1.07 | 9.8 s | 1.02 &deg;C | 1.02, 1.07, 1.12, 1.17 (growing) | never | 68 s |
+| S5 | 1.0 | 0.5 | 0.88 | 1.14 | 19.5 s | 1.05 &deg;C | 1.05, 1.22, 1.40, 1.62 (growing) | never | 135 s |
+| S6 | 1.0 | 1 | 1.37 | 0.73 | 15.5 s | 0.81 &deg;C | 0.81, 0.44, 0.25, 0.15 | 674 s | 104 s |
+| S7 | 1.0 | 5 | 5.27 | 0.19 | 10.8 s | 0.30 &deg;C | 0.30, 0.00 | 54 s | 80 s |
+
+The 0.25 on the page snaps to 0.26 in the GUI (the K<sub>i</sub> slider moves
+in 0.02 steps); ρ<sub>I</sub> is 0.11 either way.
+
+**What it shows.**
+
+- ρ<sub>I</sub> predicts the outcome before the run: well below 1 decays fast,
+  just below 1 decays slowly, above 1 grows. All seven agreed with the
+  prediction made from the displayed K<sub>i,crit</sub>.
+- Raising K<sub>i</sub> shortens the initial correction (rise 16.4 to 9.8 s)
+  while making the final settling slower (61 s, 169 s, then never). Faster
+  approach and quicker settling pull in opposite directions.
+- Lowering G, at fixed gains, lowers K<sub>i,crit</sub>: more internal lag
+  leaves less room for integral action. The same K<sub>i</sub> = 1.0 is well
+  damped at G = 5, rings at G = 1 and is unstable at G = 0.5.
+- The growing runs (S4, S5) stay inside the PWM limit for the 600 s shown, so
+  their growth is the linear instability itself, not saturation.
+
+---
+
 **Simulator quirks found.** The K<sub>i</sub> slider moves in steps of 0.02
 and the program re-applies it on every redraw, so a typed 0.05 becomes 0.06.
 Any field whose enabled state changes (switching measured / direct constants,

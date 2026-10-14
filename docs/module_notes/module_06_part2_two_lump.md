@@ -194,6 +194,41 @@ The ζ = 0.98 run still overshoots by 0.58 &deg;C. ζ near 1 does not guarantee
 no overshoot for PI, because the controller adds a zero: the integral keeps
 pushing until the error changes sign.
 
+---
+
+## In-class step 3: the two-lump P transition
+
+The page's common parameter set, not our apparatus: `two_lump`, `direct
+constants`, `p`, T<sub>amb</sub> = T<sub>0</sub> = 29 &deg;C, T<sub>set</sub> =
+30 &deg;C, C = 91 J/K, H = 1.14 W/K, P<sub>u,c</sub> = 0.26 W/PWM, r = 2.0,
+K<sub>i</sub> = 0, mass temperature only. ζ is the simulator's
+ζ<sub>2L,P</sub>; every displayed value matched the page's prediction.
+
+| Run | K<sub>p</sub> | G (W/K) | C<sub>T</sub>/C | ζ<sub>2L,P</sub> | Rise 10-90 % | Overshoot of T<sub>m</sub> |
+|---|---|---|---|---|---|---|
+| P1 | 60 | 50 | 0.35 | 1.31 | 5.3 s | none |
+| P2 | 105 | 50 | 0.35 | 1.00 | 2.7 s | none |
+| P3 | 160 | 50 | 0.35 | 0.81 | 1.6 s | 0.015 &deg;C (1.5 %) |
+| G1 | 105 | 35 | 0.35 | 0.84 | 2.5 s | 0.009 &deg;C (0.9 %) |
+| G2 | 105 | 70 | 0.35 | 1.18 | 2.9 s | none |
+| F1 | 105 | 50 | 0.20 | 1.19 | 2.9 s | none |
+| F2 | 105 | 50 | 0.50 | 0.96 | 2.6 s | none visible |
+| F3 | 105 | 50 | 0.80 | 1.21 | 3.0 s | none |
+
+Rise times and overshoots are from the simulator code with these settings.
+
+**What it shows.** Raising K<sub>p</sub> moves the two-lump P loop from
+monotonic (ζ 1.31) through critical (1.00) to underdamped (0.81), and the
+response gets faster each time. That is what the one-lump P model can never
+do: its single real eigenvalue cannot overshoot at any gain. The overshoot here
+is small, 1.5 % at ζ = 0.81, because ζ is still close to 1. Lowering G (weaker
+coupling, more lag) lowers ζ; raising it brings the model back toward one
+lump. ζ is smallest when both thermal masses are appreciable (C<sub>T</sub>/C
+= 0.5) and rises when the capacitance sits mostly in either lump, because then
+one of the two states barely matters.
+
+---
+
 **Simulator quirks found.** The K<sub>i</sub> slider moves in steps of 0.02
 and the program re-applies it on every redraw, so a typed 0.05 becomes 0.06.
 Any field whose enabled state changes (switching measured / direct constants,

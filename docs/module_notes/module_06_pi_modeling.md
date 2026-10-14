@@ -595,7 +595,8 @@ window includes the approach; over its last 30 s it is flat.)
 
 **Figures** (`python/plot_goldilocks_experiment.py`): one per run in
 `docs/figures/module_06/goldilocks/`, all on the same axes (&minus;30 to 610 s
-from the 30 &rarr; 35 step, 25 to 37 &deg;C), temperature with setpoint above
+from the 30 &rarr; 35 step, 25 to 38 &deg;C, the same axes as the Part II
+simulation plots), temperature with setpoint above
 and signed applied PWM below; `overlay_p_and_pi.png` puts the three P and
 three PI runs on one figure each; `high_gain_steps.png` zooms on the four
 steps the metrics are quoted for.

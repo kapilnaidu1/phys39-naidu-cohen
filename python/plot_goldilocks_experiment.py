@@ -22,7 +22,7 @@ OUTPUT  docs/figures/module_06/goldilocks/run1_p_kp2.png ... run6_pi_ki1.png
 WHAT IS PLOTTED
 
     Every run is shown on the same axes: time from the 30 to 35 C setpoint
-    step, -30 s to +610 s, and 25 to 37 C. Only rows with control ON are
+    step, -30 s to +610 s, and 25 to 38 C. Only rows with control ON are
     drawn. The upper panel is the process output, the measured temperature,
     with the setpoint. The lower panel is the process input, the signed PWM
     actually commanded (pwm_sent), drawn as a step because each command is
@@ -72,7 +72,7 @@ RUNS = {
     6: ("PI", 12.0, 1.0, "high", "run6_pi_ki1"),
 }
 
-T_LIM = (25.0, 37.0)
+T_LIM = (25.0, 38.0)
 X_LIM = (-30.0, 610.0)
 PWM_LIMIT = 255
 BEFORE = 30.0          # s, window for T_i

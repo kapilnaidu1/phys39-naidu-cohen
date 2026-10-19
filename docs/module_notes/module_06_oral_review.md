@@ -300,6 +300,67 @@ on and 70 at H × 1.5.
 disagree beyond their uncertainties; r = χ<sub>h</sub>/χ<sub>c</sub> changes; or
 the two A blocks disagree with each other more than with B.
 
+### Result, 19 October: removing the foam did not change H measurably
+
+Run as two blocks in one session, foam off and then foam on, each: PI at 30 °C,
+PI at 45 °C, control off (cool-down), P at K<sub>p</sub> 2 with a 35 °C setpoint.
+The open-loop step was replaced by the passive cool-down, which gives τ without
+leaving the PI program. The third block (foam off again) was not run. Log:
+`data/module_06/bench_log_2026-10-19.md`. Analysis:
+[`python/foam_experiment_analysis.py`](../../python/foam_experiment_analysis.py),
+output in `data/module_06/foam_experiment_output.txt`.
+
+![Foam experiment](../figures/module_06/oral_review/foam_experiment.png)
+
+| Measurement | Foam off | Foam on | What it says about H |
+|---|---|---|---|
+| Steady PI command at 30 / 45 °C | 15.44 / 47.45 counts | 14.54 / 46.59 counts | a constant offset of 0.9 counts, not a change of slope |
+| **Slope du<sub>ss</sub>/dT = H/P<sub>u,h</sub>** | **2.135 ± 0.010** counts/°C | **2.135 ± 0.018** counts/°C | **H(off)/H(on) = 1.000 ± 0.010** |
+| Intercept T<sub>eff</sub> | 22.78 °C | 23.19 °C | the offset above, expressed as a temperature |
+| P, K<sub>p</sub> 2, steady T (droop) | 28.753 °C (6.247) | 28.753 °C (6.247) | identical |
+| Cool-down τ, T<sub>inf</sub> held at 23.0 °C for both | 63.2 s | 64.8 s | 2.4 % longer with foam on |
+| Cool-down τ, T<sub>inf</sub> fitted separately | 60.4 s | 65.3 s | fit-dependent, see below |
+| Temperature noise sd, last 60 s at 30 / 45 °C | 0.007 / 0.021 °C | 0.005 / 0.021 °C | no extra noise without the box |
+
+Uncertainties combine the standard error of each 60 s mean with the bias a
+leftover drift could cause, (τ/χ)|dT/dt|. The foam-on 45 °C hold was short and
+still drifting (+0.085 °C/min), which is why its slope uncertainty is larger.
+
+**Conclusion.** The designed measurement, the slope, gives H(off)/H(on) =
+1.000 ± 0.010. The 2σ range is 0.98 to 1.02, so removing the box changed the
+loss conductance by less than about 2 %. The P droop at the most sensitive gain
+(L ≈ 1) agrees to the last digit. The cool-downs agree to 2 to 8 %, depending on
+how the final temperature is handled. This is the weakest comparison: the foam-on
+cool-down lasted only about 150 s, after a 2 minute hold, so its asymptote is
+not measured and τ trades off against it in the fit. With the same asymptote for
+both (23.0 °C, measured in the long foam-off cool-down), the difference is 2.4 %.
+
+**What it means physically.** Almost none of the plate's heat loss goes through
+the path the foam controls. Most of H must be conduction through the TEC to the
+water block and through the mounting, which the box does not touch. That fits the
+rough data-sheet estimate of about 0.6 W/K for the TEC alone, though the data
+cannot say how the rest divides. Either the air path is small in both
+conditions, or the box was never insulating much.
+
+**What is left open.**
+
+- The 0.9-count offset is constant across both setpoints, so it is not an H
+  effect: it is an effective room temperature 0.4 °C higher during the foam-on
+  PI holds. It could be drift (the plate was still warming at the start of the
+  session) or warm air trapped in the box. The identical P points, taken later in
+  each block, argue against a foam effect that lasted the whole block. Without
+  the third block this cannot be settled.
+- Today's slope over 30 to 45 °C gives χ<sub>h</sub> = 0.468 in both blocks.
+  The 30 to 35 °C pairs of 13 October gave 0.505, and Module 4 gave 0.501. The
+  plant line may curve at higher temperature (χ smaller when hotter), or it may
+  be a day-to-day difference. A 35 °C PI hold in the same session would separate
+  the two.
+
+**For the oral, in one sentence.** The model says that if only H changes, χ, τ
+and the droop must all move by the same factor. We measured that factor
+directly from the PI command slope, and it is 1.00 to within 2 %: the foam box
+is not what sets our heat loss.
+
 ---
 
 ## 7. Equation sheet

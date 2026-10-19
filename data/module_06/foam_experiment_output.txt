@@ -1,0 +1,34 @@
+python3 python/foam_experiment_analysis.py
+
+Holds (last 60 s). du = sqrt(SEM^2 + drift bias^2), drift bias = (tau/chi_h)|dT/dt|
+  block 1 (foam off) PI30:     40 to    315 s (275 s), T 30.004 C, u  15.44 (sd 0.11, SEM 0.031, drift +0.019 C/min, bias 0.040), du 0.050
+  block 1 (foam off) PI45:    316 to    678 s (362 s), T 44.995 C, u  47.45 (sd 0.26, SEM 0.132, drift +0.015 C/min, bias 0.031), du 0.136
+  block 1 (foam off) P35:   1028 to   1338 s (310 s), T 28.753 C, u  12.49 (sd 0.01, SEM 0.001, drift -0.001 C/min, bias 0.002), du 0.002
+  block 2 (foam on) PI30:   1402 to   1612 s (211 s), T 30.002 C, u  14.54 (sd 0.06, SEM 0.005, drift -0.003 C/min, bias 0.006), du 0.008
+  block 2 (foam on) PI45:   1613 to   1737 s (125 s), T 45.015 C, u  46.59 (sd 0.44, SEM 0.210, drift +0.085 C/min, bias 0.178), du 0.275
+  block 2 (foam on) P35:   1891 to   2220 s (329 s), T 28.753 C, u  12.49 (sd 0.01, SEM 0.001, drift -0.003 C/min, bias 0.006), du 0.006
+
+Slope of steady command against temperature (30 to 45 C holds)
+  block 1 (foam off): H/P_u,h = 2.1354 +/- 0.0097 counts/C (chi_h = 0.4683), intercept T_eff = 22.78 C
+  block 2 (foam on): H/P_u,h = 2.1350 +/- 0.0183 counts/C (chi_h = 0.4684), intercept T_eff = 23.19 C
+  H(foam off)/H(foam on) = 1.0002 +/- 0.0097 (1 sigma); 2-sigma range 0.981 to 1.020
+  intercept shift, foam on minus foam off: +0.42 C (a constant offset of -0.90 counts at 30 C, -0.86 at 45 C)
+
+P control, Kp 2, setpoint 35 C (L about 1)
+  block 1 (foam off): T_ss 28.753 C, droop 6.247 C, u 12.49
+  block 2 (foam on): T_ss 28.753 C, droop 6.247 C, u 12.49
+
+Passive cool-down after the 45 C hold, T = T_inf + A exp(-t/tau)
+  block 1 (foam off)  common window 20 to 150 s: tau 60.4 +/- 0.1 s, T_inf 23.29 C (cool-down lasted 349 s)
+  block 1 (foam off)  sensitivity   10 to 150 s: tau 59.1 +/- 0.1 s, T_inf 23.39 C (cool-down lasted 349 s)
+  block 1 (foam off)  sensitivity   40 to 150 s: tau 61.3 +/- 0.2 s, T_inf 23.22 C (cool-down lasted 349 s)
+  block 2 (foam on)  common window 20 to 150 s: tau 65.3 +/- 0.1 s, T_inf 22.94 C (cool-down lasted 153 s)
+  block 2 (foam on)  sensitivity   10 to 150 s: tau 63.5 +/- 0.2 s, T_inf 23.10 C (cool-down lasted 153 s)
+  block 2 (foam on)  sensitivity   40 to 150 s: tau 67.1 +/- 0.1 s, T_inf 22.81 C (cool-down lasted 153 s)
+  block 1 (foam off), 20 s to the end (349 s): tau 63.6 s, T_inf 22.99 C  <- the only cool-down long enough to fix T_inf
+  same common window with T_inf held equal in both blocks:
+    T_inf = 22.8 C: tau foam off 65.2 s, foam on 66.7 s, ratio on/off 1.023
+    T_inf = 23.0 C: tau foam off 63.2 s, foam on 64.8 s, ratio on/off 1.024
+    T_inf = 23.2 C: tau foam off 61.3 s, foam on 62.9 s, ratio on/off 1.026
+
+13 October reference (foam on, 30 and 35 C pairs): chi_h mean 0.5046, sd 0.0080 per pair; see python/insulation_sensitivity.py

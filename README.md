@@ -306,6 +306,7 @@ python3 python/plot_goldilocks_experiment.py     # six measured runs and step me
 python3 python/simulate_goldilocks_two_lump.py   # six two-lump simulations, comparison
 python3 python/sampling_delay_check.py           # can sampling delay explain Run 3?
 python3 python/pi_55c_check.py                   # A3 Q4: 55 C, windup, integral reset
+python3 python/insulation_sensitivity.py         # oral review: operating points, foam-removal sensitivity
 python3 python/plot_a3_figures.py                # print-size A3 figures
 python3 python/build_a3_pdf.py                   # A3 PDF (reportlab, DejaVu fonts)
 ```

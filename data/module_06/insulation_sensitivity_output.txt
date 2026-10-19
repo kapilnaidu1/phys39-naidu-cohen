@@ -1,0 +1,56 @@
+python3 python/insulation_sensitivity.py
+
+1. Settled holds, 13 October (last 60 s; hold >= 100 s, drift <= 0.10 C/min, sd(u) <= 0.5)
+   run  1 P  Kp    2 Ki 0     set 30: T 25.756 C, u   8.49 (sd 0.01), drift +0.002 C/min
+   run  1 P  Kp    2 Ki 0     set 35: T 28.251 C, u  13.50 (sd 0.02), drift +0.017 C/min
+   run  1 P  Kp    2 Ki 0     set 30: T 25.764 C, u   8.47 (sd 0.03), drift -0.037 C/min
+   run  2 P  Kp   16 Ki 0     set 30: T 29.047 C, u  15.24 (sd 0.17), drift +0.024 C/min
+   run  2 P  Kp   16 Ki 0     set 35: T 33.499 C, u  24.01 (sd 0.38), drift +0.075 C/min
+   run  4 PI Kp   12 Ki 0.05  set 30: T 29.648 C, u  15.80 (sd 0.09), drift +0.069 C/min
+   run  4 PI Kp   12 Ki 0.05  set 35: T 34.695 C, u  25.60 (sd 0.09), drift +0.070 C/min
+   run  4 PI Kp   12 Ki 0.05  set 30: T 30.086 C, u  16.51 (sd 0.07), drift -0.022 C/min
+   run  5 PI Kp   12 Ki 0.2   set 30: T 29.954 C, u  16.51 (sd 0.07), drift +0.047 C/min
+   run  5 PI Kp   12 Ki 0.2   set 35: T 35.018 C, u  26.49 (sd 0.07), drift -0.012 C/min
+   run  5 PI Kp   12 Ki 0.2   set 30: T 29.934 C, u  15.91 (sd 0.36), drift -0.034 C/min
+   run  6 PI Kp   12 Ki 1     set 30: T 29.994 C, u  16.40 (sd 0.23), drift +0.001 C/min
+   run  6 PI Kp   12 Ki 1     set 35: T 35.000 C, u  26.51 (sd 0.09), drift +0.003 C/min
+   run  6 PI Kp   12 Ki 1     set 30: T 30.000 C, u  16.49 (sd 0.08), drift +0.002 C/min
+   fit T = T_amb + chi_h u over 14 holds: chi_h = 0.5110 +/- 0.0076 C/count, T_amb = 21.50 +/- 0.14 C, rms residual 0.151 C, largest 0.305 C
+   Module 4, open loop: chi_h = 0.501, T_amb = 21.54
+   largest drift 0.075 C/min would bias u by at most (tau/chi) dT/dt = 0.16 counts
+   one-sigma fractional uncertainty of 1/chi_h from this fit: 1.5 %
+   Two-setpoint method, run by run (first 30 C hold and the 35 C hold): chi_h = dT/du, T_amb = T - chi_h u
+   run 1 (P), holds ending at 574 and 746 s: chi_h = 0.4983, T_amb = 21.53 C
+   run 2 (P), holds ending at 1096 and 1217 s: chi_h = 0.5073, T_amb = 21.32 C
+   run 4 (PI), holds ending at 2024 and 2328 s: chi_h = 0.5152, T_amb = 21.51 C
+   run 5 (PI), holds ending at 2868 and 3030 s: chi_h = 0.5071, T_amb = 21.58 C
+   run 6 (PI), holds ending at 3338 and 3491 s: chi_h = 0.4950, T_amb = 21.88 C
+   mean chi_h 0.5046, sd 0.0080 (1.6 % per pair)
+
+2. One-lump sensitivities S = dlnX/dlnH and illustrative values for H x 1, 1.25, 1.5
+   chi_h (C/count)                        S    -1: 0.501, 0.401, 0.334
+   chi_c (C/count)                        S    -1: 0.181, 0.145, 0.121
+   tau (s)                                S    -1: 62.900, 50.320, 41.933
+   open-loop rise at u = +25 (C)          S    -1: 12.525, 10.020, 8.350
+   PI steady command at 35 C (counts)     S    +1: 26.866, 33.583, 40.299
+   P droop at 35 C, Kp 2 (L = 1.00)       S +0.50: 6.723, 7.471, 8.070
+   P tau_cl, Kp 2                       S -0.50: 31.42, 27.93, 25.14
+   P droop at 35 C, Kp 16 (L = 8.02)       S +0.89: 1.493, 1.816, 2.122
+   P tau_cl, Kp 16                       S -0.11: 6.98, 6.79, 6.61
+   P droop at 35 C, Kp 64 (L = 32.06)       S +0.97: 0.407, 0.505, 0.602
+   P tau_cl, Kp 64                       S -0.03: 1.90, 1.89, 1.87
+   one-lump PI zeta, Kp 12 Ki 0.2             S +0.14: 1.40, 1.45, 1.50
+   one-lump PI natural frequency sqrt(P_u Ki / C) has no H in it: S = 0
+
+   P droop: the absolute change between H1 and H2 is largest when P_u Kp = sqrt(H1 H2), i.e. L = 1 at the geometric mean H.
+   H x 1.25: best Kp = sqrt(1.25)/chi_h = 2.23, droop change 0.75 C at a 35 C setpoint
+   H x 1.5: best Kp = sqrt(1.5)/chi_h = 2.44, droop change 1.36 C at a 35 C setpoint
+
+3. Two-lump (course formulas, shared set: C, P_u, G 3.5 W/K, C_T/C 0.35 fixed; only H scaled)
+   H x 1.0  H = 1.176 W/K: zeta_2L,P(Kp 16) 0.673, zeta_2L,P(Kp 200) 0.201, K_i,crit(Kp 12) 3.25
+   H x 1.25 H = 1.471 W/K: zeta_2L,P(Kp 16) 0.681, zeta_2L,P(Kp 200) 0.206, K_i,crit(Kp 12) 3.46
+   H x 1.5  H = 1.765 W/K: zeta_2L,P(Kp 16) 0.690, zeta_2L,P(Kp 200) 0.211, K_i,crit(Kp 12) 3.67
+
+4. Laird CP14-127-045 passive conductance, constant-property TEC model (rough)
+   S I_max = (Qc_max + I_max^2 R/2)/T_h = 0.4224 W/K; K_TEC = [S I_max (T_h - dT_max) - I_max^2 R/2]/dT_max = 0.59 W/K
+   model H (shared set) = 1.176 W/K

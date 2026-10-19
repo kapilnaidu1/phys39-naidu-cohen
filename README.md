@@ -17,8 +17,10 @@ arduino/module_0N/        authoritative Arduino sketches, grouped by module
 code/module_01/           Module 1 sketches, kept at their original paths
 data/module_0N/           raw captures, one folder per module
 docs/module_notes/        written evidence notes
+docs/assessments/         Markdown sources of the A2 and A3 PDFs
+docs/A1/A2/A3_Naidu_Cohen.pdf  submitted assessments
 docs/images/              photographs, Serial Plotter and oscilloscope captures
-docs/figures/module_03/   Module 3 figures
+docs/figures/module_0N/   figures, one folder per module
 python/                   Python programs for Module 3 onward
 requirements.txt          Python dependencies
 ```
@@ -72,6 +74,8 @@ time constant about 15 s in air.
 | [`tec_manual_fixed_direction`](arduino/module_03/tec_manual_fixed_direction/tec_manual_fixed_direction.ino) | 3, Part 2 | `A0`, `A1` | PWM on pin 10 only, pin 9 held LOW | Serial Monitor |
 | [`tec_manual_hardware_direction`](arduino/module_03/tec_manual_hardware_direction/tec_manual_hardware_direction.ino) | 3, Part 3 | `A0`, `A1`, pin 11 switch | PWM on pin 9 or 10 | Serial Monitor |
 | [`tec_python_control`](arduino/module_03/tec_python_control/tec_python_control.ino) | 3, Part 6 | `A0` and serial commands | PWM on pin 9 or 10 | [`tec_control_gui.py`](python/tec_control_gui.py) |
+| [`tec_open_loop_safety`](arduino/module_04/tec_open_loop_safety/tec_open_loop_safety.ino) | 4 and 5 | `A0` and serial commands | PWM on pin 9 or 10, 60 °C software shutdown | [`tec_control_gui.py`](python/tec_control_gui.py) (Module 4), [`tec_p_control_gui.py`](python/tec_p_control_gui.py) (Module 5) |
+| [`tec_pi_safety`](arduino/module_06/tec_pi_safety/tec_pi_safety.ino) | 6 | `A0` (mean of 1000 ADC readings) and serial commands | PWM on pin 9 or 10, 60 °C software shutdown | [`tec_pi_control_gui.py`](python/tec_pi_control_gui.py) |
 
 `thermistor_serial` has a `PLOTTER_MODE` flag: `false` prints the labeled line
 for Serial Monitor, `true` prints one bare number per line for Serial Plotter.
@@ -96,7 +100,9 @@ Python, for Module 3 Parts 4 onward:
 ```bash
 pip install -r requirements.txt
 python python/tec_temperature_strip_chart.py     # display only
-python python/tec_control_gui.py                 # full manual control
+python python/tec_control_gui.py                 # full manual control (Modules 3, 4)
+python python/tec_p_control_gui.py               # P control (Module 5)
+python python/tec_pi_control_gui.py              # P and PI control (Module 6)
 ```
 
 Set `SERIAL_PORT` near the top of whichever program you run. If it is wrong,
@@ -219,6 +225,93 @@ pot has been seen at zero, so the pre-power checklist line "PWM starts at zero"
 is enforced in hardware terms rather than trusted. All three Module 3 sketches
 refuse to report a temperature when the divider reading falls outside ADC 20 to
 1000, and print the likely wiring cause instead of a number.
+
+---
+
+## Module 4: open-loop calibration and software safety
+
+Evidence note: [`docs/module_notes/module_04_open_loop_tec.md`](docs/module_notes/module_04_open_loop_tec.md)
+Submitted as [`docs/A2_Naidu_Cohen.pdf`](docs/A2_Naidu_Cohen.pdf) (source
+[`docs/assessments/a2_open_loop_tec.md`](docs/assessments/a2_open_loop_tec.md))
+
+| Quantity | Result |
+|---|---|
+| Heating susceptibility χ<sub>h</sub> | 0.501 °C per PWM count |
+| Cooling susceptibility χ<sub>c</sub> | 0.181 °C per PWM count |
+| Room temperature T<sub>amb</sub> | 21.54 °C |
+| Time constant τ | 62.9 ± 5.0 s, fitted to the eight constant-command steps (`python/estimate_tau.py`) |
+| Software shutdown | 60 °C latch in the sketch, trip tested (`data/module_04/part1_safety_shutdown_test.txt`) |
+
+Raw data: `data/module_04/full_run.csv`. Figure:
+`python3 python/plot_open_loop_calibration.py`.
+
+---
+
+## Module 5: P control
+
+Evidence note: [`docs/module_notes/module_05_p_control.md`](docs/module_notes/module_05_p_control.md)
+
+Sketch `tec_open_loop_safety` (unchanged) with
+[`python/tec_p_control_gui.py`](python/tec_p_control_gui.py). Raw data in
+`data/module_05/`, figures in `docs/figures/module_05/`
+(`python3 python/plot_droop.py`, `python3 python/plot_p_control_traces.py`).
+
+---
+
+## Module 6: PI control and lumped thermal models
+
+Evidence notes:
+[`docs/module_notes/module_06_pi_modeling.md`](docs/module_notes/module_06_pi_modeling.md) (Part I)
+and [`docs/module_notes/module_06_part2_two_lump.md`](docs/module_notes/module_06_part2_two_lump.md) (Part II).
+Submitted as [`docs/A3_Naidu_Cohen.pdf`](docs/A3_Naidu_Cohen.pdf) (source
+[`docs/assessments/a3_feedback_model.md`](docs/assessments/a3_feedback_model.md)).
+
+**On the bench.** Upload `arduino/module_06/tec_pi_safety`, quit the Arduino
+IDE (it holds the port), then run `python3 python/tec_pi_control_gui.py` from
+the repository root. The control law and its anti-windup are all in
+`pi_step()`. Each launch writes a new
+`data/module_06/pi_run_YYYYMMDD_HHMMSS.csv` and never overwrites one. Columns:
+
+| Column | Meaning |
+|---|---|
+| `time_s`, `temperature_C`, `pwm`, `heat_cool` | from the Arduino line |
+| `setpoint_C`, `error_C` | setpoint and e = T<sub>set</sub> − T |
+| `dt_s` | time since the previous accepted reading |
+| `q_Cs` | integral state after this update, °C·s |
+| `u_P`, `u_I`, `u_req`, `u_applied` | signed PWM counts, + heats and − cools |
+| `pwm_sent` | signed integer actually commanded |
+| `saturated`, `q_held` | command at the limit; integral step refused by anti-windup |
+| `mode`, `kp`, `ki`, `pwm_limit`, `anti_windup`, `control_on`, `run` | settings in force for that row |
+
+The six Goldilocks runs are in `data/module_06/pi_run_20261013_094149.csv`
+(Runs 1, 2, 4, 5) and `data/module_06/pi_run_20261014_111720.csv` (Runs 3, 6),
+with the bench logs `data/module_06/bench_log_2026-10-13.md` and
+`bench_log_2026-10-14.md`. Chosen gains: P, K<sub>p</sub> = 16 PWM/°C; PI,
+K<sub>p</sub> = 12 PWM/°C with K<sub>i</sub> = 0.2 PWM/(°C s).
+
+**Simulation.** The course simulator is kept at
+[`python/Lab_6_7_modeling_tec.py`](python/Lab_6_7_modeling_tec.py) and run with
+`python3 python/Lab_6_7_modeling_tec.py` (needs tkinter and matplotlib).
+`Lab_6_7_modeling_tec_v3.py` at the top level is the course's later version,
+kept for reference; with the instructor's agreement our results use the
+earlier one.
+
+**Reproducing the figures and numbers**, all from the repository root:
+
+```bash
+python3 python/simulate_one_lump.py              # Part I one-lump simulations
+python3 python/open_loop_course_sim_check.py     # Part I Part 4, course simulator open loop
+python3 python/plot_part5_overshoot.py           # Part I Part 5, marked overshoot
+python3 python/plot_goldilocks_experiment.py     # six measured runs and step metrics
+python3 python/simulate_goldilocks_two_lump.py   # six two-lump simulations, comparison
+python3 python/sampling_delay_check.py           # can sampling delay explain Run 3?
+python3 python/pi_55c_check.py                   # A3 Q4: 55 C, windup, integral reset
+python3 python/plot_a3_figures.py                # print-size A3 figures
+python3 python/build_a3_pdf.py                   # A3 PDF (reportlab, DejaVu fonts)
+```
+
+`build_a2_pdf.py` and `build_a3_pdf.py` look for the DejaVu fonts in
+`/usr/share/fonts/truetype/dejavu`, the Linux location.
 
 ---
 

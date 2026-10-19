@@ -537,7 +537,10 @@ these screenshots.
   section 9, `docs/figures/module_06/supplied_sim/`
 - [x] PI controller on the apparatus and the six experimental Goldilocks
   plots with step-response metrics (A3 Question 2): section 11
-- [ ] link to the pushed Git checkpoint: add the hash once pushed
+- [x] Git checkpoint cited in A3: commit 78e8c21 (pushed; the PDF itself is
+  in the following commit, 3d1cd26)
+- [x] Part 4 open-loop exercises in the course simulator, Part 5 marked
+  overshoot, Part 6 integral questions, oral review: section 12
 
 **Open, now answered by section 11.** The Module 5 note left open whether the
 K<sub>p</sub> = 32 overshoot was real and whether discrete sampling could
@@ -699,4 +702,163 @@ also runs the Part II two-lump model (shared parameter set) at K<sub>p</sub> =
 200 under the sampled, rounded, clipped controller. With up to half a sample of
 extra delay it settles to within 0.06 &deg;C; even with a full extra sample
 it holds only 0.3 to 0.4 &deg;C peak to peak, against 1.9 &deg;C measured.
+
+---
+
+## 12. Remaining Part I items (completed 19 October)
+
+### Part 4 in the course simulator
+
+`python/open_loop_course_sim_check.py` runs the Part 4 exercises with the
+course simulator's own `advance_model()` (`one_lump`, `open_loop`). Output:
+`data/module_06/open_loop_course_sim_check.txt`.
+
+**Guided exercise, simulator defaults** (T<sub>amb</sub> 22 &deg;C,
+&chi;<sub>c</sub> 0.23, &chi;<sub>h</sub> 0.46 &deg;C/PWM, &tau; 80 s):
+
+| Command | Predicted T<sub>ss</sub> = T<sub>amb</sub> + &chi;u | Simulated | &chi; from (T<sub>ss</sub> &minus; T<sub>amb</sub>)/u |
+|---|---|---|---|
+| u = +25 | 33.50 &deg;C | 33.50 &deg;C | 0.460 |
+| u = &minus;25 | 16.25 &deg;C | 16.25 &deg;C | 0.230 |
+| u = &minus;50 | 10.50 &deg;C | 10.50 &deg;C | 0.230 |
+
+Ratio &chi;<sub>h</sub>/&chi;<sub>c</sub> = 2.00, matching the displayed
+values.
+
+1. **Why +25 and &minus;25 give unequal changes.** Peltier transport reverses
+   with the current but Joule heating does not. Heating, both put heat into
+   the plate; cooling, Joule heat partly cancels the Peltier pumping. So the
+   TEC delivers more heat per count heating than it removes per count
+   cooling: P<sub>u,h</sub> = r P<sub>u,c</sub> with r = 2 here (2.77 on our
+   apparatus), and &chi; = P<sub>u</sub>/H differs by the same factor.
+2. **&chi; from the displayed values** is in the table, and agrees with the
+   simulator's &chi;<sub>h</sub> = 0.46 and &chi;<sub>c</sub> = 0.23.
+
+**Thermal mass** (direct constants, u = +25, H, P<sub>u,c</sub> and r fixed):
+C &times; 1 gives 33.50 &deg;C with the 63 % point at 79.9 s; C &times; 2 gives
+33.50 &deg;C with the 63 % point at 160.0 s. The steady temperature is set by
+the balance P<sub>u</sub>u = H(T &minus; T<sub>amb</sub>), which has no C in
+it; C only sets how much energy has to go in to get there, so &tau; = C/H
+doubles and nothing else changes.
+
+**Our parameters against measured open-loop steps** (&chi;<sub>c</sub> 0.181,
+&chi;<sub>h</sub> 0.501, &tau; 62.9 s, T<sub>amb</sub> 21.54 &deg;C, 12 V,
+1.50 &Omega;, &Delta;t 0.05 s; Module 4 data):
+
+| Step | Length | Final, measured | Final, simulated | rms residual | Largest miss |
+|---|---|---|---|---|---|
+| heating, u = +25 | 298 s | 33.99 &deg;C | 33.96 &deg;C | 0.145 &deg;C | &minus;0.38 &deg;C at 15 s |
+| cooling, u = &minus;32 | 237 s | 15.95 &deg;C | 15.82 &deg;C | 0.107 &deg;C | &minus;0.15 &deg;C at 133 s |
+
+Changing &Delta;t from 0.05 to 0.01 s moves the end by 0.0002 &deg;C or less.
+The heating step agrees with section 4 (33.97 &deg;C, rms 0.147 &deg;C with our
+own Euler code). The important difference from the apparatus: on both steps
+the measured plate moves faster than the model for the first 60 s (model minus
+measurement &minus;0.34 &deg;C heating and +0.08 &deg;C cooling, mean over 10
+to 30 s) and slower after 100 s (+0.15 and &minus;0.13 &deg;C, 100 to 150 s).
+A single exponential cannot do that, the same second-time-scale signature as
+section 4.
+Figure: `docs/figures/module_06/open_loop_course_sim.png`.
+
+### Part 5: the high-gain trace marked
+
+![Part 5](../figures/module_06/part5_overshoot_marked.png)
+
+`python/plot_part5_overshoot.py`. Module 5, K<sub>p</sub> = 32: late-time
+T<sub>ss</sub> = 29.54 &deg;C, first overshoot 29.58 &deg;C (+0.04 &deg;C) at
+7.1 s, then down to 29.49 &deg;C at about 12 s. Run 3a, K<sub>p</sub> = 64:
+T<sub>ss</sub> = 34.59 &deg;C, first overshoot 36.28 &deg;C (+1.69 &deg;C) at
+5.1 s. **The contradiction:** the one-lump model predicts a monotonic
+exponential approach to T<sub>ss</sub>; the apparatus crosses T<sub>ss</sub> and
+comes back, an underdamped transient.
+
+### Part 6: watching the integral contribution
+
+From the simulator PI runs (Part II notes, in-class step 2) and Run 5 on the
+bench (K<sub>p</sub> 12, K<sub>i</sub> 0.2):
+
+1. **While e &gt; 0, why does u<sub>I</sub> keep growing?** dq/dt = e, so q
+   rises as long as the error is positive, and u<sub>I</sub> = K<sub>i</sub>q
+   with it. In Run 5 (first approach to 30 &deg;C), u<sub>I</sub> went 0.6,
+   7.3, 9.9, 11.6, 12.7, 13.5, 14.1, 14.6 counts at 10 s intervals while e
+   fell from 5.28 to 0.22 &deg;C.
+2. **Why does u<sub>P</sub> go to zero at the setpoint?** u<sub>P</sub> =
+   K<sub>p</sub>e and e &rarr; 0. Over the last 30 s at 30 &deg;C in Run 5,
+   e = 0.03 &deg;C and u<sub>P</sub> = 0.4 counts.
+3. **Why can u<sub>I</sub> stay nonzero at e = 0?** q is the accumulated
+   past error. At e = 0 it stops changing but keeps its value, and
+   K<sub>i</sub>q supplies the command needed to balance the heat loss. Run 5
+   held 30 &deg;C on u<sub>I</sub> = 16.1 counts and 35 &deg;C on 26.7 counts
+   (last 30 s of each); the one-lump model needs (30 &minus; 21.54)/0.501 =
+   16.9 and (35 &minus; 21.54)/0.501 = 26.9 counts.
+4. **After Zero integral at steady state, why does the temperature first move
+   away?** The command was almost all u<sub>I</sub>; zeroing q removes it,
+   u<sub>P</sub> &asymp; 0, so nothing balances the heat loss and the plate
+   drifts toward room temperature until the new error builds q back up. In the
+   model (`python/pi_55c_check.py`) the command drops from 16.9 to 0.02
+   counts, the plate falls to 28.89 &deg;C after 24 s and is back within 0.02
+   &deg;C after 263 s.
+
+### Oral review answers
+
+**Module 5, P control**
+
+1. *Setpoint above room under P only.* At T = T<sub>set</sub>, e = 0 and the
+   TEC delivers nothing, but H(T &minus; T<sub>amb</sub>) still leaks heat, so
+   the plate cools until K<sub>p</sub>e pays for the leak: droop. Below
+   ambient the leak runs inward, the TEC must cool, and the droop is toward
+   ambient from below, set by the smaller cooling &chi;.
+2. *Same TEC, different insulation.* Better insulation means smaller H, so
+   larger &chi; = P<sub>u</sub>/H, larger L at the same K<sub>p</sub>, and less
+   droop. Held fixed: the TEC and its drive (P<sub>u</sub>), K<sub>p</sub>,
+   setpoint and T<sub>amb</sub>.
+3. *Is K<sub>p</sub> = 1 small?* It has units, counts per &deg;C, so it needs
+   &chi; to judge: L = &chi;K<sub>p</sub> = 0.50 heating (comparable) and 0.18
+   cooling (small).
+4. *Double C, nothing else changed.* &chi; and the droop are unchanged; the
+   settling time doubles, since &tau;<sub>cl</sub> = C/(H +
+   P<sub>u</sub>K<sub>p</sub>).
+
+**Module 6, PI control**
+
+1. *Integral action and windup.* dq/dt = e, so any lasting error keeps
+   changing u<sub>I</sub> until e = 0; the integral then holds the command
+   that P could only supply by keeping an error. Windup is q growing while
+   the command is clamped; the stored integral then drives the plate past the
+   setpoint. Our conditional integration refuses those integral steps.
+2. *Effect of K<sub>p</sub> and K<sub>i</sub> on the apparatus* (35 &deg;C
+   step, `data/module_06/goldilocks_metrics.csv`). Raising K<sub>p</sub> (2,
+   16, 64, 200): rise 74, 13, 2.1, 2.8 s; droop 6.7, 1.5, 0.41 &deg;C, then a
+   cycle whose mean sits 0.15 &deg;C above the setpoint; overshoot 0.02, 0.02,
+   1.69, 2.10 &deg;C; settling 110, 42, 21 s, then never, a sustained 2.6
+   &deg;C peak-to-peak cycle with the command at &plusmn;255 for 16 % of
+   samples. Raising K<sub>i</sub> at K<sub>p</sub> 12 (0.05, 0.2, 1.0, 20):
+   steady error 0.29, &minus;0.02, 0.00 &deg;C, then a cycle mean 0.53 &deg;C
+   above; rise 58, 24, 8 s; overshoot 0.02, 0.03, 0.71 &deg;C (14 %, 26 % on
+   the step down), then an 11 &deg;C oscillation held by saturation; settling
+   225, 52, 56 s, then never. K<sub>p</sub> speeds the response and shrinks
+   the droop until the lag makes it ring; K<sub>i</sub> removes the droop
+   and, past about 1, adds overshoot and then instability.
+
+**Module 6 Part II, process modeling**
+
+1. *Which lag gives overshoot at high gain?* Heat has to flow from the TEC
+   face through the plate and the thermistor contact before the thermistor
+   sees it (G between C<sub>T</sub> and C<sub>m</sub>, plus the thermistor's
+   own lag). The controller acts on a reading that is behind the heat already
+   delivered.
+2. *One parameter.* G, W/K, the conductance between the lumps. Smaller G means
+   more lag: at K<sub>p</sub> = 64 the model's overshoot is 46 % at G = 2 and
+   32 % at G = 4 W/K (Part II notes, step 2), and in the K<sub>p</sub> = 18,
+   K<sub>i</sub> = 1.0 study the loop is well damped at G = 5, rings at G = 1
+   and is unstable at G = 0.5, because K<sub>i,crit</sub> falls with G (5.27,
+   1.37, 0.88).
+
+**The two questions in the Part II model section.** If someone opens a window
+and T<sub>amb</sub> drops, T<sub>m</sub> changes first: only the measured lump
+exchanges heat with the room (the H term), and T follows later through G. If
+the command u changes (for example after a setpoint change), T changes first:
+the TEC heat goes into C<sub>T</sub>, and T<sub>m</sub> only responds once
+G(T &minus; T<sub>m</sub>) has grown. The controller watches T<sub>m</sub>, so
+it sees its own action late, which is the lag behind the overshoot.
 

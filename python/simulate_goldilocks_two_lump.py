@@ -157,6 +157,19 @@ def simulate_run(base, spec, measured):
     return out
 
 
+def stability_note(six):
+    """One caption line with the displayed stability numbers of the six runs."""
+    p = [k for k in sorted(six) if six[k]["spec"].mode == "P"]
+    q = [k for k in sorted(six) if six[k]["spec"].mode == "PI"]
+    zetas = ", ".join(f"{six[k]['zeta']:.2f}" for k in p)
+    rhos = ", ".join(f"{six[k]['rho']:.3f}" if six[k]["rho"] < 1
+                     else f"{six[k]['rho']:.2f}" for k in q)
+    return (f"$\\zeta_{{2L,P}}$ = {zetas} (Runs {p[0]} to {p[-1]}); "
+            f"$K_{{i,crit}}$ = {six[q[0]]['ki_crit']:.2f} PWM/(°C s) at "
+            f"$K_p$ = {six[q[0]]['spec'].kp:g}, $\\rho_I$ = {rhos} "
+            f"(Runs {q[0]} to {q[-1]}), heating side.")
+
+
 def stability_text(spec, s):
     if spec.mode == "P":
         return f"$\\zeta_{{2L,P}}$ = {s['zeta']:.2f}"
@@ -311,8 +324,9 @@ def main():
         six, os.path.join(FIG_DIR, "overlay_p_and_pi_sim.png"),
         title="Simulated step responses, one shared two-lump parameter set",
         temp_label="simulated $T_m$ (°C)",
-        note=model_note() + " Each run replays its experiment's start, "
-             "setpoints and timing.")
+        note=model_note(wrap=True) + " Each run replays its experiment's "
+             "start, setpoints and timing.\n" + stability_note(six),
+        bottom=0.145)
     comparison_figure({k: measured[k] for k in exp.RUNS}, six,
                       os.path.join(FIG_DIR, "sim_vs_experiment.png"))
 

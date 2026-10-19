@@ -63,8 +63,7 @@ def main():
         dpi=DPI, temp_label="simulated $T_m$ (°C)",
         note="Two-lump model, one shared set: χc 0.181, χh 0.501 °C/PWM, "
              "τ 62.9 s, V 12.0 V, R 1.50 Ω, T_amb 21.54 °C, G 3.5 W/K, "
-             "$C_T/C$ 0.35.\nEach run replays its experiment's start, "
-             "setpoints and timing. Course simulator code, Δt 0.05 s.")
+             "$C_T/C$ 0.35, Δt 0.05 s.\n" + two.stability_note(sims))
     exp.high_gain_figure(cuts, metrics,
                          os.path.join(OUT_DIR, "a3_high_gain_metrics.png"),
                          figsize=(7.0, 4.2), fs=FS, dpi=DPI, note=False,

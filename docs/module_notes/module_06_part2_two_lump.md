@@ -397,16 +397,20 @@ unstable and bounded by the actuator, which the model does permit.
 
 ### The four comparison prompts (draft for A3 Questions 3 and 5)
 
-**1. Best reproductions.** P: Run 1, end values within 0.03 &deg;C, rise 66
-against 74 s, settling 115 against 110 s. PI: Run 4, end values within 0.02
-&deg;C, no overshoot in either, settling 212 against 225 s. Run 6 is the most
+**1. Best reproductions.** P: Run 1, end values within 0.04 &deg;C, rise 66
+against 74 s, settling 114 against 110 s (step up). PI: Run 4, end values
+within 0.02 &deg;C, no overshoot in either, settling 212 against 225 s, but
+not its rise: 22 s simulated against 58 s measured, because the measured fast
+rise ends lower (33.9 against 34.3 &deg;C at 30 s) and its 90 % point falls in
+the slow integral creep. Run 6 is the most
 striking: the model predicts its bounded oscillation to within 0.2 &deg;C in
 size, though too slowly.
 
 **2. The three P responses.** Ordered by falling ζ<sub>2L,P</sub> = 1.43,
 0.67, 0.20, with K<sub>p</sub> below, above and far above K<sub>p,crit</sub> =
 6.2. Measured, the response speeds up (rise 74, 13, 3 s) and the droop shrinks
-(4.24, 0.88 &deg;C, then a cycle mean within 0.15 &deg;C of the setpoint).
+(6.75, 1.48 &deg;C on the step up and 4.24, 0.88 &deg;C on the step down, then
+a cycle mean within 0.15 &deg;C of the setpoint).
 Run 1 matches the model. Run 2 is predicted to overshoot by 6 % and did not
 overshoot measurably. Run 3's first overshoot matches (41 % against 41 %),
 but where the model then decays, the plate keeps oscillating.

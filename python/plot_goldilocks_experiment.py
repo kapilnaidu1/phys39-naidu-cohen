@@ -415,7 +415,7 @@ def run_figure(r, label, up, down, path):
 
 def reference_figure(series, path, figsize=(11.0, 8.6), fs=10.0,
                      title=None, note="", temp_label="Temperature (°C)",
-                     dpi=200):
+                     dpi=200, bottom=0.125):
     """Laid out like the course reference figure: P on the left, PI on the
     right, output above input, the three gains overlaid, darker for higher
     gain. Top block is the 30 -> 35 C step, bottom block the 35 -> 30 C step.
@@ -426,7 +426,7 @@ def reference_figure(series, path, figsize=(11.0, 8.6), fs=10.0,
     fig.patch.set_facecolor("white")
     outer = fig.add_gridspec(2, 2, left=0.085, right=0.975,
                              top=0.93 if title else 0.955,
-                             bottom=0.125, hspace=0.3, wspace=0.17)
+                             bottom=bottom, hspace=0.3, wspace=0.17)
     arrows = {("up", 0): ((0.46, 0.10), (0.56, 0.72)),
               ("up", 1): ((0.46, 0.30), (0.56, 0.90)),
               ("down", 0): ((0.70, 0.04), (0.80, 0.40)),

@@ -1,0 +1,16 @@
+python3 python/open_loop_course_sim_check.py
+
+A. Guided exercise, simulator defaults
+   derived: C 130.95 J/K, H 1.6368 W/K, P_u,c 0.3765 W/PWM, r 2.00, tau 80.0 s
+   u  +25: predicted  33.50 C, simulated  33.50 C, chi from it (T_ss - T_amb)/u = 0.4600
+   u  -25: predicted  16.25 C, simulated  16.25 C, chi from it (T_ss - T_amb)/u = 0.2300
+   u  -50: predicted  10.50 C, simulated  10.50 C, chi from it (T_ss - T_amb)/u = 0.2300
+   ratio chi_h/chi_c from the simulated values: 2.000
+
+B. Double C at fixed H, P_u,c, r (direct constants), u = +25
+   C x1: steady 33.50 C, 63 % time 79.9 s, C/H 80.0 s
+   C x2: steady 33.50 C, 63 % time 160.0 s, C/H 160.0 s
+
+C. Measured parameters against Module 4 open-loop steps
+   u  +25: 298 s, start 21.92 C, final measured 33.99 C, simulated 33.96 C, rms residual 0.145 C, largest -0.38 C at 15 s; dt 0.05 -> 0.01 s changes the end by 0.0002 C
+   u  -32: 237 s, start 18.89 C, final measured 15.95 C, simulated 15.82 C, rms residual 0.107 C, largest -0.15 C at 133 s; dt 0.05 -> 0.01 s changes the end by 0.0001 C

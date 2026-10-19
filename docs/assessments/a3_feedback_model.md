@@ -101,7 +101,7 @@ Every simulation uses χ<sub>c</sub> = 0.181 and χ<sub>h</sub> = 0.501 °C/coun
 
 ![Simulated step responses](../figures/module_06/a3/a3_simulated.png)
 
-**Figure 3.** Simulated T<sub>m</sub> and command for the six runs, in the same layout and axes as Figure 1.
+**Figure 3.** Simulated T<sub>m</sub> and command for the six runs, in the same layout and axes as Figure 1. P: K<sub>p</sub> = 2, 16, 200 PWM/°C, ζ<sub>2L,P</sub> = 1.43, 0.67, 0.20. PI: K<sub>p</sub> = 12 PWM/°C, K<sub>i</sub> = 0.05, 0.2, 20 PWM/(°C s), K<sub>i,crit</sub> = 3.25 PWM/(°C s), ρ<sub>I</sub> = 0.015, 0.061, 6.15.
 
 **Stability measures.** For this parameter set
 
@@ -125,6 +125,16 @@ K_i,crit = [C_T(G+H) + C_m G](H + P_u K_p) / (C_T C_m P_u) = 3.25 PWM/(°C s) at
 ![Experiment against model](../figures/module_06/a3/a3_sim_vs_experiment.png)
 
 **Figure 4.** Each measured run (grey) with its simulation (blue). Data: `data/module_06/goldilocks_sim_metrics.csv`.
+
+**The four comparison prompts.**
+
+1. *Best reproductions.* P: Run 1, in end values (within 0.04 °C), rise (66 against 74 s on the step up) and settling (114 against 110 s). PI: Run 4, in overshoot (none in either) and settling (212 against 225 s up), but not in rise: 22 s simulated against 58 s measured, because the measured fast rise ends lower (33.9 against 34.3 °C at 30 s) and its 90 % point falls in the slow integral creep.
+
+2. *The three P responses.* They are ordered by ζ<sub>2L,P</sub> = 1.43, 0.67, 0.20, with K<sub>p</sub> below, above and far above K<sub>p,crit</sub> = 6.2 PWM/°C: the model goes from monotonic to a 6 % overshoot to 41 % with decaying ringing. Measured, the rise falls from 74 to 13 to 3 s and the droop from 6.7 to 1.5 °C (step up), but Run 2 did not overshoot measurably and Run 3's oscillation never decayed.
+
+3. *The three PI responses.* At fixed K<sub>p</sub> = 12, K<sub>i</sub> moves ρ<sub>I</sub> from 0.015 and 0.061, far inside the stable region, where both runs settle without measurable overshoot (Run 4 slowly, 0.29 °C short after 300 s), to 6.15, six times past the boundary, where the swing grows until the ±255 limit holds it at 11 °C. Run 6a (K<sub>i</sub> = 1.0, ρ<sub>I</sub> = 0.31) sat between: 14 to 26 % overshoot, settled in about a minute.
+
+4. *Agreement, disagreement and gains*, below. Each response is classified in the table above; Run 3's sustained oscillation is the observation that falsifies the model. The gains are justified in Question 5: K<sub>p</sub> = 16 for P, and K<sub>p</sub> = 12 with K<sub>i</sub> = 0.2 (ρ<sub>I</sub> = 0.061) for PI, the fastest PI run with no measurable overshoot and no steady-state error.
 
 **Agreement.** With nothing changed between runs, the model reproduces every steady state to within 0.06 °C, the droop at both P gains that settle, Run 4's slow integral creep, Run 3's first overshoot (41 % against 41 %) and Run 6's bounded oscillation (30.3 to 41.4 °C against 30.4 to 41.3 °C).
 

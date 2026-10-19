@@ -537,8 +537,8 @@ these screenshots.
   section 9, `docs/figures/module_06/supplied_sim/`
 - [x] PI controller on the apparatus and the six experimental Goldilocks
   plots with step-response metrics (A3 Question 2): section 11
-- [x] Git checkpoint cited in A3: commit 78e8c21 (pushed; the PDF itself is
-  in the following commit, 3d1cd26)
+- [x] Git checkpoint cited in A3: commit 7339536 (the PDF itself is in the
+  following commit, 9e9ede9)
 - [x] Part 4 open-loop exercises in the course simulator, Part 5 marked
   overshoot, Part 6 integral questions, oral review: section 12
 

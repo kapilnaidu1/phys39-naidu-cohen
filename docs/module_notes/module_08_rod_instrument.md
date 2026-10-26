@@ -46,10 +46,10 @@ Offsets from the cross-check are applied in memory by the analysis scripts
 
 | Item | Value | How measured |
 |---|---|---|
-| Rod material | TO CONFIRM | |
-| Rod diameter D, radius R = D/2 | TO MEASURE (mm) | calipers, 3 places, mean ± sd |
-| Cross-section A = πR², perimeter P = 2πR | from D | |
-| Rod length L, origin to tip | TO MEASURE (mm) | ruler or calipers |
+| Rod material | aluminium alloy 6061 (as given for the course rod, 26 Oct) | label / instructor |
+| Rod diameter D, radius R = D/2 | D = 0.5 in = 12.70 mm nominal, R = 6.35 mm; **confirm with calipers** at 3 places (mean ± sd) | nominal size, 26 Oct |
+| Cross-section A = πR², perimeter P = 2πR | A = 126.7 mm² = 1.267e-04 m², P = 39.9 mm = 0.0399 m, A/P = R/2 = 3.175 mm (from the nominal D) | calculated |
+| Rod length L | 300 mm (30 cm) as given; **measure from the chosen origin to the tip** | nominal, 26 Oct |
 | Coordinate origin and direction | TO DEFINE (for example, the face where the rod meets the plate, x increasing toward the tip) | photograph |
 | Insulation around the rod | TO RECORD (bare, foam, partly covered) | |
 | Each upper resistor R_fixed | TO MEASURE with the multimeter, enter in `rodRfixed[]` and `sensor_map.csv` | multimeter |

@@ -85,6 +85,23 @@ Uncertainties combine the standard error of each 60 s mean with the bias that a
 leftover drift could cause. The cool-down τ depends on how the final temperature
 is fitted (2 to 8 % difference), because the foam-on cool-down was short.
 
+### Follow-up, 21 October: one setpoint at 50 °C
+
+File `data/module_06/pi_run_20261021_113509.csv`, log
+`data/module_06/bench_log_2026-10-21.md`. PI hold at 50 °C, foam off, then foam on.
+
+| Hold | Foam | Steady command at 50 °C |
+|---|---|---|
+| 1 | off | 68.6 counts, still falling 0.5 counts/min (about 1 min at the setpoint) |
+| 2 | on | 62.5 counts, settled |
+
+Foam off needed about 9 % more power. With a single setpoint this cannot be
+separated from a warm-up shift of the effective room temperature: a 2.8 °C
+shift would explain all 6 counts. As on 19 October, the foam-off block ran
+first, and on both days the first block needed more power, which fits warm-up
+drift. The foam-off hold was also not settled. This run is therefore weaker
+evidence than the 19 October slope, which cancels such offsets.
+
 ## 5. Conclusion
 
 Removing the foam box changed the plate's heat-loss conductance by **less than

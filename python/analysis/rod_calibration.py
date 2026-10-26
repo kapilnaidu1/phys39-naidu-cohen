@@ -9,7 +9,8 @@ long enough to reach room temperature, at least 60 s of data), each channel
 should read the same. The difference between a channel and the reference
 over that window is its offset.
 
-Reference: the mean of all channels (default), or one named channel.
+Reference: the mean of the rod channels (default), or one named channel
+(base, R1, ...). The base thermistor's offset is reported either way.
 Window: --t0 and --t1 in Arduino seconds (time_s). Without them, the first
 control-off stretch of the run is used if it is at least 60 s long.
 
@@ -71,9 +72,9 @@ def main():
     series = rd.channel_series(cols, channels)
     stats = {name: rd.mean_and_sem(v[m], t[m]) for name, v in series.items()}
     if a.ref == "mean":
-        ref = np.nanmean(np.vstack([series[n][m] for n in series]), axis=0)
-        ref_mean = np.nanmean([s[0] for s in stats.values()])
-        ref_label = "mean of all channels"
+        ref = np.nanmean(np.vstack([series[n][m] for n in channels]), axis=0)
+        ref_mean = np.nanmean([stats[n][0] for n in channels])
+        ref_label = "mean of the rod channels"
     else:
         ref = series[a.ref][m]
         ref_mean = stats[a.ref][0]

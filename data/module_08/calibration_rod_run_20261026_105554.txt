@@ -1,0 +1,12 @@
+python3 python/analysis/rod_calibration.py data/module_08/rod_run_20261026_105554.csv --t0 87.12 --t1 287.84 --ref mean
+
+Run data/module_08/rod_run_20261026_105554.csv
+Window 87.1 to 287.8 s (201 s, 363 rows); reference: mean of the rod channels = 22.057 C
+ channel   x (mm)  mean (C)     sd    sem  offset offset/sem
+    base      nan    21.980  0.065  0.039  -0.076        2.0
+      R1      nan    22.387  0.048  0.036  +0.330        9.3
+      R2      nan    21.597  0.087  0.065  -0.459        7.1
+      R3      nan    22.596  0.021  0.012  +0.539       44.8
+      R4      nan    21.722  0.096  0.071  -0.334        4.7
+      R5      nan    21.981  0.084  0.062  -0.076        1.2
+Spread of offsets: 0.999 C

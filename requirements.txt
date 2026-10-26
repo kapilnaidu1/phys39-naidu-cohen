@@ -6,3 +6,4 @@ pyqtgraph
 numpy
 matplotlib
 reportlab
+scipy

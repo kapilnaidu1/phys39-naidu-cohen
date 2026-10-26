@@ -1,0 +1,6 @@
+channel,arduino_pin,position_mm,position_uncertainty_mm,rfixed_measured_ohm,notes
+R1,A1,,,,TO MEASURE: distance from the origin along the rod; fill in before analysis
+R2,A2,,,,
+R3,A3,,,,
+R4,A4,,,,
+R5,A5,,,,

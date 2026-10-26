@@ -187,9 +187,20 @@ def prediction_text(mode, kp, ki, setpoint):
 # =====================================================================
 
 class PIControlWindow(QtWidgets.QMainWindow):
+    # Overridden by python/rod_pi_logger.py (Module 7), which adds the rod
+    # channels without changing anything below.
+    window_title = "Phys 39 Module 6, PI temperature control"
+    data_dir = DATA_DIR
+    csv_prefix = "pi_run"
+    columns = COLUMNS
+
+    def extra_row(self):
+        """Extra CSV values appended to every row (none here)."""
+        return []
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Phys 39 Module 6, PI temperature control")
+        self.setWindowTitle(self.window_title)
         self.resize(1120, 920)
 
         # ---- controller state ----------------------------------------
@@ -213,16 +224,19 @@ class PIControlWindow(QtWidgets.QMainWindow):
 
         # ---- CSV, a new file every launch ----------------------------
         self._closing = False
-        os.makedirs(DATA_DIR, exist_ok=True)
+        os.makedirs(self.data_dir, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.csv_path = os.path.join(DATA_DIR, f"pi_run_{stamp}.csv")
+        self.stamp = stamp
+        self.csv_path = os.path.join(self.data_dir,
+                                     f"{self.csv_prefix}_{stamp}.csv")
         k = 1
         while os.path.exists(self.csv_path):
-            self.csv_path = os.path.join(DATA_DIR, f"pi_run_{stamp}_{k}.csv")
+            self.csv_path = os.path.join(
+                self.data_dir, f"{self.csv_prefix}_{stamp}_{k}.csv")
             k += 1
         self.csv_file = open(self.csv_path, "x", newline="")
         self.csv_writer = csv.writer(self.csv_file)
-        self.csv_writer.writerow(COLUMNS)
+        self.csv_writer.writerow(self.columns)
         self.csv_file.flush()
         print(f"Writing to {self.csv_path}")
 
@@ -660,7 +674,8 @@ class PIControlWindow(QtWidgets.QMainWindow):
             f"{self.q:.3f}", f"{u_P:.3f}", f"{u_I:.3f}", f"{u_req:.3f}",
             f"{u_app:.3f}", sent, int(saturated), int(held), self.mode,
             f"{self.kp:.4f}", f"{ki:.5f}", self.limit,
-            int(self.anti_windup), int(self.control_on), self.run_label])
+            int(self.anti_windup), int(self.control_on), self.run_label]
+            + self.extra_row())
         self.csv_file.flush()
 
         self.temp_label.setText(f"{T:.2f}")

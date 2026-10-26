@@ -316,6 +316,41 @@ python3 python/build_a3_pdf.py                   # A3 PDF (reportlab, DejaVu fon
 
 ---
 
+## Module 7: rod instrument (C5) and stationary fin
+
+Notes: [`docs/module_notes/module_08_rod_instrument.md`](docs/module_notes/module_08_rod_instrument.md)
+(acquisition chain, wiring, procedure, C5 checklist),
+[`docs/module_notes/module_08_stationary_fin.md`](docs/module_notes/module_08_stationary_fin.md)
+(fit method and results), and the Part I preparation notes
+[`docs/theory/theory_bridge_chapter_1_notes.md`](docs/theory/theory_bridge_chapter_1_notes.md).
+The `module_08` paths follow the course page.
+
+**Hardware assumptions.** Base thermistor on A0 as in Modules 3 to 6; rod
+thermistors on A1 to A5 (edit `rodPins[]`), each the lower leg of its own
+divider, 5V - R_fixed - pin - thermistor - GND. The old trim pot must be off A1.
+
+| Sketch | Pair with | Output |
+|---|---|---|
+| [`rod_tec_multichannel`](arduino/module_08/rod_tec_multichannel/rod_tec_multichannel.ino) | [`python/rod_pi_logger.py`](python/rod_pi_logger.py) | the Module 6 line with `, Rod (C): R1, R2, ...` appended, one time stamp per line |
+
+The Module 6 GUI still works with this sketch (it ignores the rod field).
+
+**Data format.** `data/module_08/rod_run_YYYYMMDD_HHMMSS.csv` has the Module 6
+PI columns followed by `T_<channel>_C` for each rod channel (raw beta-equation
+values, °C), plus `_meta.json` (units, channels, commit, sensor map) and
+`_notes.csv` (timed notes). Channel names and positions:
+[`data/module_08/sensor_map.csv`](data/module_08/sensor_map.csv) (fill in the
+measured positions before analysis).
+
+```bash
+python3 python/rod_pi_logger.py                                   # acquisition with PI base control
+python3 python/analysis/rod_calibration.py <run.csv> --t0 S --t1 S # sensor cross-check, offsets
+python3 python/analysis/rod_step_response.py <run.csv> --offsets <calibration.csv>
+python3 python/analysis/stationary_fin_fit.py <run.csv> --length-mm L --troom T --radius-mm R --offsets <calibration.csv>
+```
+
+---
+
 ## Verification performed
 
 - Every value in the Module 1 and Module 2 result tables was measured on the

@@ -193,11 +193,45 @@ class RodWindow(pig.PIControlWindow):
     def extra_row(self):
         return [("" if math.isnan(v) else f"{v:.2f}") for v in self.latest_rod]
 
+    def _log_rod_only(self, line, rod):
+        """The base reading is unusable ("---"), for example while the base
+        thermistor is out of the plate. Log the rod channels anyway, with the
+        base columns blank, so a calibration run does not lose data."""
+        mt = base.LINE_PATTERN.search(line)
+        n = len(self.rod_names)
+        rod = (rod + [float("nan")] * n)[:n]
+        self.latest_rod = rod
+        row = [""] * len(pig.COLUMNS)
+        idx = {c: i for i, c in enumerate(pig.COLUMNS)}
+        row[idx["time_s"]] = mt.group(2)
+        row[idx["pwm"]] = mt.group(3)
+        row[idx["heat_cool"]] = mt.group(4)
+        row[idx["setpoint_C"]] = f"{self.setpoint:.2f}"
+        row[idx["mode"]] = self.mode
+        row[idx["kp"]] = f"{self.kp:.4f}"
+        row[idx["ki"]] = f"{self._effective_ki():.5f}"
+        row[idx["pwm_limit"]] = self.limit
+        row[idx["anti_windup"]] = int(self.anti_windup)
+        row[idx["control_on"]] = int(self.control_on)
+        row[idx["run"]] = self.run_label
+        self.csv_writer.writerow(row + self.extra_row())
+        self.csv_file.flush()
+        self.latest_time = float(mt.group(2))
+        print(f"t = {self.latest_time:8.2f}  base ---  rod "
+              + " ".join("---" if math.isnan(v) else f"{v:.2f}" for v in rod))
+
     def on_line(self, line):
         if self._closing:
             return
         rod = parse_rod(line)
         m = pig.parse_measurement(line)
+        if m is None and rod is not None and pig.is_measurement_line(line):
+            self._log_rod_only(line, rod)
+            if self.control_on:
+                print("!!! base reading unusable while control is ON. "
+                      "Control switched OFF. !!!")
+                self.enable_box.setChecked(False)
+            return
         if m is not None:
             n = len(self.rod_names)
             if rod is None:

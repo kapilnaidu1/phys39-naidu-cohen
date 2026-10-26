@@ -104,6 +104,20 @@ much larger than its own standard error *and* not small compared with the
 temperature differences to be measured. A trend of offset with position means
 the rod was not at one temperature; wait longer and repeat.
 
+**Multi-point check.** If an offset is large, or to show the offsets do not
+change with temperature, bundle the thermistors flat on the plate next to the
+base thermistor (beads touching, taped, shaded) and hold two or three plateaus:
+control off at room temperature, then PI at 35 °C and 45 °C, about 5 minutes
+steady at each, with a note at each. Then
+
+```bash
+python3 python/analysis/rod_calibration_multipoint.py data/module_08/rod_run_<...>.csv --windows <t0:t1> <t0:t1> <t0:t1>
+```
+
+fits reading = a + b·reference for each channel. A gain b of 1 means a
+constant offset is enough; otherwise the gain is applied as well
+((T − a)/b). Either output file works with `--offsets`.
+
 Result: TO FILL after the run.
 
 ## 5. Part 2: baseline and step response

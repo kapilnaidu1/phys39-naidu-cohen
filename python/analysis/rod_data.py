@@ -78,9 +78,17 @@ def load_sensor_map(path=None):
 
 
 def load_offsets(path):
-    """{channel: offset_C} from a rod_calibration.py output file."""
+    """{channel: (intercept_C, gain)} from rod_calibration.py (a constant
+    offset, gain 1) or rod_calibration_multipoint.py (intercept and gain).
+    The correction applied is T_corrected = (T_raw - intercept) / gain."""
+    out = {}
     with open(path, newline="") as fh:
-        return {r["channel"]: float(r["offset_C"]) for r in csv.DictReader(fh)}
+        for r in csv.DictReader(fh):
+            if r.get("gain"):
+                out[r["channel"]] = (float(r["intercept_C"]), float(r["gain"]))
+            else:
+                out[r["channel"]] = (float(r["offset_C"]), 1.0)
+    return out
 
 
 def channel_series(cols, channels, offsets=None):
@@ -90,9 +98,9 @@ def channel_series(cols, channels, offsets=None):
     for ch in channels:
         out[ch] = cols[f"T_{ch}_C"].astype(float)
     if offsets:
-        for ch, off in offsets.items():
+        for ch, (a0, b) in offsets.items():
             if ch in out:
-                out[ch] = out[ch] - off
+                out[ch] = (out[ch] - a0) / b
     return out
 
 

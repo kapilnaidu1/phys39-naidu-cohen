@@ -1,0 +1,92 @@
+{
+  "file": "data/module_07_sammy/sammy_rod_run_20261028_114042.csv",
+  "started": "2026-10-28T11:40:42",
+  "git_commit_at_start": "39c2b67063bed4df2c9443af05ea979b8d0f5cb6",
+  "program": "python/sammy_module7_rod_pi_logger.py",
+  "sketch": "arduino/module_07_sammy/rod_tec_multichannel_sammy/rod_tec_multichannel_sammy.ino",
+  "serial_port": "/dev/cu.usbmodem1101",
+  "baud": 9600,
+  "time_column": "time_s = Arduino millis()/1000 at the report; base and rod values of a row share it",
+  "units": {
+    "time_s": "s",
+    "temperature_C": "degC (base, A0)",
+    "T_<channel>_C": "degC, raw beta-equation value",
+    "pwm": "counts 0-255",
+    "u_*": "signed PWM counts",
+    "q_Cs": "degC s"
+  },
+  "rod_channels": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5"
+  ],
+  "sensor_map_file": "data/module_07_sammy/sensor_map.csv",
+  "sensor_map": [
+    {
+      "channel": "T1",
+      "arduino_pin": "A1",
+      "tape_label": "T1",
+      "order_from_base": "1",
+      "target_position_mm": "0.0",
+      "measured_position_mm": "",
+      "position_uncertainty_mm": "",
+      "rfixed_measured_ohm": "",
+      "mount_method": "tape",
+      "notes": "First rod hole; analysis origin x=0; verify actual contact and label."
+    },
+    {
+      "channel": "T2",
+      "arduino_pin": "A2",
+      "tape_label": "T2",
+      "order_from_base": "2",
+      "target_position_mm": "50.8",
+      "measured_position_mm": "",
+      "position_uncertainty_mm": "",
+      "rfixed_measured_ohm": "",
+      "mount_method": "tape",
+      "notes": "Every-other-hole plan about 2 in from T1; measure actual position from T1."
+    },
+    {
+      "channel": "T3",
+      "arduino_pin": "A3",
+      "tape_label": "T3",
+      "order_from_base": "3",
+      "target_position_mm": "101.6",
+      "measured_position_mm": "",
+      "position_uncertainty_mm": "",
+      "rfixed_measured_ohm": "",
+      "mount_method": "tape",
+      "notes": "Every-other-hole plan about 4 in from T1; measure actual position from T1."
+    },
+    {
+      "channel": "T4",
+      "arduino_pin": "A4",
+      "tape_label": "T4",
+      "order_from_base": "4",
+      "target_position_mm": "152.4",
+      "measured_position_mm": "",
+      "position_uncertainty_mm": "",
+      "rfixed_measured_ohm": "",
+      "mount_method": "tape",
+      "notes": "Every-other-hole plan about 6 in from T1; measure actual position from T1."
+    },
+    {
+      "channel": "T5",
+      "arduino_pin": "A5",
+      "tape_label": "T5",
+      "order_from_base": "5",
+      "target_position_mm": "203.2",
+      "measured_position_mm": "",
+      "position_uncertainty_mm": "",
+      "rfixed_measured_ohm": "",
+      "mount_method": "tape",
+      "notes": "Every-other-hole plan about 8 in from T1; farthest available hole from prior notes; measure actual position from T1."
+    }
+  ],
+  "rod_values_logged_raw": true,
+  "display_smoothing_points": 1,
+  "mounting_method": "see sensor_map.csv; default plot is unsmoothed",
+  "notes_file": "data/module_07_sammy/sammy_rod_run_20261028_114042_notes.csv"
+}

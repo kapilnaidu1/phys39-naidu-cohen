@@ -1,4 +1,4 @@
-python3 python/analysis/stationary_fin_fit.py data/module_08/rod_run_20261028_092033.csv --length-mm 279.4 --troom 21.03 --t0 4346.00 --t1 4646.00 --radius-mm 6.35 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+python3 python/analysis/stationary_fin_fit.py data/module_08/rod_run_20261028_092033.csv --length-mm 279.4 --troom 21.03 --t0 4346.00 --t1 4646.00 --radius-mm 6.35 --offsets data/module_08/calibration_rod_run_20261026_112627.csv --mark-mm 203.2 --mark-label 'farthest hole'
 
 Run data/module_08/rod_run_20261028_092033.csv; steady window 4346 to 4646 s (300 s); T_room = 21.03 C; L = 279.4 mm
 Offsets subtracted: data/module_08/calibration_rod_run_20261026_112627.csv
@@ -16,3 +16,4 @@ mL = 1.150
 Placement check (course Part 2): theta at the farthest sensor / theta at x = 0 = 0.739; needs <= 1/e = 0.368: NOT met
 Bi_perp = (mR)^2/4 = 1.71e-04 +/- 3.0e-06 (R = 6.35 mm)
 m^2 = hP/(kA): the steady profile fixes h/k only, not h and k separately.
+Finite fit at farthest hole, x = 203.2 mm: theta/theta(0) = 0.604

@@ -83,6 +83,11 @@ def main():
     ap.add_argument("--include-base", action="store_true")
     ap.add_argument("--base-x-mm", type=float, default=0.0)
     ap.add_argument("--sensor-map")
+    ap.add_argument("--mark-mm", type=float,
+                    help="draw a vertical line at this position (e.g. the "
+                         "farthest available hole) and print the fitted "
+                         "theta/theta(0) there")
+    ap.add_argument("--mark-label", default="marked position")
     a = ap.parse_args()
 
     cols, channels = rd.load_run(a.run)
@@ -180,7 +185,14 @@ def main():
             cmd += f" --offsets {a.offsets}"
         if a.include_base:
             cmd += f" --include-base --base-x-mm {a.base_x_mm:g}"
-        fh.write(cmd + "\n\n" + text)
+        if a.sensor_map:
+            cmd += f" --sensor-map {a.sensor_map}"
+        extra = ""
+        if a.mark_mm is not None:
+            cmd += f" --mark-mm {a.mark_mm:g} --mark-label '{a.mark_label}'"
+            extra = (f"Finite fit at {a.mark_label}, x = {a.mark_mm:.1f} mm: "
+                     f"theta/theta(0) = {fin(a.mark_mm / 1000.0, *pf) / pf[0]:.3f}\n")
+        fh.write(cmd + "\n\n" + text + extra)
     with open(os.path.join(rd.DATA_DIR, f"fin_profile_{stem}.csv"), "w") as fh:
         fh.write("channel,x_m,dx_m,theta_C,sigma_C,res_finite_C,res_semi_C,eps_T\n")
         for i, n in enumerate(names):
@@ -201,6 +213,15 @@ def main():
     # the farthest sensor should sit at or below theta(0)/e
     ax.axhline(y[0] / np.e, color="#7f7f7f", lw=1.0, ls=":",
                label="θ(0)/e, placement target")
+    if a.mark_mm is not None:
+        xm = a.mark_mm / 1000.0
+        rm = fin(xm, *pf) / pf[0]
+        ax.axvline(a.mark_mm, color="#555555", lw=1.0, ls="-.")
+        ax.plot(a.mark_mm, fin(xm, *pf), "D", color="#1F4E79", ms=6,
+                label=f"{a.mark_label} (x = {a.mark_mm:.0f} mm): "
+                      f"fitted θ/θ(0) = {rm:.2f}")
+        print(f"Finite fit at {a.mark_label}, x = {a.mark_mm:.1f} mm: "
+              f"theta/theta(0) = {rm:.3f}")
     ax.set_yscale("log")
     from matplotlib.ticker import FixedLocator, FormatStrFormatter, NullLocator
     lo, hi = ax.get_ylim()

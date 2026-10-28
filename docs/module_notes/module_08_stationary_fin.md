@@ -66,7 +66,8 @@ uncertainty propagated through the local slope (δθ ≈ m θ δx).
 ```bash
 python3 python/analysis/stationary_fin_fit.py data/module_08/rod_run_20261028_092033.csv \
     --length-mm 279.4 --troom 21.03 --radius-mm 6.35 --t0 4346 --t1 4646 \
-    --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+    --offsets data/module_08/calibration_rod_run_20261026_112627.csv \
+    --mark-mm 203.2 --mark-label "farthest hole"
 ```
 
 Output: [`fin_rod_run_20261028_092033.txt`](../../data/module_08/fin_rod_run_20261028_092033.txt),

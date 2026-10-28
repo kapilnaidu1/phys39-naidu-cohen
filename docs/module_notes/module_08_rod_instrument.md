@@ -4,8 +4,8 @@ Naidu / Cohen. Started 26 October 2026. Course naming: this note, the data
 (`data/module_08/`) and the figures (`docs/figures/module_08/`) use the
 `module_08` paths the course page asks for.
 
-**C5 is demonstrated in class on Wednesday 28 October; the Moodle
-"C5 Team Checkoff" receipt is due 11:55 AM and must cite the pushed commit.**
+**C5 work in class on Wednesday 28 October. No Moodle receipt was due that
+day; when the receipt is due, it must cite the pushed commit.**
 
 Fields marked **TO MEASURE** are not known yet and must come from the bench.
 Nothing in this note is a measurement until it says so.
@@ -118,7 +118,30 @@ fits reading = a + b·reference for each channel. A gain b of 1 means a
 constant offset is enough; otherwise the gain is applied as well
 ((T − a)/b). Either output file works with `--offsets`.
 
-Result: TO FILL after the run.
+**Result (26 October, run `rod_run_20261026_112627`, window 150 to 390 s,
+TEC off, room temperature).** Reference = mean of the rod
+channels, 22.447 °C. Files:
+[`calibration_rod_run_20261026_112627.txt`](../../data/module_08/calibration_rod_run_20261026_112627.txt),
+`.csv`, and `docs/figures/module_08/calibration_rod_run_20261026_112627.png`.
+
+| Channel | Offset (°C) | SEM (°C) | Offset / SEM |
+|---|---|---|---|
+| base (A0) | +0.060 | 0.027 | 2.2 |
+| R1 (A1) | +0.056 | 0.025 | 2.2 |
+| R2 (A2) | −0.221 | 0.022 | 10.1 |
+| R3 (A3) | +0.066 | 0.019 | 3.4 |
+| R4 (A4) | −0.035 | 0.026 | 1.4 |
+| R5 (A5) | +0.134 | 0.020 | 6.6 |
+
+Spread 0.36 °C, inside the ±1 % (about ±0.2 °C each) tolerance of the
+thermistors. **Decision: apply the offsets.** R2 and R5 are 10 and 7 times
+their own SEM, and 0.2 °C is not small next to the 0.7 to 1.3 °C differences
+between neighbouring sensors in the steady profile.
+
+**Independent check, 28 October** (run `rod_run_20261028_092033`, 13 to
+87 s, control off, before any heating, sensors in the rod). Raw spread of
+the six channels 0.43 °C; with the 26 October offsets applied 0.09 °C, and
+the five rod channels agree to sd 0.02 °C. The offsets carried over to 28 October.
 
 ## 5. Part 2: baseline and step response
 
@@ -170,18 +193,69 @@ roughly like x²/κ. Meanwhile the side surface keeps losing heat (hP per unit
 length), so less of the base change survives the farther out a sensor is. In
 the steady state the excess decays roughly like e^(−mx).
 
-Result: TO FILL after the run.
+**Result: 20 → 45 °C step, run 092033 (28 October).**
+
+```bash
+python3 python/analysis/rod_step_response.py data/module_08/rod_run_20261028_092033.csv \
+    --t-start 1319 --t-end 4646 --t-step 2556.11 \
+    --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+```
+
+![Step response](../figures/module_08/step_rod_run_20261028_092033_t1319-4646.png)
+
+- **Before the step.** PI hold at 20 °C from 1544 s; "cal check 20 C" note at
+  2440 s. In that window (2440 to 2556 s, offsets applied) the base read
+  19.94 °C and the rod 20.41 (R1) to 20.70 °C (R5). The rod was not at one
+  temperature because the room (about 21 °C) was warmer than the base, so
+  the sensors cannot be compared with each other here; the calibration
+  rests on the 26 and 28 October room checks above. The rod was still
+  drifting 0.02 to 0.05 °C/min (noted).
+- **The step.** Setpoint 20 → 45 °C at 2556.1 s. PWM sat at 255 for 9 rows
+  (about 5 s) at the start. The base reached 45 °C without oscillation:
+  peak 45.07 °C at 269 s after the step, never below 44.98 °C after 300 s,
+  mean 45.00 °C over the last 300 s (raw base reading, the controlled value).
+- **Disturbance** at about 10:18 (885 s after the step): hands and a ruler
+  near the rod while measuring the spacing; R1 dropped 0.4 °C in 30 s.
+  Noted in the run.
+- **End.** Control off at 4646.8 s; the last 300 s meet the stationary
+  criterion (section 3 of the fin note).
+
+| Channel | x (mm, provisional) | Change at the end (°C) | Arrival, +0.2 °C (s) | Half change (s) |
+|---|---|---|---|---|
+| base (A0) | plate | +25.00 | 2.2 | 10.7 |
+| R1 | 0 | +17.46 | 6.1 | 55.6 |
+| R2 | 25.4 | +16.28 | 10.2 | 83.5 |
+| R3 | 50.8 | +14.84 | 14.7 | 117.5 |
+| R4 | 76.2 | +13.56 | 21.4 | 160.5 |
+| R5 | 101.6 | +12.76 | 27.7 | 197.8 |
+
+Every rod sensor responds later and changes less the farther it is from the
+plate, as expected. R1, the boundary T(0,t), rises 17.5 °C, not 25 °C,
+because of the thermal resistance between the plate and the first rod hole.
+That is why the course takes R1, not the TEC thermistor, as the boundary.
+
+**Earlier segment of the same file** (0 to 600 s, old tape order, step to
+40 °C, not stationary): `step_rod_run_20261028_092033_t0-600.txt`, with
+`sensor_map_rod_run_20261028_092033.csv`.
+
+**Placement check:** not met (θ5/θ1 = 0.74 against the 0.37 target); see
+[`module_08_stationary_fin.md`](module_08_stationary_fin.md) section 3.
 
 ## 6. C5 checklist (Wednesday 28 October)
 
-- [ ] Thermistors cross-checked; calibration file and figure saved
+- [x] Thermistors cross-checked; calibration file and figure saved (26 Oct,
+      checked again 28 Oct)
 - [ ] Sensor coordinates, origin, direction, uncertainties and wiring
-      documented (sensor map, photograph, section 2)
-- [ ] Synchronized multichannel logging shown live with `rod_pi_logger.py`
-- [ ] Baseline and initial step-response data saved and plotted
-- [ ] Every run has `_meta.json` (units, channel labels, commit, sensor map)
-      and `_notes.csv`
-- [ ] Commit pushed; Moodle receipt filled in with the template below
+      documented. Origin and direction done (R1 = x = 0, up the rod);
+      **positions only by eye so far: ruler values, calipers and a photograph
+      still to do**
+- [x] Synchronized multichannel logging with `rod_pi_logger.py` (28 Oct)
+- [x] Baseline and initial step-response data saved and plotted (run 092033)
+- [x] Every run has `_meta.json` and `_notes.csv`; for run 092033 the sensor
+      maps are the two files named in the bench log, since the meta copy was
+      taken before the re-tape
+- [ ] Commit pushed; Moodle receipt filled in with the template below (no
+      receipt was due on 28 October)
 - [ ] Each of us can trace one channel end to end and name one dominant
       uncertainty
 

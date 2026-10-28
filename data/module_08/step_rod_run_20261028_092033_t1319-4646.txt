@@ -1,0 +1,12 @@
+python3 python/analysis/rod_step_response.py data/module_08/rod_run_20261028_092033.csv --t-step 2556.11 --pre 60 --t-start 1319 --t-end 4646 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+
+Run data/module_08/rod_run_20261028_092033.csv; step at t = 2556.1 s; baseline 60 s before it; final value = mean of the last 60 s (run ends 2090 s after the step)
+Offsets subtracted from data/module_08/calibration_rod_run_20261026_112627.csv
+Commanded setpoint after the step: 45.00 C
+ channel  x (mm)  base (C)  dT_end t_0.2C (s)  t_50 (s)
+    base     nan    19.940 +25.004        2.2      10.7
+      R1     0.0    20.402 +17.460        6.1      55.6
+      R2    25.4    20.429 +16.285       10.2      83.5
+      R3    50.8    20.538 +14.843       14.7     117.5
+      R4    76.2    20.608 +13.557       21.4     160.5
+      R5   101.6    20.695 +12.761       27.7     197.8

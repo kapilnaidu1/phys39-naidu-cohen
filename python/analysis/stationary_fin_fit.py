@@ -197,10 +197,22 @@ def main():
             label=f"finite, insulated tip: m = {mf:.2f} ± {sf:.2f} m⁻¹")
     ax.plot(xx * 1000, theta_semi(xx, *ps), color="#C0392B", lw=1.4, ls="--",
             label=f"semi-infinite: m = {ms:.2f} ± {ss:.2f} m⁻¹")
-    ax.set_ylabel("θ = T − T_room (°C)")
-    ax.grid(True, color="#E4E4E4")
+    # course Part 2: placement is judged on a ln(theta) against x plot, and
+    # the farthest sensor should sit at or below theta(0)/e
+    ax.axhline(y[0] / np.e, color="#7f7f7f", lw=1.0, ls=":",
+               label="θ(0)/e, placement target")
+    ax.set_yscale("log")
+    from matplotlib.ticker import FixedLocator, FormatStrFormatter, NullLocator
+    lo, hi = ax.get_ylim()
+    step = max(1, int(np.ceil((hi - lo) / 8)))
+    ticks = [v for v in np.arange(1, 200, step) if lo <= v <= hi]
+    ax.yaxis.set_major_locator(FixedLocator(ticks))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%g"))
+    ax.yaxis.set_minor_locator(NullLocator())
+    ax.set_ylabel("θ = T − T_room (°C, log scale)")
+    ax.grid(True, which="both", color="#E4E4E4")
     ax.legend(fontsize=8.5)
-    ax.set_title("Stationary profile along the rod", fontsize=10)
+    ax.set_title("Stationary profile along the rod (ln θ against x)", fontsize=10)
     axr.axhline(0, color="#888888", lw=0.8)
     axr.errorbar(x * 1000 - 0.6, rf, yerr=sy, fmt="o", color="#1F4E79", ms=4,
                  capsize=2, label="finite")

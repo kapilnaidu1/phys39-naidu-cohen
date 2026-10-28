@@ -1,0 +1,8 @@
+wall_clock,time_s,note
+2026-10-28T09:20:48,12.95,baseline
+2026-10-28T09:22:03,88.23,step to 40 C
+2026-10-28T09:42:34,1319.48,baseline 3
+2026-10-28T09:47:22,1608.03,"hold 20 C - new order: R1 lowest hole (x=0), R2-R5 up the rod"
+2026-10-28T10:01:14,2440.31,"cal check 20 C, rod drifting 0.02-0.05 C/min"
+2026-10-28T10:03:20,2566.84,step 20 to 45 C
+2026-10-28T10:21:18,3645.13,~10:18 measured hole spacing near rod

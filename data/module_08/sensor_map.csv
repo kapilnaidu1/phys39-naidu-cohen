@@ -1,6 +1,6 @@
-channel,arduino_pin,position_mm,position_uncertainty_mm,rfixed_measured_ohm,notes
-R1,A1,,,,TO MEASURE: distance from the origin along the rod; fill in before analysis
-R2,A2,,,,
-R3,A3,,,,
-R4,A4,,,,
-R5,A5,,,,
+channel,arduino_pin,tape_label,order_from_plate,position_mm,position_uncertainty_mm,rfixed_measured_ohm,notes
+R1,A1,R1,1,0,0,100000,first rod hole; defines x = 0 (course Part 2); from 28 Oct ~09:40 onward
+R2,A2,R2,2,,,100000,distance from R1's hole TO MEASURE
+R3,A3,R3,3,,,100000,distance from R1's hole TO MEASURE
+R4,A4,R4,4,,,100000,distance from R1's hole TO MEASURE
+R5,A5,R5,5,,,100000,farthest; distance from R1's hole TO MEASURE

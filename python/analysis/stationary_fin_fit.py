@@ -12,8 +12,10 @@ MODEL. With theta = T - T_room, the stationary rod equation is
 and the two profiles fitted are
     finite, insulated tip:  theta(x) = theta0 cosh(m(L - x)) / cosh(mL)
     semi-infinite:          theta(x) = theta0 exp(-m x)
-x is measured from the origin in data/module_08/sensor_map.csv; L is the rod
-length measured from the same origin to the tip.
+x is measured from the origin in data/module_08/sensor_map.csv, which the
+course defines as rod thermistor R1 in the first rod hole (x = 0); L is the
+rod length measured from that hole to the tip. R1's reading is the boundary
+condition theta(0); the TEC thermistor (base) is only the controlled variable.
 
 DATA. Each sensor is averaged over the steady window (default: the last
 300 s). The script prints each channel's drift over that window so the
@@ -152,6 +154,10 @@ def main():
         print(f"Shift in m when the finite end is ignored: {ms - mf:+.3f} 1/m "
               f"= {(ms - mf) / sf:+.2f} sigma of the finite fit")
         print(f"mL = {mf * L:.3f}")
+        ratio = y[-1] / y[0]
+        print(f"Placement check (course Part 2): theta at the farthest sensor / "
+              f"theta at x = 0 = {ratio:.3f}; needs <= 1/e = {1 / np.e:.3f}: "
+              f"{'met' if 0 < ratio <= 1 / np.e else 'NOT met'}")
         if a.radius_mm:
             R = a.radius_mm / 1000.0
             bi = (mf * R) ** 2 / 4.0

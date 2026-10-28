@@ -57,9 +57,21 @@ def main():
     ap.add_argument("--t-step", type=float)
     ap.add_argument("--pre", type=float, default=60.0)
     ap.add_argument("--offsets")
+    ap.add_argument("--t-start", type=float,
+                    help="ignore rows before this Arduino time (s)")
+    ap.add_argument("--t-end", type=float,
+                    help="ignore rows after this Arduino time (s)")
+    ap.add_argument("--sensor-map", help="sensor map for this run "
+                    "(default data/module_08/sensor_map.csv)")
     a = ap.parse_args()
 
     cols, channels = rd.load_run(a.run)
+    keep = np.ones(len(cols["time_s"]), bool)
+    if a.t_start is not None:
+        keep &= cols["time_s"] >= a.t_start
+    if a.t_end is not None:
+        keep &= cols["time_s"] <= a.t_end
+    cols = {k: v[keep] for k, v in cols.items()}
     offsets = rd.load_offsets(a.offsets) if a.offsets else None
     series = rd.channel_series(cols, channels, offsets)
     t = cols["time_s"]
@@ -67,8 +79,12 @@ def main():
     pre = rd.window(t, ts - a.pre, ts - 1e-9)
     post = t >= ts
     end = t >= t[-1] - 60.0
-    positions = rd.load_sensor_map()
+    positions = rd.load_sensor_map(a.sensor_map)
     stem = os.path.splitext(os.path.basename(a.run))[0]
+    if a.t_start is not None or a.t_end is not None:
+        # one run can hold several steps; keep one output per segment
+        stem += (f"_t{a.t_start:.0f}" if a.t_start is not None else "_t0") \
+            + (f"-{a.t_end:.0f}" if a.t_end is not None else "-end")
 
     res = {}
     out = io.StringIO()
@@ -97,6 +113,9 @@ def main():
     with open(os.path.join(rd.DATA_DIR, f"step_{stem}.txt"), "w") as fh:
         fh.write(f"python3 python/analysis/rod_step_response.py {a.run} "
                  f"--t-step {ts:.2f} --pre {a.pre:g}"
+                 + (f" --t-start {a.t_start:g}" if a.t_start is not None else "")
+                 + (f" --t-end {a.t_end:g}" if a.t_end is not None else "")
+                 + (f" --sensor-map {a.sensor_map}" if a.sensor_map else "")
                  + (f" --offsets {a.offsets}" if a.offsets else "")
                  + "\n\n" + text)
 
@@ -104,14 +123,16 @@ def main():
     fig, axes = plt.subplots(1, 2 if have_x else 1, figsize=(12 if have_x else 8, 4.8),
                              squeeze=False)
     ax = axes[0][0]
-    ax.plot(t - ts, cols["setpoint_C"], color="#7f7f7f", ls="--", lw=1.2,
-            label="base setpoint (commanded)")
+    # the setpoint is only a command while control is on
+    sp = np.where(cols["control_on"] == 1, cols["setpoint_C"], np.nan)
+    ax.plot(t - ts, sp, color="#7f7f7f", ls="--", lw=1.2,
+            label="base setpoint (commanded, control on)")
     for name, v in series.items():
         lw = 2.0 if name == "base" else 1.2
         lab = "base, measured (A0)" if name == "base" else name
         ax.plot(t - ts, v, lw=lw, label=lab)
     for tn, note in rd.load_notes(a.run):
-        if np.isfinite(tn):
+        if np.isfinite(tn) and t[0] <= tn <= t[-1]:
             ax.axvline(tn - ts, color="#BBBBBB", lw=0.8)
             ax.text(tn - ts, ax.get_ylim()[1], note, rotation=90, fontsize=7,
                     va="top", ha="right", color="#666666")

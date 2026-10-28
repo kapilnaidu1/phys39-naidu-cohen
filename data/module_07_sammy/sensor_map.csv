@@ -1,0 +1,6 @@
+channel,arduino_pin,tape_label,order_from_base,target_position_mm,measured_position_mm,position_uncertainty_mm,rfixed_measured_ohm,mount_method,notes
+T1,A1,T1,1,0.0,,,,tape,First rod hole; analysis origin x=0; verify actual contact and label.
+T2,A2,T2,2,50.8,,,,tape,Every-other-hole plan about 2 in from T1; measure actual position from T1.
+T3,A3,T3,3,101.6,,,,tape,Every-other-hole plan about 4 in from T1; measure actual position from T1.
+T4,A4,T4,4,152.4,,,,tape,Every-other-hole plan about 6 in from T1; measure actual position from T1.
+T5,A5,T5,5,203.2,,,,tape,Every-other-hole plan about 8 in from T1; farthest available hole from prior notes; measure actual position from T1.

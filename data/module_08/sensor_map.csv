@@ -1,6 +1,6 @@
 channel,arduino_pin,tape_label,order_from_plate,position_mm,position_uncertainty_mm,rfixed_measured_ohm,notes
 R1,A1,R1,1,0,0,100000,first rod hole; defines x = 0 (course Part 2); from 28 Oct ~09:40 onward
-R2,A2,R2,2,25.4,6,100000,PROVISIONAL: by eye 'roughly an inch' from R1 (28 Oct); uncertainty is a guess; replace with ruler value
-R3,A3,R3,3,50.8,6,100000,PROVISIONAL: by eye 'roughly an inch' from R2 (28 Oct); uncertainty is a guess; replace with ruler value
-R4,A4,R4,4,76.2,6,100000,PROVISIONAL: by eye 'roughly an inch' from R3 (28 Oct); uncertainty is a guess; replace with ruler value
-R5,A5,R5,5,101.6,6,100000,PROVISIONAL: by eye 'roughly an inch' from R4 (28 Oct); farthest hole about 4 in beyond R5; R1 hole to rod top about 11 in
+R2,A2,R2,2,25.4,1,100000,tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole
+R3,A3,R3,3,50.8,1,100000,tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole
+R4,A4,R4,4,76.2,1,100000,tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole
+R5,A5,R5,5,101.6,1,100000,tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole; farthest hole about 4 in beyond R5 and rod top about 11 in from R1 (rough)

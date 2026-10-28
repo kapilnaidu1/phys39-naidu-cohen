@@ -4,15 +4,15 @@ Run data/module_08/rod_run_20261028_092033.csv; steady window 4346 to 4646 s (30
 Offsets subtracted: data/module_08/calibration_rod_run_20261026_112627.csv
  channel  x (mm) theta (C)  sigma drift (C/min)   eps_T
       R1     0.0    16.825  0.032       +0.0053  0.0000
-      R2    25.4    15.664  0.390       +0.0053  0.0208
-      R3    50.8    14.342  0.357       +0.0035  0.0452
-      R4    76.2    13.134  0.329       -0.0042  0.0737
-      R5   101.6    12.440  0.309       +0.0052  0.1065
+      R2    25.4    15.664  0.075       +0.0053  0.0207
+      R3    50.8    14.342  0.069       +0.0035  0.0452
+      R4    76.2    13.134  0.073       -0.0042  0.0736
+      R5   101.6    12.440  0.058       +0.0052  0.1065
 
-Finite, insulated tip: m = 4.115 +/- 0.155 1/m, 1/m = 243.0 +/- 9.1 mm, theta0 = 16.826 C, chi2/dof = 0.45/3
-Semi-infinite:         m = 3.074 +/- 0.181 1/m, 1/m = 325.3 +/- 19.2 mm, theta0 = 16.825 C, chi2/dof = 0.55/3
-Shift in m when the finite end is ignored: -1.041 1/m = -6.73 sigma of the finite fit
+Finite, insulated tip: m = 4.117 +/- 0.036 1/m, 1/m = 242.9 +/- 2.2 mm, theta0 = 16.843 C, chi2/dof = 10.35/3
+Semi-infinite:         m = 3.056 +/- 0.043 1/m, 1/m = 327.2 +/- 4.6 mm, theta0 = 16.824 C, chi2/dof = 12.91/3
+Shift in m when the finite end is ignored: -1.060 1/m = -29.08 sigma of the finite fit
 mL = 1.150
 Placement check (course Part 2): theta at the farthest sensor / theta at x = 0 = 0.739; needs <= 1/e = 0.368: NOT met
-Bi_perp = (mR)^2/4 = 1.71e-04 +/- 1.3e-05 (R = 6.35 mm)
+Bi_perp = (mR)^2/4 = 1.71e-04 +/- 3.0e-06 (R = 6.35 mm)
 m^2 = hP/(kA): the steady profile fixes h/k only, not h and k separately.

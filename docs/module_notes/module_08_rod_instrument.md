@@ -220,7 +220,7 @@ python3 python/analysis/rod_step_response.py data/module_08/rod_run_20261028_092
 - **End.** Control off at 4646.8 s; the last 300 s meet the stationary
   criterion (section 3 of the fin note).
 
-| Channel | x (mm, provisional) | Change at the end (°C) | Arrival, +0.2 °C (s) | Half change (s) |
+| Channel | x (mm) | Change at the end (°C) | Arrival, +0.2 °C (s) | Half change (s) |
 |---|---|---|---|---|
 | base (A0) | plate | +25.00 | 2.2 | 10.7 |
 | R1 | 0 | +17.46 | 6.1 | 55.6 |
@@ -246,9 +246,9 @@ That is why the course takes R1, not the TEC thermistor, as the boundary.
 - [x] Thermistors cross-checked; calibration file and figure saved (26 Oct,
       checked again 28 Oct)
 - [ ] Sensor coordinates, origin, direction, uncertainties and wiring
-      documented. Origin and direction done (R1 = x = 0, up the rod);
-      **positions only by eye so far: ruler values, calipers and a photograph
-      still to do**
+      documented. Origin, direction and positions done (R1 = x = 0, holes
+      1 in apart up the rod, ±1 mm, tape); **calipers and a photograph still
+      to do**
 - [x] Synchronized multichannel logging with `rod_pi_logger.py` (28 Oct)
 - [x] Baseline and initial step-response data saved and plotted (run 092033)
 - [x] Every run has `_meta.json` and `_notes.csv`; for run 092033 the sensor

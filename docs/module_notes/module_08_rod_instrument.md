@@ -49,8 +49,8 @@ Offsets from the cross-check are applied in memory by the analysis scripts
 | Rod material | aluminium alloy 6061 (as given for the course rod, 26 Oct) | label / instructor |
 | Rod diameter D, radius R = D/2 | D = 0.5 in = 12.70 mm nominal, R = 6.35 mm; **confirm with calipers** at 3 places (mean ± sd) | nominal size, 26 Oct |
 | Cross-section A = πR², perimeter P = 2πR | A = 126.7 mm² = 1.267e-04 m², P = 39.9 mm = 0.0399 m, A/P = R/2 = 3.175 mm (from the nominal D) | calculated |
-| Rod length L | 300 mm (30 cm) as given; **measure from the chosen origin to the tip** | nominal, 26 Oct |
-| Coordinate origin and direction | TO DEFINE (for example, the face where the rod meets the plate, x increasing toward the tip) | photograph |
+| Rod length L | 300 mm (30 cm) overall as given; for the fit, L is **measured from R1's hole to the tip** | nominal, 26 Oct |
+| Coordinate origin and direction | x = 0 at rod thermistor R1 in the first (lowest) rod hole, x increasing up the rod toward the tip (course Part 2, from 28 Oct about 09:40) | course procedure |
 | Insulation around the rod | TO RECORD (bare, foam, partly covered) | |
 | Each upper resistor R_fixed | TO MEASURE with the multimeter, enter in `rodRfixed[]` and `sensor_map.csv` | multimeter |
 
@@ -122,17 +122,42 @@ Result: TO FILL after the run.
 
 ## 5. Part 2: baseline and step response
 
-1. Baseline: control OFF, at least 2 min, all channels and room temperature.
-   Note the room temperature (and how it was measured) in the notes box.
-2. Step: PI (Kp 12, Ki 0.2, anti-windup on), base setpoint a safe step above
-   room, for example 35 to 40 °C. Type a note at the step.
-3. Record long enough to see the disturbance reach the farthest sensor and
-   level off: tens of minutes, not the 2 to 4 minutes of the plate-only runs.
-4. Analyse:
+Course procedure (Prof. Fraden, updated Part 2):
 
-   ```bash
-   python3 python/analysis/rod_step_response.py data/module_08/rod_run_<...>.csv --offsets data/module_08/calibration_<run>.csv
-   ```
+1. **Boundary sensor.** Rod thermistor R1 sits in the first rod hole and
+   defines x = 0. Its reading T(0,t) is the rod's boundary condition. The
+   TEC thermistor (A0, in the plate) is only the controlled variable.
+2. **Placement pilot.** Hold the base steady at 45 °C (never above 55 °C) and
+   choose holes so that θ5 ≤ θ1/e at steady state, with the sensors spread
+   out on a ln θ against x plot. `stationary_fin_fit.py` prints this check.
+3. Record every position (distance from R1's hole, ±1 mm) in the sensor map.
+4. Set the TEC to 20 °C, let everything settle, and check the calibration
+   criterion (note "cal check 20 C").
+5. Apply a non-oscillatory PI step 20 → 45 °C (Kp 12, Ki 0.2, anti-windup on).
+   Note "step 20 to 45 C". Hands off the rod.
+6. Record until stationary (each channel changing less than about 0.05 °C
+   in 5 min). This takes tens of minutes, not the 2 to 4 minutes of the
+   plate-only runs.
+7. Plot all channels on one time axis. The CSV already holds the commanded
+   setpoint (`setpoint_C`, a command only while `control_on` = 1), the
+   measured TEC temperature (`temperature_C`) and T(0,t) (`T_R1_C`).
+
+Analyse one step at a time (a run can hold several):
+
+```bash
+python3 python/analysis/rod_step_response.py data/module_08/rod_run_<...>.csv --t-start <s> [--t-end <s>] --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+```
+
+Output names carry the segment, for example `step_<run>_t1300-end.png`.
+
+**Run 092033 (28 Oct).** One file, two set-ups:
+
+- 0 to 600 s: first step to 40 °C with the old tape order. Use
+  `--t-end 600 --sensor-map data/module_08/sensor_map_rod_run_20261028_092033.csv`.
+  Not stationary when stopped (R5 still rising). Result:
+  `data/module_08/step_rod_run_20261028_092033_t0-600.txt`.
+- From 1319 s: re-taped (R1 lowest hole, x = 0), baseline 3, hold 20 °C,
+  then the 20 → 45 °C step. Uses the current `sensor_map.csv`.
 
    It plots all channels, the commanded setpoint and the measured base on one
    time axis, and for each channel the arrival time (0.2 °C above its

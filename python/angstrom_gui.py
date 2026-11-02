@@ -3,25 +3,25 @@
 Phys 39 Module 8, Part I: live Angstrom GUI. Naidu / Cohen
 
     python3 python/angstrom_gui.py                 (from the repository root)
-    python3 python/angstrom_gui.py --check-file F  (logger-file report, no window)
+    python3 python/angstrom_gui.py --check-file F  (saved-file report, no window)
 
 Pair with arduino/module_08/angstrom_tec. The Arduino computes the sine
-setpoint, the PI command, the cooling multiplier and the PWM; it prints one
-CSV record every 500 ms on its only serial line. The laptop (USB) and the
-Fermion logger (TX, pin 1) both receive exactly the same lines.
+setpoint and the TEC command in the selected mode (OL open-loop feedforward
+from the Module 4 steady-state curve, P, or PI with the cooling multiplier
+r = chi_h/chi_c) and prints one CSV record every 500 ms.
 
 This program
-  - sends settings (Ta, Tb, period, Kp, Ki, r) and START / STOP,
+  - sends settings (Ta, Tb, period, Kp, Ki, room temperature, r computed
+    from chi_h and chi_c, control mode) and START / STOP,
   - shows the setpoint, the TEC thermistor and T1 to T5 live on one time
-    axis, and the raw PI command and applied signed PWM below,
+    axis, and the feedforward, controller and applied PWM below,
   - saves every valid record UNCHANGED to
         data/module_08/angstrom_live_YYYYMMDD_HHMMSS.csv
     with _events.txt (every "#" line, malformed line and command sent, with
     the wall-clock time), _notes.csv (typed notes) and _meta.json,
   - counts valid, malformed, duplicated and missing records,
-  - imports a logger file with the same parser ("Import logger file"), shows
-    it, reports the same counts, and copies the raw file unchanged into
-    data/module_08/.
+  - "Check a saved file" reads a saved record file with the same parser and
+    reports the same counts.
 """
 
 import argparse
@@ -29,7 +29,6 @@ import csv
 import json
 import math
 import os
-import shutil
 import subprocess
 import sys
 from collections import deque
@@ -40,23 +39,28 @@ DATA_DIR = os.path.join(REPO, "data", "module_08")
 SENSOR_MAP = os.path.join(DATA_DIR, "sensor_map.csv")
 SKETCH = "arduino/module_08/angstrom_tec/angstrom_tec.ino"
 
-COLUMNS = ["time_ms", "run_state", "step", "Ta_C", "Tb_C", "period_s",
-           "setpoint_C", "TEC_C", "T1_C", "T2_C", "T3_C", "T4_C", "T5_C",
-           "uPI_pwm", "heating_to_cooling_ratio", "signed_pwm"]
+COLUMNS = ["time_ms", "run_state", "control_mode", "step", "Ta_C", "Tb_C",
+           "period_s", "setpoint_C", "feedforward_pwm", "TEC_C", "T1_C",
+           "T2_C", "T3_C", "T4_C", "T5_C", "controller_pwm",
+           "heating_to_cooling_ratio", "signed_pwm"]
 HEADER = ",".join(COLUMNS)
 INT_COLS = {"time_ms", "run_state", "step", "signed_pwm"}
+TEXT_COLS = {"control_mode"}
+MODES = ("OL", "P", "PI")
 REPORT_MS = 500
-DEFAULTS = {"TA": 40.0, "TB": 8.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2,
-            "R": 2.771}
+# course first run (Ta 40, Tb 16, 100 s), Module 6 gains, Module 4 chi
+DEFAULTS = {"TA": 40.0, "TB": 16.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2,
+            "TAMB": 21.54, "CHIH": 0.50127, "CHIC": 0.18091}
 
 
 # =====================================================================
-# parsing, shared by the live stream and the logger import
+# parsing, shared by the live stream and the saved-file check
 # =====================================================================
 
 def parse_record(line):
-    """dict of the 16 fields, or None if the line is not a valid record.
-    'nan' is allowed for temperatures and the setpoint."""
+    """dict of the 18 fields, or None if the line is not a valid record.
+    'nan' is the placeholder for a field that does not apply or a channel
+    that could not be read."""
     parts = line.strip().split(",")
     if len(parts) != len(COLUMNS):
         return None
@@ -65,11 +69,14 @@ def parse_record(line):
         for name, field in zip(COLUMNS, parts):
             if name in INT_COLS:
                 rec[name] = int(field)
+            elif name in TEXT_COLS:
+                rec[name] = field
             else:
                 rec[name] = float(field)
     except ValueError:
         return None
-    if rec["time_ms"] < 0 or rec["run_state"] not in (0, 1, 2, 9):
+    if rec["time_ms"] < 0 or rec["run_state"] not in (0, 1, 2, 9) \
+            or rec["control_mode"] not in MODES:
         return None
     return rec
 
@@ -117,7 +124,7 @@ class StreamStats:
 
 
 def check_file(path):
-    """Read a logger (or GUI) file with the live parser. Returns
+    """Read a saved record file with the live parser. Returns
     (records, stats, segments, counts) where segments are lists of records
     between restarts."""
     stats = StreamStats()
@@ -205,8 +212,10 @@ def run_gui():
         pwm.setLabel("bottom", "Arduino time (s)")
         pwm.addLegend(offset=(10, 10))
         pwm.setXLink(temp)
-        curves["uPI_pwm"] = pwm.plot(pen=pg.mkPen("#aaaaaa", width=1.4),
-                                     name="raw u_PI")
+        curves["feedforward_pwm"] = pwm.plot(pen=pg.mkPen("#d62728", width=1.4),
+                                             name="feedforward (OL)", connect="finite")
+        curves["controller_pwm"] = pwm.plot(pen=pg.mkPen("#aaaaaa", width=1.4),
+                                            name="controller (P/PI, raw)", connect="finite")
         curves["signed_pwm"] = pwm.plot(pen=pg.mkPen("#202020", width=1.6),
                                         name="applied signed PWM")
         for y in (255, -255):
@@ -218,7 +227,7 @@ def run_gui():
     class ImportWindow(QtWidgets.QWidget):
         def __init__(self, path, segments, text):
             super().__init__()
-            self.setWindowTitle(f"Logger file: {os.path.basename(path)}")
+            self.setWindowTitle(f"Saved file: {os.path.basename(path)}")
             self.resize(1100, 750)
             lay = QtWidgets.QVBoxLayout(self)
             lab = QtWidgets.QLabel(f"<pre>{text}</pre>")
@@ -275,10 +284,17 @@ def run_gui():
                 "units": {"time_ms": "ms, Arduino millis() at the report",
                           "Ta_C, Tb_C, setpoint_C, TEC_C, T1_C..T5_C":
                               "degC, raw beta-equation values (no offsets)",
-                          "period_s": "s", "uPI_pwm": "PWM counts before the "
-                          "cooling multiplier and clamp",
+                          "period_s": "s",
+                          "feedforward_pwm": "OL command from the Module 4 "
+                          "steady-state curve; nan in P and PI",
+                          "controller_pwm": "raw P or PI command before the "
+                          "cooling multiplier and clamp; nan in OL",
                           "signed_pwm": "applied PWM, + heat, - cool",
                           "heating_to_cooling_ratio": "r = chi_h/chi_c"},
+                "control_mode": {"OL": "open-loop feedforward",
+                                 "P": "proportional only", "PI": "PI"},
+                "placeholder": "nan = does not apply in this mode, or "
+                               "channel unreadable",
                 "run_state": {"0": "idle", "1": "running", "9": "safety latched"},
                 "sensor_map_file": os.path.relpath(SENSOR_MAP, REPO),
                 "sensor_map": sensor_map_rows(),
@@ -306,9 +322,15 @@ def run_gui():
 
             row = QtWidgets.QHBoxLayout()
             self.spins = {}
-            specs = [("TA", "Ta (°C)", 10, 50, 2, 0.5), ("TB", "Tb (°C)", 0, 15, 2, 0.5),
-                     ("PERIOD", "period (s)", 20, 3600, 1, 10), ("KP", "Kp", 0, 100, 3, 0.5),
-                     ("KI", "Ki", 0, 5, 4, 0.01), ("R", "r = χh/χc", 0.5, 5, 3, 0.05)]
+            row.addWidget(QtWidgets.QLabel("mode"))
+            self.mode_box = QtWidgets.QComboBox()
+            self.mode_box.addItems(list(MODES))
+            self.mode_box.setCurrentText("PI")
+            row.addWidget(self.mode_box)
+            specs = [("TA", "Ta (°C)", 10, 56, 2, 0.5), ("TB", "Tb (°C)", 0, 23, 2, 0.5),
+                     ("PERIOD", "period (s)", 100, 3600, 1, 10), ("KP", "Kp", 0, 100, 3, 0.5),
+                     ("KI", "Ki", 0, 5, 4, 0.01), ("TAMB", "room T (°C)", 10, 35, 2, 0.1),
+                     ("CHIH", "χh", 0.01, 2, 5, 0.01), ("CHIC", "χc", 0.01, 2, 5, 0.01)]
             for key, label, lo, hi, dec, step in specs:
                 row.addWidget(QtWidgets.QLabel(label))
                 s = QtWidgets.QDoubleSpinBox()
@@ -318,6 +340,11 @@ def run_gui():
                 s.setValue(DEFAULTS[key])
                 self.spins[key] = s
                 row.addWidget(s)
+            self.r_label = QtWidgets.QLabel()
+            row.addWidget(self.r_label)
+            self.spins["CHIH"].valueChanged.connect(self.update_r)
+            self.spins["CHIC"].valueChanged.connect(self.update_r)
+            self.update_r()
             send = QtWidgets.QPushButton("Send settings")
             send.clicked.connect(self.send_settings)
             row.addWidget(send)
@@ -329,8 +356,8 @@ def run_gui():
                 b = QtWidgets.QPushButton(text)
                 b.clicked.connect(lambda _=False, c=cmd: self.send(c))
                 row2.addWidget(b)
-            imp = QtWidgets.QPushButton("Import logger file")
-            imp.clicked.connect(self.import_logger)
+            imp = QtWidgets.QPushButton("Check a saved file")
+            imp.clicked.connect(self.check_saved_file)
             row2.addWidget(imp)
             row2.addWidget(QtWidgets.QLabel("window (s)"))
             self.win_spin = QtWidgets.QSpinBox()
@@ -360,9 +387,19 @@ def run_gui():
             if self.link.send_command(cmd):
                 self.log_event(f"SENT {cmd}")
 
+        def r_value(self):
+            return self.spins["CHIH"].value() / self.spins["CHIC"].value()
+
+        def update_r(self):
+            self.r_label.setText(f"r = χh/χc = {self.r_value():.3f}")
+
         def send_settings(self):
-            for key, s in self.spins.items():
-                self.send(f"SET {key} {s.value():g}")
+            self.send(f"SET MODE {self.mode_box.currentText()}")
+            for key in ("TA", "TB", "PERIOD", "KP", "KI", "TAMB"):
+                self.send(f"SET {key} {self.spins[key].value():g}")
+            self.send(f"SET R {self.r_value():.3f}")
+            self.log_event(f"chi_h {self.spins['CHIH'].value():g} chi_c "
+                           f"{self.spins['CHIC'].value():g} -> r {self.r_value():.4f}")
 
         def log_note(self):
             text = self.note_edit.text().strip()
@@ -426,29 +463,25 @@ def run_gui():
                 f"{state} &nbsp; t = {r['time_ms'] / 1000:.1f} s &nbsp; "
                 f"set {f(r['setpoint_C'])} &nbsp; TEC {f(r['TEC_C'])} &nbsp; "
                 + " ".join(f"T{i} {f(r[f'T{i}_C'])}" for i in range(1, 6))
-                + f" &nbsp; u_PI {r['uPI_pwm']:.1f} &nbsp; PWM {r['signed_pwm']}"
-                f" &nbsp; | &nbsp; Ta {r['Ta_C']:g} Tb {r['Tb_C']:g} "
+                + f" &nbsp; ff {f(r['feedforward_pwm'])} &nbsp; ctrl "
+                f"{f(r['controller_pwm'])} &nbsp; PWM {r['signed_pwm']}"
+                f" &nbsp; | &nbsp; <b>{r['control_mode']}</b> Ta {r['Ta_C']:g} Tb {r['Tb_C']:g} "
                 f"period {r['period_s']:g} s r {r['heating_to_cooling_ratio']:g}"
                 f"<br>{self.stats.text()} &nbsp; file "
                 f"{os.path.basename(self.csv_path)}")
 
-        def import_logger(self):
+        def check_saved_file(self):
             path, _ = QtWidgets.QFileDialog.getOpenFileName(
-                self, "Logger file", os.path.expanduser("~"),
+                self, "Saved record file", DATA_DIR,
                 "Text or CSV (*.txt *.csv *.TXT *.CSV);;All files (*)")
             if not path:
                 return
             records, stats, segments, counts = check_file(path)
             text = report_text(path, stats, segments, counts)
-            dest = os.path.join(DATA_DIR, f"logger_{datetime.now():%Y%m%d_%H%M%S}_"
-                                f"{os.path.basename(path)}")
-            if os.path.abspath(path) != os.path.abspath(dest) and not os.path.exists(dest):
-                shutil.copy2(path, dest)
-                text += f"\nCopied unchanged to {os.path.relpath(dest, REPO)}"
             print(text)
             self.log_event("IMPORT " + text.replace("\n", " | "))
             if not records:
-                QtWidgets.QMessageBox.warning(self, "Logger file", text)
+                QtWidgets.QMessageBox.warning(self, "Saved record file", text)
                 return
             win = ImportWindow(path, segments, text)
             win.show()
@@ -474,7 +507,7 @@ def run_gui():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--check-file", help="report on a logger or GUI file and exit")
+    ap.add_argument("--check-file", help="report on a saved record file and exit")
     a = ap.parse_args()
     if a.check_file:
         _, stats, segments, counts = check_file(a.check_file)

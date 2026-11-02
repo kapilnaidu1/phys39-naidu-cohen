@@ -313,6 +313,10 @@ def run_gui():
             self.timer = QtCore.QTimer(self)
             self.timer.timeout.connect(self.redraw)
             self.timer.start(300)
+            self.cmd_queue = deque()
+            self.cmd_timer = QtCore.QTimer(self)
+            self.cmd_timer.timeout.connect(self._send_next)
+            self.cmd_timer.start(300)
 
         # ---- UI -----------------------------------------------------------
         def _build_ui(self):
@@ -383,9 +387,19 @@ def run_gui():
             self.events.write(f"{wall}\t{text}\n")
             self.events.flush()
 
+        # The Uno's serial input buffer is 64 bytes and the sketch only
+        # reads it between ~0.1 s measurement passes, so a burst of commands
+        # can overflow it (on 2 Nov the 7th of 7 settings was lost and the
+        # next START arrived garbled). Commands therefore go out one at a
+        # time, 0.3 s apart.
         def send(self, cmd):
-            if self.link.send_command(cmd):
-                self.log_event(f"SENT {cmd}")
+            self.cmd_queue.append(cmd)
+
+        def _send_next(self):
+            if self.cmd_queue:
+                cmd = self.cmd_queue.popleft()
+                if self.link.send_command(cmd):
+                    self.log_event(f"SENT {cmd}")
 
         def r_value(self):
             return self.spins["CHIH"].value() / self.spins["CHIC"].value()
@@ -488,7 +502,9 @@ def run_gui():
             self.import_windows.append(win)
 
         def closeEvent(self, event):
-            self.send("STOP")
+            self.cmd_queue.clear()
+            if self.link.send_command("STOP"):
+                self.log_event("SENT STOP")
             QtCore.QThread.msleep(300)
             self._closing = True
             self.timer.stop()

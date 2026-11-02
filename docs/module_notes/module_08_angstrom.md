@@ -110,6 +110,10 @@ Photos: `docs/figures/module_08/setup_rod_sensors_20261102.jpg` (rod, T1 in
 the lowest hole at the foam surface, +x up the rod) and
 `setup_bench_wiring_20261102.jpg`. Channel labels still to be marked on a copy.
 
+Rod geometry (`data/module_08/rod_geometry.csv`): D = 12.757 ± 0.006 mm by
+calipers at 3 places; T1 hole to rod top L = 281.9 mm (11.1 in) and overall
+about 305 mm (12 in), ruler readings still to confirm.
+
 Room temperature 22.53 °C: mean of T1 to T5 with offsets, control off, rod
 unheated, 09:47 (note in the run). Pump switched on about 09:50; the TEC
 channel jumped about 2 °C for a few seconds at switch-on, then steady.

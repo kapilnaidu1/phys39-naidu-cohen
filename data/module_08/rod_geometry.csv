@@ -1,0 +1,9 @@
+quantity,value,uncertainty,unit,how_measured,date,notes
+diameter_reading_1,12.76,,mm,calipers,2026-11-02,
+diameter_reading_2,12.75,,mm,calipers,2026-11-02,
+diameter_reading_3,12.76,,mm,calipers,2026-11-02,
+diameter_mean,12.757,0.006,mm,mean and sd of the 3 readings,2026-11-02,nominal 0.5 in = 12.70 mm
+radius,6.378,0.003,mm,diameter_mean / 2,2026-11-02,
+analysis_length_L,281.9,2.5,mm,ruler: T1 hole to rod top = 11.1 in,2026-11-02,"reading given as 'I think'; uncertainty is a guess of +/-0.1 in; confirm"
+overall_length,304.8,2.5,mm,ruler: 12 in,2026-11-02,"reading given as 'I think'; 26 Oct nominal 30 cm; confirm"
+material,6061-T6 aluminium,,,course page,,

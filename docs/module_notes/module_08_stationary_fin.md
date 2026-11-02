@@ -127,6 +127,13 @@ condition and L rather than from the data. With mL = 1.15 the rod is not
 long compared with 1/m, and the finite model is the one to use; the far
 sensors (ε_T up to 0.11 at R5) are where ignoring the end matters most.
 
+**Measured geometry (2 November).** Calipers give D = 12.757 ± 0.006 mm
+(R = 6.378 mm) and a ruler gives 11.1 in = 281.9 mm from R1's hole to the
+top, against the 6.35 mm and 279.4 mm used above. Rerun with the measured
+values: m = 4.10 ± 0.04 m⁻¹ (−0.016), mL = 1.16, θ/θ1 = 0.603 at the
+farthest hole, Bi_⊥ = 1.7 × 10⁻⁴. All within the uncertainties above, so the
+numbers in this section stand.
+
 **Placement check (course Part 2).** θ5/θ1 = 12.44/16.83 = 0.74 (0.73 to
 0.75 for T_room ± 0.5 °C). The target is θ5 ≤ θ1/e = 0.37: **not met**. From
 the finite fit, the farthest available hole (about 8 in from R1) would give

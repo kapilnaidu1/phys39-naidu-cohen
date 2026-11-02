@@ -1,0 +1,11 @@
+python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_20261102_094506.csv --compare --period 100 --cycles 3 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+
+Run data/module_08/angstrom_live_20261102_094506.csv: open loop vs P vs PI at period 100 s, last 3 complete cycles of each segment; offsets applied
+mode  chan    mean      B   B/Tb lag vs set (rad) up-swing   down rms res  B2/B1    PWM range
+  OL   TEC   39.02   3.75  0.234            1.418     3.83   3.89   0.019  0.002     3 to   67
+  OL    T1   32.00   0.70  0.044            2.330     1.13   1.14   0.051  0.009     3 to   67
+   P   TEC   37.37  12.22  0.764            0.552    12.29  12.12   0.019  0.011  -195 to  134
+   P    T1   31.88   2.46  0.154            1.433     2.58   2.52   0.016  0.015  -195 to  134
+  PI   TEC   39.94  13.89  0.868            0.623    13.93  13.76   0.015  0.014  -216 to  156
+  PI    T1   33.70   2.88  0.180            1.503     2.94   2.90   0.018  0.020  -216 to  156
+up-swing / down = max - mean and mean - min over the window (heating/cooling symmetry).

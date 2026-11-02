@@ -103,3 +103,62 @@ r 2.771, records every 0.5 s (200 per period). Settling test: fit groups of
 complete cycles; settled when each sensor's B and φ agree between
 consecutive groups within their uncertainties and the residuals show no
 drift.
+
+## 4. S18 live run, 2 November (`angstrom_live_20261102_094506.csv`)
+
+Photos: `docs/figures/module_08/setup_rod_sensors_20261102.jpg` (rod, T1 in
+the lowest hole at the foam surface, +x up the rod) and
+`setup_bench_wiring_20261102.jpg`. Channel labels still to be marked on a copy.
+
+Room temperature 22.53 °C: mean of T1 to T5 with offsets, control off, rod
+unheated, 09:47 (note in the run). Pump switched on about 09:50; the TEC
+channel jumped about 2 °C for a few seconds at switch-on, then steady.
+
+| Arduino time (s) | Event |
+|---|---|
+| 405.5 | START, open loop (OL), Ta 40, Tb 16, period 100 s |
+| 1079.2 | mode P, Kp 12 (no stop, phase continuous) |
+| 1591.4 | mode PI, Kp 12, Ki 0.2 |
+| 2626.8 | period 480 s (mode PI re-sent, integral reset) |
+
+Two command bursts overflowed the Uno's 64-byte input buffer (the last
+setting and the following command were lost or garbled, then refused). No
+setting took a wrong value; the GUI now sends commands 0.3 s apart.
+
+**Open loop vs P vs PI at 100 s** (last 3 cycles of each,
+`angstrom_compare_angstrom_live_20261102_094506_100s.txt`):
+
+| Mode | TEC mean | TEC B / Tb | TEC lag (rad) | T1 B (°C) | T1 lag (rad) | PWM range |
+|---|---|---|---|---|---|---|
+| OL | 39.02 | 0.234 | 1.42 | 0.70 | 2.33 | 3 to 67 |
+| P | 37.37 | 0.764 | 0.55 | 2.46 | 1.43 | −195 to 134 |
+| PI | 39.94 | 0.868 | 0.62 | 2.88 | 1.50 | −216 to 156 |
+
+Open loop follows the Module 4 steady-state curve but the plate's ~63 s time
+constant filters a 100 s drive heavily, and it never cools actively (the
+whole setpoint is above room). P tracks with a 2.6 °C droop in the mean. PI
+removes the droop and gives the largest T1 swing; no saturation in any mode.
+Heating and cooling halves are symmetric within 0.2 °C at TEC and T1, and
+the 2nd harmonic is under 2.5 % of the fundamental.
+
+**PI, 100 s, last 5 cycles (2125.9 to 2625.9 s)**
+(`angstrom_fit_angstrom_live_20261102_094506_PI_100s.*`). Settling test:
+cycle by cycle, B of every sensor within about 2 % and φ within 0.05 rad.
+
+| | x (mm) | B (°C) | B/B1 | lag after T1 (rad) |
+|---|---|---|---|---|
+| T1 | 0 | 2.874 | 1.000 | 0 |
+| T2 | 25.4 | 1.899 | 0.661 | 0.38 |
+| T3 | 50.8 | 1.137 | 0.396 | 0.88 |
+| T4 | 76.2 | 0.697 | 0.243 | 1.32 |
+| T5 | 101.6 | 0.430 | 0.149 | 1.79 |
+
+q = 18.5 ± 0.3 m⁻¹, q′ = 17.4 ± 0.3 m⁻¹ (χ²/dof 3.3 and 4.7, errors scaled),
+κ = ω/(2qq′) = (9.8 ± 0.2) × 10⁻⁵ m²/s, ν = (4.0 ± 1.5) × 10⁻³ s⁻¹.
+
+Pilot only. κ is about 40 % above the handbook value for 6061-T6
+(6.9 × 10⁻⁵ m²/s), and the straight lines miss by more than the point
+errors, so something is not yet in the error budget: per-sensor lag from the
+taped contacts, positions, or the semi-infinite assumption. The 480 s run
+gives an independent κ; agreement or not between the two periods is the
+first test.

@@ -125,7 +125,7 @@ The course asks for the farthest sensor near B5 ≈ B1/e = 0.37 at the primary p
 
 ### 6.1 Transverse Biot number
 
-The 1-D equation needs the cross-section to be nearly isothermal, Bi<sub>⊥</sub> = hR/(2k) ≪ 1. Because ν/κ = hP/(kA) = 2h/(kR), the measured slopes give it without knowing h or k: Bi<sub>⊥</sub> = (ν/κ)R²/4. With R = 6.378 mm:
+The 1-D equation needs the cross-section to be nearly isothermal, Bi<sub>⊥</sub> = hR/(2k) much less than 1. Because ν/κ = hP/(kA) = 2h/(kR), the measured slopes give it without knowing h or k: Bi<sub>⊥</sub> = (ν/κ)R²/4. With R = 6.378 mm:
 
 | Source | ν/κ (m⁻²) | Bi<sub>⊥</sub> |
 |---|---|---|
@@ -178,10 +178,16 @@ Yes, with one condition. Across the rod, Bi<sub>⊥</sub> ≤ 4 × 10⁻⁴, so 
 - Notes: `docs/module_notes/module_08_angstrom.md`.
 
 ```
-python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_20261102_094506.csv --mode PI --period 100 --cycles 5 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
-python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_20261102_094506.csv --mode PI --period 480 --cycles 5 --t-end 5507.21 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
-python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_20261102_094506.csv --compare --period 100 --cycles 3 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
-python3 python/analysis/angstrom_finite_fit.py data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_100s.csv data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_480s.csv --length-mm 281.9 --dx-mm 1
+RUN=data/module_08/angstrom_live_20261102_094506.csv
+CAL=data/module_08/calibration_rod_run_20261026_112627.csv
+python3 python/analysis/angstrom_fit.py $RUN --mode PI --period 100 --cycles 5 --offsets $CAL
+python3 python/analysis/angstrom_fit.py $RUN --mode PI --period 480 --cycles 5 \
+    --t-end 5507.21 --offsets $CAL
+python3 python/analysis/angstrom_fit.py $RUN --compare --period 100 --cycles 3 --offsets $CAL
+python3 python/analysis/angstrom_finite_fit.py \
+    data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_100s.csv \
+    data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_480s.csv \
+    --length-mm 281.9 --dx-mm 1
 ```
 
 ## 9. AI use

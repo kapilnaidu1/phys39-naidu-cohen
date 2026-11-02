@@ -112,7 +112,7 @@ the lowest hole at the foam surface, +x up the rod) and
 
 Rod geometry (`data/module_08/rod_geometry.csv`): D = 12.757 ± 0.006 mm by
 calipers at 3 places; T1 hole to rod top L = 281.9 mm (11.1 in) and overall
-about 305 mm (12 in), ruler readings still to confirm.
+about 305 mm (12 in), ruler readings confirmed 2 November.
 
 Room temperature 22.53 °C: mean of T1 to T5 with offsets, control off, rod
 unheated, 09:47 (note in the run). Pump switched on about 09:50; the TEC
@@ -142,7 +142,9 @@ setting took a wrong value; the GUI now sends commands 0.3 s apart.
 Open loop follows the Module 4 steady-state curve but the plate's ~63 s time
 constant filters a 100 s drive heavily, and it never cools actively (the
 whole setpoint is above room). P tracks with a 2.6 °C droop in the mean. PI
-removes the droop and gives the largest T1 swing; no saturation in any mode.
+removes the droop and gives the largest T1 swing. No saturation in the
+compared cycles; P hit the −255 clamp for 14 records (7 s) right after the
+switch from OL, PI never did.
 Heating and cooling halves are symmetric within 0.2 °C at TEC and T1, and
 the 2nd harmonic is under 2.5 % of the fundamental.
 
@@ -207,3 +209,44 @@ on Wednesday, before calling either number a result: the finite rod (at 480 s
 1/q = 107 mm against 279 mm to the top, so the reflected wave is a few
 percent at T5), different thermal lags of the taped sensors, and the
 position uncertainty.
+
+## 5. Checks on the actuator and the model (S18 data)
+
+```bash
+python3 python/analysis/angstrom_actuator.py data/module_08/angstrom_live_20261102_094506.csv --tamb 22.53
+```
+
+**Open-loop feedforward.**
+`docs/figures/module_08/angstrom_feedforward_angstrom_live_20261102_094506.png`.
+The Module 4 points, the piecewise-linear inverse and every u_ff the run
+sent. The requested T − T_room ran from 1.5 to 33.5 °C; the measured curve
+only reaches +25.1 °C (PWM 50), so 36 % of the OL records used the
+extrapolated end segment (2.00 PWM per °C) up to PWM 66.8. The whole OL
+waveform was above room, so OL never cooled.
+
+**Open loop against the one-lump model.** A first-order plate with
+τ = 62.9 s (Module 6) driven at 100 s passes 1/√(1 + (ωτ)²) = 0.245 of the
+amplitude with a lag of arctan(ωτ) = 1.32 rad. Measured at the TEC: 0.234
+and 1.42 rad. The extra 0.1 rad and the slightly smaller swing are
+consistent with the rod adding load and lag that the one-lump model leaves
+out.
+
+**Controller command against applied PWM** (P and PI).
+`docs/figures/module_08/angstrom_actuator_angstrom_live_20261102_094506.png`.
+Fitted slopes: heating 1.000, cooling 2.773 (P) and 2.771 (PI), equal to
+r = 2.771, so the multiplier is applied as intended before the clamp. P
+reached −255 for 14 records just after the switch from OL; PI stayed
+between −217 and +156.
+
+**Finite-length check for the retained sensors.** For an insulated tip the
+periodic solution differs from the semi-infinite one by a reflected wave of
+relative size about e^(−2q(L − x)), with L = 281.9 mm:
+
+| Period | T1 | T2 | T3 | T4 | T5 |
+|---|---|---|---|---|---|
+| 100 s (q = 18.5) | 0.0000 | 0.0001 | 0.0002 | 0.0005 | 0.0013 |
+| 480 s (q = 9.34) | 0.005 | 0.008 | 0.013 | 0.021 | 0.035 |
+
+Negligible at 100 s; at 480 s up to 3.5 % at T5, which is the same size as
+the scatter in B and can bias q and q′ there. **Transverse Biot number**
+(Module 7): Bi_⊥ = 1.7 × 10⁻⁴, so one temperature per cross-section holds.

@@ -349,6 +349,33 @@ python3 python/analysis/rod_step_response.py <run.csv> --offsets <calibration.cs
 python3 python/analysis/stationary_fin_fit.py <run.csv> --length-mm L --troom T --radius-mm R --offsets <calibration.csv>
 ```
 
+## Module 8, Part I: Angstrom method
+
+Notes: [`docs/module_notes/module_08_angstrom.md`](docs/module_notes/module_08_angstrom.md)
+(acquisition, run order, P3 predictions, S18 results). Rod geometry:
+[`data/module_08/rod_geometry.csv`](data/module_08/rod_geometry.csv).
+
+| Sketch | Pair with | Output |
+|---|---|---|
+| [`angstrom_tec`](arduino/module_08/angstrom_tec/angstrom_tec.ino) | [`python/angstrom_gui.py`](python/angstrom_gui.py) | one CSV record every 500 ms (format below); setpoint, OL / P / PI control and the cooling multiplier are computed on the Arduino |
+
+```text
+time_ms,run_state,control_mode,step,Ta_C,Tb_C,period_s,setpoint_C,feedforward_pwm,TEC_C,T1_C,T2_C,T3_C,T4_C,T5_C,controller_pwm,heating_to_cooling_ratio,signed_pwm
+```
+
+`nan` marks a field that does not apply in the selected mode (or an unreadable
+channel). The GUI saves every valid record unchanged to
+`data/module_08/angstrom_live_YYYYMMDD_HHMMSS.csv` with `_events.txt`,
+`_notes.csv` and `_meta.json`.
+
+```bash
+python3 python/angstrom_gui.py                                    # live run
+python3 python/angstrom_gui.py --check-file <run.csv>              # record counts for a saved file
+python3 python/analysis/angstrom_fit.py <run.csv> --mode PI --period 480 --cycles 5 --offsets <calibration.csv>
+python3 python/analysis/angstrom_fit.py <run.csv> --compare --period 100 --cycles 3 --offsets <calibration.csv>
+python3 python/analysis/angstrom_actuator.py <run.csv> --tamb 22.53  # feedforward curve, controller vs applied PWM
+```
+
 ---
 
 ## Verification performed

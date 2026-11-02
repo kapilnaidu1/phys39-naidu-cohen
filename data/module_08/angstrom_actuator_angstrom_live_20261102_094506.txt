@@ -1,0 +1,10 @@
+python3 python/analysis/angstrom_actuator.py data/module_08/angstrom_live_20261102_094506.csv --tamb 22.53
+
+Run data/module_08/angstrom_live_20261102_094506.csv
+Module 4 curve: data/module_04/steady_state.csv (T0 = 21.54 C); room temperature for OL: 22.53 C
+
+OL: 1244 records, requested T - T_room 1.47 to 33.47 C, u_ff 2.9 to 66.8.
+Measured curve reaches +25.06 C (PWM 50); 36 % of the OL records needed more and used the extrapolated end segment (2.00 PWM per C).
+
+P: 941 records, controller -176.2 to 134.3, applied -255 to 134, r = [2.771], heating slope 1.000, cooling slope 2.773, records at the +-255 clamp: 14
+PI: 7801 records, controller -78.5 to 155.9, applied -217 to 156, r = [2.771], heating slope 1.000, cooling slope 2.771, records at the +-255 clamp: 0

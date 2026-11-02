@@ -49,7 +49,7 @@ Offsets from the cross-check are applied in memory by the analysis scripts
 | Rod material | aluminium alloy 6061 (as given for the course rod, 26 Oct) | label / instructor |
 | Rod diameter D, radius R = D/2 | D = 12.757 ± 0.006 mm (12.76, 12.75, 12.76 at 3 places), R = 6.378 mm; nominal 0.5 in = 12.70 mm | calipers, 2 Nov |
 | Cross-section A = πR², perimeter P = 2πR | A = 126.7 mm² = 1.267e-04 m², P = 39.9 mm = 0.0399 m, A/P = R/2 = 3.175 mm (from the nominal D) | calculated |
-| Rod length L | overall about 12 in = 305 mm (26 Oct: 30 cm); R1's hole to the top 11.1 in = 281.9 mm (±0.1 in, to confirm). `data/module_08/rod_geometry.csv` | ruler, 2 Nov |
+| Rod length L | overall about 12 in = 305 mm (26 Oct: 30 cm); R1's hole to the top 11.1 in = 281.9 mm (confirmed 2 Nov). `data/module_08/rod_geometry.csv` | ruler, 2 Nov |
 | Coordinate origin and direction | x = 0 at rod thermistor R1 in the first (lowest) rod hole, x increasing up the rod toward the tip (course Part 2, from 28 Oct about 09:40) | course procedure |
 | Insulation around the rod | TO RECORD (bare, foam, partly covered) | |
 | Each upper resistor R_fixed | TO MEASURE with the multimeter, enter in `rodRfixed[]` and `sensor_map.csv` | multimeter |

@@ -168,7 +168,7 @@ first test.
 (`angstrom_fit_angstrom_live_20261102_094506_PI_480s.*`). Cycle 1 after the
 switch is excluded: the TEC swing was 15.30 °C in cycle 1 and 15.83 to
 15.87 °C in cycles 2 to 6. From cycle 2 on, every phase stays within
-0.04 rad; the rod swings vary by up to ±3 % from cycle to cycle with no
+0.05 rad; the rod swings vary by up to ±3 % from cycle to cycle with no
 trend (T5 2.41 to 2.51 °C). The run was stopped at 6.7 cycles, so the
 five retained cycles start with the first settled one; a stricter count
 (cycles 3 to 6) has four. The means still rise 0.2 to 0.34 °C per cycle

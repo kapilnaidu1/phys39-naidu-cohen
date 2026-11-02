@@ -1,4 +1,4 @@
-# Why our sensors could not reach θ(0)/e, and how to place yours
+# Sensor placement along the rod: the calculation
 
 Naidu / Cohen, 28 October 2026. Data: run `rod_run_20261028_092033`, steady
 window 4346 to 4646 s. Full analysis: [`module_08_stationary_fin.md`](module_08_stationary_fin.md).
@@ -30,32 +30,11 @@ sensor.
 Check: the model with m = 4.12 gives cosh(4.12 × 0.178)/cosh(1.15) = 0.737
 at R5, against 0.739 measured.
 
-## 3. Why no hole works
+## 3. Finite rods
 
-The lowest θ anywhere on the rod is at the tip, θ(L)/θ(0) = 1/cosh(mL).
-
-```
-tip:            1 / cosh(1.15)                      = 1 / 1.738 = 0.58
-farthest hole:  cosh(4.12 × 0.076) / cosh(1.15)     = 1.050 / 1.738 = 0.60   (x = 203 mm, 8 in)
-target:         1/e                                 = 0.37
-```
-
-Even the tip is far from 0.37. Moving sensors cannot fix it; only a larger
-mL can.
-
-**Condition for 1/e to be reachable at all:** 1/cosh(mL) ≤ 1/e, so
-
-```
-cosh(mL) ≥ e     →     mL ≥ arccosh(e) = 1.66
-```
-
-Ours is 1.15. For our rod (L = 279 mm) that needs m ≥ 5.9 m⁻¹ at the tip, or
-m ≥ 6.4 m⁻¹ at the farthest hole: h/k about 2.1 to 2.4 times what we have.
-
-For scale only: taking the handbook conductivity of 6061 aluminium,
-k ≈ 167 W/(m K) (not measured by us), m = 4.12 m⁻¹ and R = 6.35 mm give
-h = m²kR/2 ≈ 9 W/(m² K), a normal value for still air. The aluminium rod
-conducts so well that the heat reaches the tip before much of it leaks out.
+Prof. Fraden has measured the course rods: all of them behave as finite
+rods (reported to us 2 November), so the insulated-tip form above is the one
+to use, not the semi-infinite exponential.
 
 ## 4. How to place your sensors
 
@@ -69,7 +48,7 @@ conducts so well that the heat reaches the tip before much of it leaks out.
 3. **Check mL.**
    - If **mL < 1.66**, no position on that rod reaches 1/e. Put the
      farthest sensor in the farthest hole and space the rest evenly from
-     x = 0. Report the ratio you get and why (this section).
+     x = 0. Report the ratio you get.
    - If **mL ≥ 1.66**, the farthest sensor must be at or beyond
      ```
      x5 = L − arccosh( cosh(mL) / e ) / m

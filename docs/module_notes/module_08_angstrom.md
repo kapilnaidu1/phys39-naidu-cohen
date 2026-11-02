@@ -143,7 +143,7 @@ the 2nd harmonic is under 2.5 % of the fundamental.
 
 **PI, 100 s, last 5 cycles (2125.9 to 2625.9 s)**
 (`angstrom_fit_angstrom_live_20261102_094506_PI_100s.*`). Settling test:
-cycle by cycle, B of every sensor within about 2 % and φ within 0.05 rad.
+cycle by cycle, B of every sensor within about 3 % (T5 0.426 to 0.440 °C) and φ within 0.06 rad.
 
 | | x (mm) | B (°C) | B/B1 | lag after T1 (rad) |
 |---|---|---|---|---|

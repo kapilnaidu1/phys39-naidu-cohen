@@ -1,0 +1,9 @@
+wall_clock,time_ms,note
+2026-11-02T09:48:10,180795,"room T 22.53 C = mean of T1-T5 with offsets, control off, rod unheated, 09:47"
+2026-11-02T09:51:28,378911,pump on ~09:50 (TEC channel jumped ~2 C for a few s at switch-on).
+2026-11-02T09:51:48,398743,"OL start, Ta 40 Tb 16 period 100 s"
+2026-11-02T10:03:24,1095420,"switch to P, Kp 12"
+2026-11-02T10:11:49,1600461,"switch to PI, Kp 12 Ki 0.2"
+2026-11-02T10:25:17,2409164,"period 100 -> 480 s, PI Kp 12 Ki 0.2"
+2026-11-02T10:29:04,2635928,"period 100 -> 480 s, PI Kp 12 Ki 0.2"
+2026-11-02T11:22:19,5832495,"STOP, end of S18 run"

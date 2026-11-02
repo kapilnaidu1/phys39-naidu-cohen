@@ -120,6 +120,7 @@ channel jumped about 2 °C for a few seconds at switch-on, then steady.
 | 1079.2 | mode P, Kp 12 (no stop, phase continuous) |
 | 1591.4 | mode PI, Kp 12, Ki 0.2 |
 | 2626.8 | period 480 s (mode PI re-sent, integral reset) |
+| 5832.4 | STOP, end of the S18 run (11:22) |
 
 Two command bursts overflowed the Uno's 64-byte input buffer (the last
 setting and the following command were lost or garbled, then refused). No
@@ -162,3 +163,43 @@ errors, so something is not yet in the error budget: per-sensor lag from the
 taped contacts, positions, or the semi-infinite assumption. The 480 s run
 gives an independent κ; agreement or not between the two periods is the
 first test.
+
+**PI, 480 s, cycles 2 to 6 (3107.2 to 5507.2 s)**
+(`angstrom_fit_angstrom_live_20261102_094506_PI_480s.*`). Cycle 1 after the
+switch is excluded: the TEC swing was 15.30 °C in cycle 1 and 15.83 to
+15.87 °C in cycles 2 to 6. From cycle 2 on, every phase stays within
+0.04 rad; the rod swings vary by up to ±3 % from cycle to cycle with no
+trend (T5 2.41 to 2.51 °C). The run was stopped at 6.7 cycles, so the
+five retained cycles start with the first settled one; a stricter count
+(cycles 3 to 6) has four. The means still rise 0.2 to 0.34 °C per cycle
+(handled by the drift term).
+
+| | x (mm) | B (°C) | B/B1 | lag after T1 (rad) |
+|---|---|---|---|---|
+| T1 | 0 | 6.368 | 1.000 | 0 |
+| T2 | 25.4 | 5.176 | 0.813 | 0.17 |
+| T3 | 50.8 | 4.023 | 0.632 | 0.39 |
+| T4 | 76.2 | 3.140 | 0.493 | 0.59 |
+| T5 | 101.6 | 2.453 | 0.385 | 0.81 |
+
+TEC follows the setpoint at 99 % amplitude, 12 s behind; PWM −43 to 88.
+B5/B1 = 0.385, the course's 1/e target for the primary period, and the
+T1 → T5 lag of 0.81 rad is inside the 0.5 to 2 rad target. **480 s is the
+primary period.**
+
+q = 9.34 ± 0.18 m⁻¹, q′ = 7.84 ± 0.15 m⁻¹ (χ²/dof 2.3 and 3.2),
+κ = (8.94 ± 0.24) × 10⁻⁵ m²/s, ν = (2.31 ± 0.37) × 10⁻³ s⁻¹.
+
+**The two periods compared.**
+
+| Period | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) | ν (10⁻³ 1/s) |
+|---|---|---|---|---|
+| 100 s | 18.5 ± 0.3 | 17.4 ± 0.3 | 9.76 ± 0.23 | 4.0 ± 1.5 |
+| 480 s | 9.34 ± 0.18 | 7.84 ± 0.15 | 8.94 ± 0.24 | 2.31 ± 0.37 |
+
+κ differs by 0.82 × 10⁻⁵ m²/s, 2.5 times the combined error, and both lie
+30 to 40 % above the handbook 6061-T6 value (6.9 × 10⁻⁵). Candidates to test
+on Wednesday, before calling either number a result: the finite rod (at 480 s
+1/q = 107 mm against 279 mm to the top, so the reflected wave is a few
+percent at T5), different thermal lags of the taped sensors, and the
+position uncertainty.

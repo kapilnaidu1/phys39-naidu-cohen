@@ -10,6 +10,10 @@ For whoever runs the bench. Everything below uses the code already on `main`.
    cd ~/Documents/GitHub/phys39-naidu-cohen
    python3 python/angstrom_gui.py
    ```
+   **Caliper check (5 min, supply off, rod at room temperature).** Without moving
+   any thermistor, measure centre to centre from the T1 hole to the T2, T3, T4
+   and T5 holes with calipers. Type them as one note, e.g.
+   `calipers T1-T2 __, T1-T3 __, T1-T4 __, T1-T5 __ mm`, filling in the readings.
 3. Supply and pump **off**. Leave everything alone for 2 minutes and watch the six lines:
    - no spikes, no gaps (nan), all six flat;
    - after the known offsets they should agree within about 0.3 °C (T2 normally reads about 0.2 °C lower than the others).

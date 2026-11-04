@@ -53,8 +53,9 @@ REPORT_MS = 500
 SCHEDULE_PRESETS = {
     "Fast test": "# accelerated check: 3 steps, 2 automatic period changes, 10 min\n"
                  "200 40 16 100\n200 40 16 150\n200 40 16 200\n",
-    "Production": "# S20 plan: 7 cycles at each period, about 96 min\n"
-                  "3360 40 16 480\n1680 40 16 240\n700 40 16 100\n",
+    "Production": "# S20 plan: 5 min hold at Ta (Tb 0) so the plate and integral start\n"
+                  "# near the mean, then 7 cycles at each period, about 101 min\n"
+                  "300 40 0 100\n3360 40 16 480\n1680 40 16 240\n700 40 16 100\n",
 }
 
 

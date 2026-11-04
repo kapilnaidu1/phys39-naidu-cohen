@@ -250,3 +250,31 @@ relative size about e^(−2q(L − x)), with L = 281.9 mm:
 Negligible at 100 s; at 480 s up to 3.5 % at T5, which is the same size as
 the scatter in B and can bias q and q′ there. **Transverse Biot number**
 (Module 7): Bi_⊥ = 1.7 × 10⁻⁴, so one temperature per cross-section holds.
+
+## 6. Frequency schedule (Stage 3, built 4 November)
+
+The GUI's schedule box takes one step per line, `duration_s Ta_C Tb_C period_s`
+(up to 8 steps). **Send schedule** sends `SCHED CLEAR`, one `SCHED ADD` per step
+and `SCHED LIST`; **START schedule** sends `SCHED START`. The Arduino then runs
+the steps on its own clock in the selected control mode, with the laptop still
+recording:
+
+- step 1 starts with phase 0; at every later step the phase keeps running, so
+  a period change does not make the setpoint jump;
+- every change prints `# EVENT t_ms=... SCHEDULE STEP k dur_s=... Ta=... Tb=... period_s=...`,
+  and the record's `step` field shows the active step (`run_state` 2);
+- after the last step the output goes to 0 (`# EVENT ... SCHEDULE DONE`); STOP
+  ends a schedule early;
+- periods below 100 s, setpoints outside 10 to 56 °C, durations outside 10 to
+  36000 s and more than 8 steps are refused.
+
+Presets: **Fast test** (200 s each at 100, 150 and 200 s periods: two automatic
+changes in 10 min, the Stage 3 demonstration) and **Production** (7 cycles each
+at 480, 240 and 100 s, about 96 min, the S20 plan).
+
+Checked before the bench: the sketch compiled for the Uno and was run on the
+host with a stub Arduino layer (3-step schedule): steps changed at 200 s
+intervals, the setpoint stayed continuous across both changes (40.18 °C two
+full cycles into step 1; 53.7 °C at the 100 to 150 s change, the expected
+continuation of the phase), refused steps were rejected, and the output went
+to 0 at the end. The analysis scripts accept `run_state` 1 or 2.

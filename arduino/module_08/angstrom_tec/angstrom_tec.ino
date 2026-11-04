@@ -29,9 +29,10 @@
 
     time_ms,run_state,control_mode,step,Ta_C,Tb_C,period_s,setpoint_C,feedforward_pwm,TEC_C,T1_C,T2_C,T3_C,T4_C,T5_C,controller_pwm,heating_to_cooling_ratio,signed_pwm
 
-    run_state        0 idle (output off), 1 running, 9 safety latched
+    run_state        0 idle (output off), 1 running (live START),
+                     2 running a frequency schedule, 9 safety latched
     control_mode     OL, P or PI (the selected mode, also while idle)
-    step             schedule step; 0 for a run started from the GUI
+    step             schedule step 1..n while a schedule runs; 0 otherwise
     setpoint_C       nan while idle
     feedforward_pwm  u_ff in OL mode; nan (does not apply) in P and PI
     controller_pwm   raw P or PI command before the cooling multiplier and
@@ -48,6 +49,19 @@
     SET TAMB 21.5                               room temperature for OL, C
     SET MODE OL | P | PI
     START   STOP   GET   CLEAR SAFETY   TEST LIMIT <C>
+
+  FREQUENCY SCHEDULE (Module 8 Stage 3). The GUI sends the steps, the
+  Arduino runs them on its own clock while the laptop keeps recording:
+    SCHED CLEAR
+    SCHED ADD <duration_s> <Ta> <Tb> <period_s>     up to 8 steps
+    SCHED LIST
+    SCHED START      step 1 begins with phase 0; each later step keeps the
+                     phase running, so a period change does not make the
+                     setpoint jump. Every change prints "# EVENT ... STEP k"
+                     and the record's step field shows the active step.
+                     After the last step the output goes to 0 ("SCHEDULE
+                     DONE"). STOP ends a schedule early.
+  Periods are refused below 100 s (course minimum).
   A change during a run takes effect at the next report and is printed as
   "# EVENT". The phase carries on through a period change, so the setpoint
   does not jump. Changing the mode resets the integral.
@@ -110,8 +124,17 @@ float       t1Limit     = T1_LIMIT_C;
 float       tecLimit    = TEC_LIMIT_C;
 
 // ---- state -----------------------------------------------------------
-int   runState = 0;          // 0 idle, 1 running, 9 latched
+int   runState = 0;          // 0 idle, 1 live run, 2 schedule, 9 latched
 int   stepIdx  = 0;
+
+// ---- frequency schedule (RAM; the GUI sends it before SCHED START) ----
+const int MAX_STEPS = 8;
+struct Step { float dur, ta, tb, period; };
+Step sched[MAX_STEPS];
+int  nSteps = 0;
+unsigned long stepStartMs = 0;
+
+bool running() { return runState == 1 || runState == 2; }
 float phase    = 0.0;
 float q        = 0.0;
 float uCtrl    = NAN;        // raw P or PI command
@@ -178,7 +201,7 @@ void readRod() {
 
 // One input carries PWM, the other is driven LOW first. Never both.
 void applyDrive(int sp) {
-  if (latched || runState != 1) sp = 0;
+  if (latched || !running()) sp = 0;
   sp = constrain(sp, -maxDuty, maxDuty);
   signedPwm = sp;
   if (sp == 0) {
@@ -233,12 +256,53 @@ float feedforward(float dT) {
   return ffU[i - 1] + slope * (dT - ffDT[i - 1]);   // extends the end segments
 }
 
+void printStep(int k) {
+  Serial.print(F(" dur_s="));    Serial.print(sched[k].dur, 0);
+  Serial.print(F(" Ta="));       Serial.print(sched[k].ta, 2);
+  Serial.print(F(" Tb="));       Serial.print(sched[k].tb, 2);
+  Serial.print(F(" period_s=")); Serial.println(sched[k].period, 1);
+}
+
+void stepEvent(const __FlashStringHelper *what, int k) {
+  Serial.print(F("# EVENT t_ms="));
+  Serial.print(millis());
+  Serial.print(' ');
+  Serial.print(what);
+  Serial.print(F(" STEP "));
+  Serial.print(k + 1);
+  printStep(k);
+}
+
+void loadStep(int k, unsigned long now) {
+  Ta = sched[k].ta;
+  Tb = sched[k].tb;
+  periodS = sched[k].period;     // phase carries on: no jump in the setpoint
+  stepIdx = k + 1;
+  stepStartMs = now;
+}
+
+// Move to the next step when the current one has run its duration.
+void advanceSchedule(unsigned long now) {
+  if (now - stepStartMs < (unsigned long)(sched[stepIdx - 1].dur * 1000.0)) return;
+  if (stepIdx < nSteps) {
+    loadStep(stepIdx, now);
+    stepEvent(F("SCHEDULE"), stepIdx - 1);
+  } else {
+    runState = 0;
+    stepIdx = 0;
+    q = 0.0;
+    applyDrive(0);
+    event("SCHEDULE DONE, output 0", NULL);
+  }
+}
+
 void controlStep(unsigned long now) {
   float dt = (now - lastCtrl) / 1000.0;
   lastCtrl = now;
   uCtrl = NAN;
   uFF   = NAN;
-  if (runState != 1) {
+  if (runState == 2) advanceSchedule(now);
+  if (!running()) {
     if (runState == 0) setpointC = NAN;
     applyDrive(0);
     return;
@@ -302,7 +366,8 @@ void printSettings() {
   Serial.print(F(" Tamb="));            Serial.print(Tamb, 2);
   Serial.print(F(" T1_limit="));        Serial.print(t1Limit, 1);
   Serial.print(F(" TEC_limit="));       Serial.print(tecLimit, 1);
-  Serial.print(F(" run_state="));       Serial.println(runState);
+  Serial.print(F(" run_state="));       Serial.print(runState);
+  Serial.print(F(" sched_steps="));     Serial.println(nSteps);
 }
 
 void report(unsigned long now) {
@@ -371,7 +436,7 @@ void handleSet(char *name, char *val) {
   if      (!strcmp(name, "TA")) newTa = v;
   else if (!strcmp(name, "TB")) newTb = v;
   else if (!strcmp(name, "PERIOD")) {
-    if (v < 20.0 || v > 3600.0) { refuse(F("period must be 20 to 3600 s")); return; }
+    if (v < 100.0 || v > 3600.0) { refuse(F("period must be 100 to 3600 s")); return; }
     periodS = v;
   } else if (!strcmp(name, "KP")) {
     if (v < 0.0 || v > 100.0) { refuse(F("Kp must be 0 to 100")); return; }
@@ -399,6 +464,63 @@ void handleSet(char *name, char *val) {
   printSettings();
 }
 
+void handleSched(char *b, char *c, char *d, char *e, char *f) {
+  if (!strcmp(b, "CLEAR")) {
+    if (runState == 2) { refuse(F("schedule running, STOP first")); return; }
+    nSteps = 0;
+    event("SCHED CLEAR", NULL);
+    return;
+  }
+  if (!strcmp(b, "ADD")) {
+    float dur, ta, tb, per;
+    if (!parseFloat(c, dur) || !parseFloat(d, ta) || !parseFloat(e, tb) || !parseFloat(f, per)) {
+      refuse(F("SCHED ADD <duration_s> <Ta> <Tb> <period_s>"));
+      return;
+    }
+    if (runState == 2)               { refuse(F("schedule running, STOP first")); return; }
+    if (nSteps >= MAX_STEPS)         { refuse(F("at most 8 steps")); return; }
+    if (dur < 10.0 || dur > 36000.0) { refuse(F("duration must be 10 to 36000 s")); return; }
+    if (per < 100.0 || per > 3600.0) { refuse(F("period must be 100 to 3600 s")); return; }
+    if (tb < 0.0 || ta + tb > SET_MAX_C || ta - tb < SET_MIN_C) {
+      refuse(F("setpoint must stay within 10 to 56 C"));
+      return;
+    }
+    sched[nSteps].dur = dur;
+    sched[nSteps].ta = ta;
+    sched[nSteps].tb = tb;
+    sched[nSteps].period = per;
+    nSteps++;
+    stepEvent(F("SCHED ADD"), nSteps - 1);
+    return;
+  }
+  if (!strcmp(b, "LIST")) {
+    Serial.print(F("# SCHEDULE "));
+    Serial.print(nSteps);
+    Serial.println(F(" steps"));
+    for (int k = 0; k < nSteps; k++) {
+      Serial.print(F("#   step "));
+      Serial.print(k + 1);
+      printStep(k);
+    }
+    return;
+  }
+  if (!strcmp(b, "START")) {
+    if (nSteps == 0) { refuse(F("no schedule loaded")); return; }
+    if (latched)     { refuse(F("safety latched, send CLEAR SAFETY")); return; }
+    if (!tecOk)      { refuse(F("TEC thermistor not readable")); return; }
+    unsigned long now = millis();
+    phase = 0.0;
+    q = 0.0;
+    lastCtrl = now;
+    loadStep(0, now);
+    runState = 2;
+    event("SCHEDULE START", modeName(mode));
+    stepEvent(F("SCHEDULE"), 0);
+    return;
+  }
+  refuse(F("SCHED CLEAR | ADD | LIST | START"));
+}
+
 void handleLine() {
   while (bufLen > 0 && (buf[bufLen - 1] == '\r' || buf[bufLen - 1] == ' '))
     bufLen--;
@@ -409,7 +531,12 @@ void handleLine() {
   char *a = strtok(buf, " \t");
   char *b = strtok(NULL, " \t");
   char *c = strtok(NULL, " \t");
+  char *d = strtok(NULL, " \t");
+  char *e = strtok(NULL, " \t");
+  char *f = strtok(NULL, " \t");
   if (!a) return;
+
+  if (!strcmp(a, "SCHED") && b) { handleSched(b, c, d, e, f); return; }
 
   if (!strcmp(a, "SET") && b && c) { handleSet(b, c); return; }
   if (!strcmp(a, "GET"))            { printSettings(); return; }
@@ -426,7 +553,8 @@ void handleLine() {
     return;
   }
   if (!strcmp(a, "STOP")) {
-    if (runState == 1) runState = 0;
+    if (running()) runState = 0;
+    stepIdx = 0;
     q = 0.0;
     applyDrive(0);
     event("STOP", NULL);
@@ -438,6 +566,7 @@ void handleLine() {
     t1Limit = T1_LIMIT_C;
     tecLimit = TEC_LIMIT_C;
     runState = 0;
+    stepIdx = 0;
     applyDrive(0);
     event("CLEAR SAFETY", NULL);
     return;

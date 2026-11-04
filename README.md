@@ -364,7 +364,9 @@ time_ms,run_state,control_mode,step,Ta_C,Tb_C,period_s,setpoint_C,feedforward_pw
 ```
 
 `nan` marks a field that does not apply in the selected mode (or an unreadable
-channel). The GUI saves every valid record unchanged to
+channel). Frequency schedules: `SCHED CLEAR`, `SCHED ADD <duration_s> <Ta> <Tb> <period_s>`,
+`SCHED LIST`, `SCHED START` (from the GUI's schedule box); `step` and `run_state` 2 mark a
+scheduled run. The GUI saves every valid record unchanged to
 `data/module_08/angstrom_live_YYYYMMDD_HHMMSS.csv` with `_events.txt`,
 `_notes.csv` and `_meta.json`.
 

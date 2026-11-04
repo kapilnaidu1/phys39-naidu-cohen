@@ -108,7 +108,7 @@ def load_positions(path):
 def segment(cols, mode, period):
     """Indices of the last contiguous stretch with run_state 1, this mode
     and this period."""
-    ok = (cols["run_state"] == 1) & (cols["control_mode"] == mode) & \
+    ok = np.isin(cols["run_state"], (1, 2)) & (cols["control_mode"] == mode) & \
          (np.abs(cols["period_s"] - period) < 1e-6)
     idx = np.flatnonzero(ok)
     if idx.size == 0:

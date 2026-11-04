@@ -48,6 +48,40 @@ INT_COLS = {"time_ms", "run_state", "step", "signed_pwm"}
 TEXT_COLS = {"control_mode"}
 MODES = ("OL", "P", "PI")
 REPORT_MS = 500
+# Frequency schedules (Module 8 Stage 3): one step per line,
+# "duration_s Ta_C Tb_C period_s". Durations = about 2 cycles to settle + 5 kept.
+SCHEDULE_PRESETS = {
+    "Fast test": "# accelerated check: 3 steps, 2 automatic period changes, 10 min\n"
+                 "200 40 16 100\n200 40 16 150\n200 40 16 200\n",
+    "Production": "# S20 plan: 7 cycles at each period, about 96 min\n"
+                  "3360 40 16 480\n1680 40 16 240\n700 40 16 100\n",
+}
+
+
+def parse_schedule(text):
+    """[(dur, Ta, Tb, period), ...] and a list of problems."""
+    steps, problems = [], []
+    for n, line in enumerate(text.splitlines(), 1):
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        try:
+            dur, ta, tb, per = (float(v) for v in line.replace(",", " ").split())
+        except ValueError:
+            problems.append(f"line {n}: need 4 numbers: duration Ta Tb period")
+            continue
+        if not 10 <= dur <= 36000:
+            problems.append(f"line {n}: duration must be 10 to 36000 s")
+        if not 100 <= per <= 3600:
+            problems.append(f"line {n}: period must be 100 to 3600 s")
+        if tb < 0 or ta + tb > 56 or ta - tb < 10:
+            problems.append(f"line {n}: setpoint must stay within 10 to 56 C")
+        steps.append((dur, ta, tb, per))
+    if len(steps) > 8:
+        problems.append("at most 8 steps")
+    if not steps:
+        problems.append("no steps")
+    return steps, problems
 # course first run (Ta 40, Tb 16, 100 s), Module 6 gains, Module 4 chi
 DEFAULTS = {"TA": 40.0, "TB": 16.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2,
             "TAMB": 21.54, "CHIH": 0.50127, "CHIC": 0.18091}
@@ -295,7 +329,9 @@ def run_gui():
                                  "P": "proportional only", "PI": "PI"},
                 "placeholder": "nan = does not apply in this mode, or "
                                "channel unreadable",
-                "run_state": {"0": "idle", "1": "running", "9": "safety latched"},
+                "run_state": {"0": "idle", "1": "running (live START)",
+                              "2": "running a frequency schedule",
+                              "9": "safety latched"},
                 "sensor_map_file": os.path.relpath(SENSOR_MAP, REPO),
                 "sensor_map": sensor_map_rows(),
                 "events_file": os.path.relpath(stem + "_events.txt", REPO),
@@ -374,6 +410,29 @@ def run_gui():
             row2.addWidget(self.note_edit, stretch=2)
             lay.addLayout(row2)
 
+            # frequency schedule
+            row3 = QtWidgets.QHBoxLayout()
+            self.sched_edit = QtWidgets.QPlainTextEdit(SCHEDULE_PRESETS["Fast test"])
+            self.sched_edit.setFixedHeight(70)
+            self.sched_edit.textChanged.connect(self.update_sched_label)
+            row3.addWidget(QtWidgets.QLabel("schedule\n(duration Ta Tb period\nper line)"))
+            row3.addWidget(self.sched_edit, stretch=2)
+            for name in SCHEDULE_PRESETS:
+                b = QtWidgets.QPushButton(name)
+                b.clicked.connect(lambda _=False, n=name:
+                                  self.sched_edit.setPlainText(SCHEDULE_PRESETS[n]))
+                row3.addWidget(b)
+            b = QtWidgets.QPushButton("Send schedule")
+            b.clicked.connect(self.send_schedule)
+            row3.addWidget(b)
+            b = QtWidgets.QPushButton("START schedule")
+            b.clicked.connect(lambda: self.send("SCHED START"))
+            row3.addWidget(b)
+            self.sched_label = QtWidgets.QLabel()
+            row3.addWidget(self.sched_label)
+            lay.addLayout(row3)
+            self.update_sched_label()
+
             self.status = QtWidgets.QLabel("waiting for the Arduino ...")
             self.status.setTextFormat(QtCore.Qt.RichText)
             lay.addWidget(self.status)
@@ -414,6 +473,27 @@ def run_gui():
             self.send(f"SET R {self.r_value():.3f}")
             self.log_event(f"chi_h {self.spins['CHIH'].value():g} chi_c "
                            f"{self.spins['CHIC'].value():g} -> r {self.r_value():.4f}")
+
+        def update_sched_label(self):
+            steps, problems = parse_schedule(self.sched_edit.toPlainText())
+            if problems:
+                self.sched_label.setText("<span style='color:#C0392B'>"
+                                         + "; ".join(problems) + "</span>")
+            else:
+                total = sum(st[0] for st in steps)
+                self.sched_label.setText(f"{len(steps)} steps, {total / 60:.1f} min")
+
+        def send_schedule(self):
+            steps, problems = parse_schedule(self.sched_edit.toPlainText())
+            if problems:
+                QtWidgets.QMessageBox.warning(self, "Schedule", "\n".join(problems))
+                return
+            self.send("SCHED CLEAR")
+            for dur, ta, tb, per in steps:
+                self.send(f"SCHED ADD {dur:g} {ta:g} {tb:g} {per:g}")
+            self.send("SCHED LIST")
+            self.log_event("schedule sent: " + " | ".join(
+                f"{d:g} s, Ta {a:g}, Tb {b:g}, period {p:g} s" for d, a, b, p in steps))
 
         def log_note(self):
             text = self.note_edit.text().strip()
@@ -468,6 +548,7 @@ def run_gui():
                 c.setData(t, list(self.buf[k]), connect="finite")
             r = self.latest
             state = {0: "idle", 1: "<b style='color:#1a7f37'>RUNNING</b>",
+                     2: f"<b style='color:#1a7f37'>SCHEDULE step {r['step']}</b>",
                      9: "<b style='color:#C0392B'>SAFETY LATCHED</b>"}.get(
                          r["run_state"], str(r["run_state"]))
 

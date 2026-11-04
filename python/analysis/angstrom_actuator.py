@@ -77,7 +77,7 @@ def main():
     a = ap.parse_args()
     stem = os.path.splitext(os.path.basename(a.run))[0]
     cols = load(a.run)
-    run = cols["run_state"] == 1
+    run = np.isin(cols["run_state"], (1, 2))
     lines = [f"Run {a.run}", f"Module 4 curve: {os.path.relpath(CURVE, REPO)} "
              f"(T0 = {T0_MODULE4} C); room temperature for OL: {a.tamb} C", ""]
 

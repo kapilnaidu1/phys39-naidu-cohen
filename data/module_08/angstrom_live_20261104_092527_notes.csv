@@ -1,0 +1,5 @@
+wall_clock,time_ms,note
+2026-11-04T09:29:40,249847,"wires reseated (pushed further in), no pin changes; room T ~27.1 C (rod mean, offsets)"
+2026-11-04T09:31:20,349931,"room T 27.10 C (rod mean, offsets, 09:30); supply and pump on."
+2026-11-04T09:31:44,374964,fast schedule test start.
+2026-11-04T09:43:47,1098100,extra periods 240 and 180 s; 5 min hold at 40 C first

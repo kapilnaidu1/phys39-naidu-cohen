@@ -287,6 +287,7 @@ to 0 at the end. The analysis scripts accept `run_state` 1 or 2.
 | `angstrom_live_20261104_092121` | After reseating: no faults except one T5 blip at 130 s (+1.3 °C for one reading, then 0.3 °C lower). Everything at about 27.3 °C and still cooling about 0.1 °C/min. Reset to push the wires further in (no pin changes). |
 | `angstrom_live_20261104_092527` | Clean. Room temperature 27.10 °C (mean of T1 to T5 with offsets, sd 0.09 °C, 09:30, control off). Supply and pump on. Fast schedule test (Stage 3): 200 s each at 100, 150 and 200 s periods, PI Kp 12 Ki 0.2; steps changed at 200.0 s intervals with a continuous setpoint, output 0 at the end. Then (09:43:45): 300 s hold at 40 °C, 1680 s at 240 s, 1260 s at 180 s; `SCHEDULE DONE` at 10:37:45. |
 | `angstrom_live_20261104_104451` | After the run, output off the whole time (run_state 0), 117 s. Rod still warm and cooling: T1 to T5 raw 29.3 to 29.9 °C at the start, 28.9 to 29.5 °C at the end. Ended with a serial read error at 10:46:51 when the USB was unplugged. Not used in any fit. |
+| `angstrom_live_20261104_110306` | 300 s period. Sensors not moved. No new room-temperature baseline: the rod was still warm from the earlier run (T1 to T5 raw 28.2 to 28.7 °C and cooling slowly), so the room T box was set to the 09:30 value, 27.10 °C, and a note says so. Schedule started 11:07:53 (PI, Kp 12, Ki 0.2, r 2.771): 300 s hold at 40 °C, then 300 s period, Ta 40, Tb 16. Stopped by hand at 11:50:02 (t = 2816.6 s), after cycle 7 and part way into cycle 8, to finish within the session. No nan in the run. T5 glitch in cycle 5: it read up to 0.36 °C high for about 20 s and dropped back onto the normal curve at 1989.8 s (same phase in cycles 4 and 6 for comparison). |
 
 The room was about 5 °C warmer than on 2 November (27.1 against 22.5 °C).
 The first PI cycle after a cold start ran hot (TEC up to 5.5 °C above the
@@ -299,12 +300,15 @@ at Ta.
 Fits: `angstrom_fit_angstrom_live_20261104_092527_PI_240s.*` (cycles 3 to 7 of
 the 240 s step, 1877 to 3077 s) and `..._PI_180s.*` (cycles 3 to 7 of the
 180 s step, 3437 to 4337 s); finite-rod comparison in
-`angstrom_finite_angstrom_live_20261104_092527.txt`.
+`angstrom_finite_angstrom_live_20261104_092527.txt`. 300 s:
+`angstrom_fit_angstrom_live_20261104_110306_PI_300s.*` (cycles 2 to 7 of the
+300 s step, 887.2 to 2687.2 s) and `angstrom_finite_angstrom_live_20261104_110306.txt`.
 
 | Period | B5/B1 (A5 prediction) | lag T1 to T5, rad (prediction) | TEC B/Tb | κ semi-infinite | κ finite rod |
 |---|---|---|---|---|---|
 | 240 s | 0.281 (0.285) | 1.15 (1.14) | 0.954 | 9.40 ± 0.17 | 9.36 ± 0.17 |
 | 180 s | 0.234 (0.240) | 1.37 (1.34) | 0.928 | 9.24 ± 0.20 | 9.19 ± 0.20 |
+| 300 s | 0.321 (0.319) | 1.04 (1.01) | 0.970 | 9.31 ± 0.16 | 9.33 ± 0.15 |
 
 κ in 10⁻⁵ m²/s. Settling: at 240 s every sensor's B stayed within about 2 %
 and φ within 0.04 rad over the five cycles. At 180 s the fourth retained cycle
@@ -312,9 +316,18 @@ dipped (T4 and T5 about 5 to 9 % low, phases about 0.04 rad later) and then
 recovered, so a disturbance (air movement near the rod is the likely cause) is
 included in that window and widens its errors.
 
-**Frequency consistency, all four periods (finite-rod fits):** 100 s 9.74 ±
-0.23 and 480 s 9.40 ± 0.24 (2 November), 180 s 9.19 ± 0.20 and 240 s 9.36 ±
-0.17 (4 November). Weighted mean 9.40 ± 0.10 × 10⁻⁵ m²/s with χ² = 3.3 for 3
-degrees of freedom, so the four periods agree within their errors, on two days
-with room temperatures of 22.5 and 27.1 °C. The 30 % gap to the handbook value
-for 6061-T6 (6.9 × 10⁻⁵ m²/s) remains.
+At 300 s, cycle 1 after the hold was not settled (T1 amplitude 5.73 °C against
+6.51 °C in cycle 2, T2 to T5 also 6 to 14 % low). From cycle 2 on, T1 to T4
+stayed within 1 % in B and every sensor within 0.03 rad in φ from one cycle to
+the next; T5 within 2.2 % (cycle 5 holds the T5 glitch). Cycles 2 to 7 are
+kept (6 cycles). Checks: cycles 3 to 7 alone give κ = 9.29 ± 0.16; replacing
+the 30 s of T5 around the glitch with the mean of the same phase in cycles 4
+and 6 (temporary copy, deleted; the raw file is unchanged) gives 9.30. The
+glitch does not matter.
+
+**Frequency consistency, all five periods (finite-rod fits):** 100 s 9.74 ±
+0.23 and 480 s 9.40 ± 0.24 (2 November), 180 s 9.19 ± 0.20, 240 s 9.36 ±
+0.17 and 300 s 9.33 ± 0.15 (4 November). Weighted mean 9.38 ± 0.08 × 10⁻⁵
+m²/s with χ² = 3.5 for 4 degrees of freedom, so the five periods agree within
+their errors, on two days with room temperatures of 22.5 and 27.1 °C. Our κ is
+still 36 % above the handbook value for 6061-T6 (6.9 × 10⁻⁵ m²/s).

@@ -1,0 +1,105 @@
+{
+  "file": "data/module_08/angstrom_live_20261104_110306.csv",
+  "started": "2026-11-04T11:03:06",
+  "git_commit_at_start": "914e1f4f68e43d85336afa6e387b27a2228a0ede",
+  "program": "python/angstrom_gui.py",
+  "sketch": "arduino/module_08/angstrom_tec/angstrom_tec.ino",
+  "serial_port": "/dev/cu.usbmodem1101",
+  "baud": 9600,
+  "columns": [
+    "time_ms",
+    "run_state",
+    "control_mode",
+    "step",
+    "Ta_C",
+    "Tb_C",
+    "period_s",
+    "setpoint_C",
+    "feedforward_pwm",
+    "TEC_C",
+    "T1_C",
+    "T2_C",
+    "T3_C",
+    "T4_C",
+    "T5_C",
+    "controller_pwm",
+    "heating_to_cooling_ratio",
+    "signed_pwm"
+  ],
+  "units": {
+    "time_ms": "ms, Arduino millis() at the report",
+    "Ta_C, Tb_C, setpoint_C, TEC_C, T1_C..T5_C": "degC, raw beta-equation values (no offsets)",
+    "period_s": "s",
+    "feedforward_pwm": "OL command from the Module 4 steady-state curve; nan in P and PI",
+    "controller_pwm": "raw P or PI command before the cooling multiplier and clamp; nan in OL",
+    "signed_pwm": "applied PWM, + heat, - cool",
+    "heating_to_cooling_ratio": "r = chi_h/chi_c"
+  },
+  "control_mode": {
+    "OL": "open-loop feedforward",
+    "P": "proportional only",
+    "PI": "PI"
+  },
+  "placeholder": "nan = does not apply in this mode, or channel unreadable",
+  "run_state": {
+    "0": "idle",
+    "1": "running (live START)",
+    "2": "running a frequency schedule",
+    "9": "safety latched"
+  },
+  "sensor_map_file": "data/module_08/sensor_map.csv",
+  "sensor_map": [
+    {
+      "channel": "R1",
+      "arduino_pin": "A1",
+      "tape_label": "R1",
+      "order_from_plate": "1",
+      "position_mm": "0",
+      "position_uncertainty_mm": "0",
+      "rfixed_measured_ohm": "100000",
+      "notes": "first rod hole; defines x = 0 (course Part 2); from 28 Oct ~09:40 onward; 2 Nov: still in the first hole (Module 8 name T1)"
+    },
+    {
+      "channel": "R2",
+      "arduino_pin": "A2",
+      "tape_label": "R2",
+      "order_from_plate": "2",
+      "position_mm": "25.4",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole; 2 Nov: moved back to this hole after Sammy's 2-in run (Module 8 name T2)"
+    },
+    {
+      "channel": "R3",
+      "arduino_pin": "A3",
+      "tape_label": "R3",
+      "order_from_plate": "3",
+      "position_mm": "50.8",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole; 2 Nov: moved back to this hole after Sammy's 2-in run (Module 8 name T3)"
+    },
+    {
+      "channel": "R4",
+      "arduino_pin": "A4",
+      "tape_label": "R4",
+      "order_from_plate": "4",
+      "position_mm": "76.2",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole; 2 Nov: moved back to this hole after Sammy's 2-in run (Module 8 name T4)"
+    },
+    {
+      "channel": "R5",
+      "arduino_pin": "A5",
+      "tape_label": "R5",
+      "order_from_plate": "5",
+      "position_mm": "101.6",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "tape measure 28 Oct after the run: holes 1 in (25.4 mm) apart; position from R1's hole; farthest hole about 4 in beyond R5 and rod top 11.1 in = 281.9 mm from R1 (ruler 2 Nov); 2 Nov: moved back to this hole after Sammy's 2-in run (Module 8 name T5)"
+    }
+  ],
+  "events_file": "data/module_08/angstrom_live_20261104_110306_events.txt",
+  "notes_file": "data/module_08/angstrom_live_20261104_110306_notes.csv"
+}

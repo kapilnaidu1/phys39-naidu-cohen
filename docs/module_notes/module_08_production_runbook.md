@@ -89,4 +89,4 @@ Each period gives q (amplitude decay), q′ (phase lag), κ = ω/(2qq′) and
 ν = κ(q² − q′²). Agreement of κ across 480, 240 and 100 s in one record, under
 one room temperature and one sensor seating, is the frequency-consistency test.
 The caliper readings test whether the sensor spacing explains our κ being about
-30 % above the handbook value for 6061-T6 (κ scales with spacing squared).
+36 % above the handbook value for 6061-T6 (κ scales with spacing squared).

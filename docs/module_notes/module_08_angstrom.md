@@ -286,6 +286,7 @@ to 0 at the end. The analysis scripts accept `run_state` 1 or 2.
 | `angstrom_live_20261104_091727` | Start-up with control off. T2 to T5 showed contact faults: one-reading spikes (T5 to 58 °C, T3 to 41 °C), short dropouts (nan) on T4 and T5, and T3 and T4 stuck 2.4 and 1.1 °C high. GUI closed to reseat wires. |
 | `angstrom_live_20261104_092121` | After reseating: no faults except one T5 blip at 130 s (+1.3 °C for one reading, then 0.3 °C lower). Everything at about 27.3 °C and still cooling about 0.1 °C/min. Reset to push the wires further in (no pin changes). |
 | `angstrom_live_20261104_092527` | Clean. Room temperature 27.10 °C (mean of T1 to T5 with offsets, sd 0.09 °C, 09:30, control off). Supply and pump on. Fast schedule test (Stage 3): 200 s each at 100, 150 and 200 s periods, PI Kp 12 Ki 0.2; steps changed at 200.0 s intervals with a continuous setpoint, output 0 at the end. Then (09:43:45): 300 s hold at 40 °C, 1680 s at 240 s, 1260 s at 180 s; `SCHEDULE DONE` at 10:37:45. |
+| `angstrom_live_20261104_104451` | After the run, output off the whole time (run_state 0), 117 s. Rod still warm and cooling: T1 to T5 raw 29.3 to 29.9 °C at the start, 28.9 to 29.5 °C at the end. Ended with a serial read error at 10:46:51 when the USB was unplugged. Not used in any fit. |
 
 The room was about 5 °C warmer than on 2 November (27.1 against 22.5 °C).
 The first PI cycle after a cold start ran hot (TEC up to 5.5 °C above the

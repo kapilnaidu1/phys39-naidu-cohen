@@ -285,10 +285,35 @@ to 0 at the end. The analysis scripts accept `run_state` 1 or 2.
 |---|---|
 | `angstrom_live_20261104_091727` | Start-up with control off. T2 to T5 showed contact faults: one-reading spikes (T5 to 58 °C, T3 to 41 °C), short dropouts (nan) on T4 and T5, and T3 and T4 stuck 2.4 and 1.1 °C high. GUI closed to reseat wires. |
 | `angstrom_live_20261104_092121` | After reseating: no faults except one T5 blip at 130 s (+1.3 °C for one reading, then 0.3 °C lower). Everything at about 27.3 °C and still cooling about 0.1 °C/min. Reset to push the wires further in (no pin changes). |
-| `angstrom_live_20261104_092527` | Clean. Room temperature 27.10 °C (mean of T1 to T5 with offsets, sd 0.09 °C, 09:30, control off). Supply and pump on. Fast schedule test (Stage 3): 200 s each at 100, 150 and 200 s periods, PI Kp 12 Ki 0.2; steps changed at 200.0 s intervals with a continuous setpoint, output 0 at the end. Then: 300 s hold at 40 °C, 1680 s at 240 s, 1260 s at 180 s (in progress). |
+| `angstrom_live_20261104_092527` | Clean. Room temperature 27.10 °C (mean of T1 to T5 with offsets, sd 0.09 °C, 09:30, control off). Supply and pump on. Fast schedule test (Stage 3): 200 s each at 100, 150 and 200 s periods, PI Kp 12 Ki 0.2; steps changed at 200.0 s intervals with a continuous setpoint, output 0 at the end. Then (09:43:45): 300 s hold at 40 °C, 1680 s at 240 s, 1260 s at 180 s; `SCHEDULE DONE` at 10:37:45. |
 
 The room was about 5 °C warmer than on 2 November (27.1 against 22.5 °C).
 The first PI cycle after a cold start ran hot (TEC up to 5.5 °C above the
 falling setpoint): the plate lags about 10 s and the integral built up
 during the first rise. The production preset now starts with a 5 min hold
 at Ta.
+
+### Extra periods, 4 November (PI, Ta 40, Tb 16)
+
+Fits: `angstrom_fit_angstrom_live_20261104_092527_PI_240s.*` (cycles 3 to 7 of
+the 240 s step, 1877 to 3077 s) and `..._PI_180s.*` (cycles 3 to 7 of the
+180 s step, 3437 to 4337 s); finite-rod comparison in
+`angstrom_finite_angstrom_live_20261104_092527.txt`.
+
+| Period | B5/B1 (A5 prediction) | lag T1 to T5, rad (prediction) | TEC B/Tb | κ semi-infinite | κ finite rod |
+|---|---|---|---|---|---|
+| 240 s | 0.281 (0.285) | 1.15 (1.14) | 0.954 | 9.40 ± 0.17 | 9.36 ± 0.17 |
+| 180 s | 0.234 (0.240) | 1.37 (1.34) | 0.928 | 9.24 ± 0.20 | 9.19 ± 0.20 |
+
+κ in 10⁻⁵ m²/s. Settling: at 240 s every sensor's B stayed within about 2 %
+and φ within 0.04 rad over the five cycles. At 180 s the fourth retained cycle
+dipped (T4 and T5 about 5 to 9 % low, phases about 0.04 rad later) and then
+recovered, so a disturbance (air movement near the rod is the likely cause) is
+included in that window and widens its errors.
+
+**Frequency consistency, all four periods (finite-rod fits):** 100 s 9.74 ±
+0.23 and 480 s 9.40 ± 0.24 (2 November), 180 s 9.19 ± 0.20 and 240 s 9.36 ±
+0.17 (4 November). Weighted mean 9.40 ± 0.10 × 10⁻⁵ m²/s with χ² = 3.3 for 3
+degrees of freedom, so the four periods agree within their errors, on two days
+with room temperatures of 22.5 and 27.1 °C. The 30 % gap to the handbook value
+for 6061-T6 (6.9 × 10⁻⁵ m²/s) remains.

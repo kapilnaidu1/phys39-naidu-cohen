@@ -1,0 +1,8 @@
+python3 python/analysis/angstrom_finite_fit.py data/module_08/angstrom_fit_angstrom_live_20261104_092527_PI_240s.csv data/module_08/angstrom_fit_angstrom_live_20261104_092527_PI_180s.csv --length-mm 281.9 --dx-mm 1
+
+L = 281.9 mm (T1 hole to rod top), position uncertainty 1 mm for T2..T5
+                                            file         model      q (1/m)  q_prime (1/m)  kappa (1e-5 m2/s)  nu (1e-3 1/s)  chi2/dof
+angstrom_fit_angstrom_live_20261104_092527_PI_240s.csv semi-infinite  12.35±0.15    11.29±0.16        9.39±0.17     2.36±0.49  13.4/6
+angstrom_fit_angstrom_live_20261104_092527_PI_240s.csv    finite rod  12.30±0.15    11.37±0.15        9.36±0.17     2.06±0.47  12.2/6
+angstrom_fit_angstrom_live_20261104_092527_PI_180s.csv semi-infinite  14.11±0.22    13.40±0.20        9.23±0.20     1.80±0.77  11.1/6
+angstrom_fit_angstrom_live_20261104_092527_PI_180s.csv    finite rod  14.13±0.23    13.44±0.20        9.19±0.20     1.73±0.77  11.5/6

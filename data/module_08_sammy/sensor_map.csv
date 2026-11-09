@@ -1,0 +1,6 @@
+channel,arduino_pin,tape_label,order_from_plate,position_mm,position_uncertainty_mm,rfixed_measured_ohm,notes
+R1,A1,R1,1,0,0,100000,"Module 8 name T1. First rod hole; defines x = 0. Same hole as Kapil's runs. Do not move."
+R2,A2,R2,2,25.4,1,100000,"Module 8 name T2. 1 in (25.4 mm) from R1 by tape measure 28 Oct (Kapil's data/module_08/sensor_map.csv). Caliper-check on run day; edit position_mm here if it disagrees by more than 1 mm."
+R3,A3,R3,3,50.8,1,100000,"Module 8 name T3. 2 in (50.8 mm) from R1, same source and check as R2."
+R4,A4,R4,4,76.2,1,100000,"Module 8 name T4. 3 in (76.2 mm) from R1, same source and check as R2."
+R5,A5,R5,5,101.6,1,100000,"Module 8 name T5. 4 in (101.6 mm) from R1, same source and check as R2. Rod top is 281.9 mm from R1 (rod_geometry.csv)."

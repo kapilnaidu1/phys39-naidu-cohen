@@ -1,0 +1,6 @@
+channel,t_start_s,t_end_s,reason
+T3,36,200,leads being handled before the run (spikes up to 33 C)
+T4,36,200,leads being handled before the run (spikes up to 117 C)
+T5,36,200,leads being handled before the run (spikes up to 102 C)
+T5,1860,2617,reads 1 to 4 C above the T3/T4 prediction (480 s step cycles 2-3)
+T5,3087,3140,reads 2.6 C above the T3/T4 prediction (480 s step cycle 4)

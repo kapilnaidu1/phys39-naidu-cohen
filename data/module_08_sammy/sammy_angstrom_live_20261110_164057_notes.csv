@@ -1,0 +1,6 @@
+wall_clock,time_ms,note
+2026-11-10T16:46:12,312576,"calipers T1 to T2 T3 T4 T5 = 25.4 50.8 76.2 101.6 mm, 1 in spacing, sensor_map unchanged"
+2026-11-10T16:46:33,333983,"ignore, clean from t=200 s"
+2026-11-10T16:47:02,362350,"room T baseline 24.3, hands off 2 min, no spikes"
+2026-11-10T18:31:55,6658682,"T5 bad at t=1860-2617 s and 3087-3140 s (offset +1 to +4 C), mask T5 there in analysis, otherwise clean"
+2026-11-10T18:32:58,6720896,production run done

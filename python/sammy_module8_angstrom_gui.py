@@ -31,7 +31,9 @@ This program
   - sends settings (Ta, Tb, period, Kp, Ki, room temperature, r computed
     from chi_h and chi_c, control mode; U and U0 in RAW) and START / STOP,
   - shows the setpoint, the TEC thermistor and T1 to T5 live on one time
-    axis, and the feedforward, controller and applied PWM below,
+    axis, and the feedforward, controller and applied PWM below; plots on
+    the left, live values and controls in two columns on the right (window
+    and text size follow the screen; View menu or Cmd +, Cmd -, Cmd 0),
   - saves every valid record UNCHANGED, with every "#" line, malformed line
     and command sent in _events.txt (wall-clock time), typed notes in
     _notes.csv and the run description in _meta.json,
@@ -244,20 +246,41 @@ def sensor_map_rows():
 
 def run_gui():
     import pyqtgraph as pg
-    from PySide6 import QtCore, QtWidgets
+    from PySide6 import QtCore, QtGui, QtWidgets
 
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import tec_control_gui as base
 
     CH_COLORS = {"TEC_C": "#000000", "T1_C": "#1f77b4", "T2_C": "#ff7f0e",
                  "T3_C": "#2ca02c", "T4_C": "#9467bd", "T5_C": "#8c564b"}
+    BASE_PT = 13.0      # text size on a screen 1000 logical px tall
+
+    def screen_scale():
+        """Text scale for this screen: 1 at 1000 px of height, 1.8 at most."""
+        scr = QtWidgets.QApplication.primaryScreen()
+        return max(1.0, min(1.8, scr.availableGeometry().height() / 1000.0))
+
+    def fit_to_screen(win, frac):
+        geo = QtWidgets.QApplication.primaryScreen().availableGeometry()
+        win.resize(int(geo.width() * frac), int(geo.height() * frac))
+        win.move(geo.center() - win.rect().center())
+
+    def style_plot(plot, pt):
+        font = QtGui.QFont()
+        font.setPointSizeF(pt)
+        for name, text in plot.axis_labels.items():
+            plot.setLabel(name, text, **{"font-size": f"{pt}pt", "color": "#303030"})
+        for name in ("left", "bottom"):
+            plot.getAxis(name).setStyle(tickFont=font)
+            plot.getAxis(name).setTextPen("#505050")
+        plot.legend_item.setScale(pt / 12.0)     # the legend text is 12 px at scale 1
 
     def make_plots(layout_parent):
         temp = pg.PlotWidget()
         temp.setBackground("w")
         temp.showGrid(x=True, y=True, alpha=0.25)
-        temp.setLabel("left", "Temperature (°C)")
-        temp.addLegend(offset=(10, 10))
+        temp.axis_labels = {"left": "Temperature (°C)"}
+        temp.legend_item = temp.addLegend(offset=(10, 10), labelTextColor="#303030")
         curves = {"setpoint_C": temp.plot(
             pen=pg.mkPen("#7f7f7f", width=1.5, style=QtCore.Qt.DashLine),
             name="setpoint", connect="finite")}
@@ -267,9 +290,8 @@ def run_gui():
         pwm = pg.PlotWidget()
         pwm.setBackground("w")
         pwm.showGrid(x=True, y=True, alpha=0.25)
-        pwm.setLabel("left", "PWM counts")
-        pwm.setLabel("bottom", "Arduino time (s)")
-        pwm.addLegend(offset=(10, 10))
+        pwm.axis_labels = {"left": "PWM counts", "bottom": "Arduino time (s)"}
+        pwm.legend_item = pwm.addLegend(offset=(10, 10), labelTextColor="#303030")
         pwm.setXLink(temp)
         curves["feedforward_pwm"] = pwm.plot(pen=pg.mkPen("#d62728", width=1.4),
                                              name="feedforward (OL)", connect="finite")
@@ -279,20 +301,26 @@ def run_gui():
                                         name="applied signed PWM")
         for y in (255, -255):
             pwm.addLine(y=y, pen=pg.mkPen("#C0392B", width=1, style=QtCore.Qt.DotLine))
+        for plot in (temp, pwm):          # wheel and drag move time only, y follows the visible data
+            plot.getViewBox().setMouseEnabled(x=True, y=False)
+            plot.getViewBox().setAutoVisible(y=True)
+            plot.enableAutoRange(axis="y", enable=True)
         layout_parent.addWidget(temp, stretch=3)
         layout_parent.addWidget(pwm, stretch=2)
-        return curves
+        return curves, temp, pwm
 
     class ImportWindow(QtWidgets.QWidget):
         def __init__(self, path, segments, text):
             super().__init__()
             self.setWindowTitle(f"Saved file: {os.path.basename(path)}")
-            self.resize(1100, 750)
+            fit_to_screen(self, 0.85)
             lay = QtWidgets.QVBoxLayout(self)
             lab = QtWidgets.QLabel(f"<pre>{text}</pre>")
             lab.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
             lay.addWidget(lab)
-            curves = make_plots(lay)
+            curves, temp, pwm = make_plots(lay)
+            for plot in (temp, pwm):
+                style_plot(plot, QtWidgets.QApplication.font().pointSizeF())
             # segments laid end to end; each restart starts after the last
             data = {k: [] for k in curves}
             t_all, offset = [], 0.0
@@ -313,7 +341,7 @@ def run_gui():
         def __init__(self, port):
             super().__init__()
             self.setWindowTitle("Phys 39 Module 8 SAMMY: Angstrom live run")
-            self.resize(1250, 900)
+            self.ui_scale = screen_scale()
             self.stats = StreamStats()
             self.buf = {k: deque() for k in ["t"] + COLUMNS}
             self.latest = None
@@ -374,6 +402,7 @@ def run_gui():
             print(f"Saving to {self.csv_path}")
 
             self._build_ui()
+            fit_to_screen(self, 0.92)
             self.link = base.SerialLink(port, base.BAUD_RATE)
             self.link.line_received.connect(self.on_line)
             self.link.error.connect(lambda m: self.log_event(f"SERIAL ERROR {m}"))
@@ -388,103 +417,254 @@ def run_gui():
 
         # ---- UI -----------------------------------------------------------
         def _build_ui(self):
-            w = QtWidgets.QWidget()
-            self.setCentralWidget(w)
-            lay = QtWidgets.QVBoxLayout(w)
-
-            row = QtWidgets.QHBoxLayout()
             self.spins = {}
-            row.addWidget(QtWidgets.QLabel("mode"))
+            self.split = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+            self.split.setHandleWidth(6)
+            self.setCentralWidget(self.split)
+
+            plots = QtWidgets.QWidget()
+            plot_lay = QtWidgets.QVBoxLayout(plots)
+            plot_lay.setContentsMargins(0, 0, 0, 0)
+            self.curves, temp, pwm = make_plots(plot_lay)
+            self.plots = (temp, pwm)
+            self.split.addWidget(plots)
+            self.split.setStretchFactor(0, 1)
+            self.split.setCollapsible(0, False)
+
+            self.side_panes = []
+            for panel in (self._data_panel(), self._controls_panel()):
+                scroll = QtWidgets.QScrollArea()
+                scroll.setWidgetResizable(True)
+                scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
+                scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+                scroll.setWidget(panel)
+                self.split.addWidget(scroll)
+                self.side_panes.append(scroll)
+            self.split.setStretchFactor(1, 0)
+            self.split.setStretchFactor(2, 0)
+
+            self.view_menu = self.menuBar().addMenu("View")
+            for text, keys, factor in (("Larger text", ("Ctrl++", "Ctrl+="), 1.1),
+                                       ("Smaller text", ("Ctrl+-",), 1 / 1.1),
+                                       ("Reset text size", ("Ctrl+0",), None)):
+                act = QtGui.QAction(text, self)
+                act.setShortcuts([QtGui.QKeySequence(k) for k in keys])
+                act.triggered.connect(lambda _=False, f=factor: self.set_scale(
+                    screen_scale() if f is None else self.ui_scale * f))
+                self.view_menu.addAction(act)
+                self.addAction(act)
+            self.set_scale(self.ui_scale)
+
+        def _data_panel(self):
+            panel = QtWidgets.QWidget()
+            lay = QtWidgets.QVBoxLayout(panel)
+
+            box = QtWidgets.QGroupBox("State")
+            vbox = QtWidgets.QVBoxLayout(box)
+            self.state_label = QtWidgets.QLabel("waiting for the Arduino ...")
+            self.state_label.setTextFormat(QtCore.Qt.RichText)
+            self.state_label.setWordWrap(True)
+            self.time_label = QtWidgets.QLabel("t = -")
+            self.mode_label = QtWidgets.QLabel("-")
+            self.mode_label.setWordWrap(True)
+            for lab in (self.state_label, self.time_label, self.mode_label):
+                vbox.addWidget(lab)
+            lay.addWidget(box)
+
+            self.value_labels = {}
+            groups = (
+                ("Temperatures (°C)",
+                 [("setpoint_C", "setpoint", "#7f7f7f")]
+                 + [(ch, ch.replace("_C", ""), color) for ch, color in CH_COLORS.items()]),
+                ("PWM counts",
+                 [("feedforward_pwm", "feedforward (OL)", "#d62728"),
+                  ("controller_pwm", "controller (P/PI)", "#aaaaaa"),
+                  ("signed_pwm", "applied", "#202020")]))
+            for title, rows in groups:
+                box = QtWidgets.QGroupBox(title)
+                grid = QtWidgets.QGridLayout(box)
+                for i, (key, name, color) in enumerate(rows):
+                    grid.addWidget(QtWidgets.QLabel(
+                        f"<span style='color:{color}'>&#9632;</span> {name}"), i, 0)
+                    val = QtWidgets.QLabel("-")
+                    val.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+                    grid.addWidget(val, i, 1)
+                    self.value_labels[key] = val
+                grid.setColumnStretch(1, 1)
+                lay.addWidget(box)
+
+            box = QtWidgets.QGroupBox("Stream")
+            grid = QtWidgets.QGridLayout(box)
+            self.stat_labels = {}
+            for i, (key, name) in enumerate((
+                    ("valid", "valid"), ("malformed", "malformed"),
+                    ("duplicated", "duplicated"), ("missing", "missing (approx.)"),
+                    ("restarts", "restarts"))):
+                grid.addWidget(QtWidgets.QLabel(name), i, 0)
+                val = QtWidgets.QLabel("0")
+                val.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+                grid.addWidget(val, i, 1)
+                self.stat_labels[key] = val
+            stamp = QtWidgets.QLabel(f"run file stamp {self.stamp}")
+            stamp.setWordWrap(True)
+            grid.addWidget(stamp, 5, 0, 1, 2)
+            grid.setColumnStretch(1, 1)
+            lay.addWidget(box)
+            lay.addStretch(1)
+            return panel
+
+        def _controls_panel(self):
+            panel = QtWidgets.QWidget()
+            lay = QtWidgets.QVBoxLayout(panel)
+
+            box = QtWidgets.QGroupBox("Run")
+            grid = QtWidgets.QGridLayout(box)
+            for i, text in enumerate(("START", "STOP", "CLEAR SAFETY", "GET")):
+                b = QtWidgets.QPushButton(text)
+                b.clicked.connect(lambda _=False, c=text: self.send(c))
+                grid.addWidget(b, i // 2, i % 2)
+            lay.addWidget(box)
+
+            box = QtWidgets.QGroupBox("Note")
+            vbox = QtWidgets.QVBoxLayout(box)
+            self.note_edit = QtWidgets.QLineEdit()
+            self.note_edit.setPlaceholderText("note, e.g. 'room T 21.4 C', then Enter")
+            self.note_edit.returnPressed.connect(self.log_note)
+            vbox.addWidget(self.note_edit)
+            lay.addWidget(box)
+
+            box = QtWidgets.QGroupBox("Settings")
+            grid = QtWidgets.QGridLayout(box)
             self.mode_box = QtWidgets.QComboBox()
             self.mode_box.addItems(list(MODES))
             self.mode_box.setCurrentText("PI")
-            row.addWidget(self.mode_box)
+            grid.addWidget(QtWidgets.QLabel("mode"), 0, 0)
+            grid.addWidget(self.mode_box, 0, 1, 1, 3)
             specs = [("TA", "Ta (°C)", 10, 56, 2, 0.5), ("TB", "Tb (°C)", 0, 23, 2, 0.5),
                      ("PERIOD", "period (s)", 100, 3600, 1, 10), ("KP", "Kp", 0, 100, 3, 0.5),
                      ("KI", "Ki", 0, 5, 4, 0.01), ("TAMB", "room T (°C)", 10, 35, 2, 0.1),
                      ("CHIH", "χh", 0.01, 2, 5, 0.01), ("CHIC", "χc", 0.01, 2, 5, 0.01)]
-            for key, label, lo, hi, dec, step in specs:
-                row.addWidget(QtWidgets.QLabel(label))
+            for i, (key, label, lo, hi, dec, step) in enumerate(specs):
                 s = QtWidgets.QDoubleSpinBox()
                 s.setRange(lo, hi)
                 s.setDecimals(dec)
                 s.setSingleStep(step)
                 s.setValue(DEFAULTS[key])
                 self.spins[key] = s
-                row.addWidget(s)
+                grid.addWidget(QtWidgets.QLabel(label), 1 + i // 2, 2 * (i % 2))
+                grid.addWidget(s, 1 + i // 2, 2 * (i % 2) + 1)
             self.r_label = QtWidgets.QLabel()
-            row.addWidget(self.r_label)
             self.spins["CHIH"].valueChanged.connect(self.update_r)
             self.spins["CHIC"].valueChanged.connect(self.update_r)
             self.update_r()
+            grid.addWidget(self.r_label, 5, 0, 1, 4)
             send = QtWidgets.QPushButton("Send settings")
             send.clicked.connect(self.send_settings)
-            row.addWidget(send)
-            lay.addLayout(row)
+            grid.addWidget(send, 6, 0, 1, 4)
+            grid.setColumnStretch(1, 1)
+            grid.setColumnStretch(3, 1)
+            lay.addWidget(box)
 
-            rowu = QtWidgets.QHBoxLayout()
-            rowu.addWidget(QtWidgets.QLabel("RAW mode: u = U0 + U sin(ωt), PWM counts"))
-            for key, lo, hi in (("U", 0, 255), ("U0", -255, 255)):
-                rowu.addWidget(QtWidgets.QLabel(key))
+            box = QtWidgets.QGroupBox("Schedule")
+            vbox = QtWidgets.QVBoxLayout(box)
+            hint = QtWidgets.QLabel("one step per line: duration (s), Ta, Tb, period (s)")
+            hint.setWordWrap(True)
+            vbox.addWidget(hint)
+            self.sched_edit = QtWidgets.QPlainTextEdit(SCHEDULE_PRESETS["Fast test"])
+            self.sched_edit.textChanged.connect(self.update_sched_label)
+            vbox.addWidget(self.sched_edit)
+            grid = QtWidgets.QGridLayout()
+            for i, name in enumerate(SCHEDULE_PRESETS):
+                b = QtWidgets.QPushButton(name)
+                b.clicked.connect(lambda _=False, n=name:
+                                  self.sched_edit.setPlainText(SCHEDULE_PRESETS[n]))
+                grid.addWidget(b, i // 2, i % 2)
+            vbox.addLayout(grid)
+            row = QtWidgets.QHBoxLayout()
+            b = QtWidgets.QPushButton("Send schedule")
+            b.clicked.connect(self.send_schedule)
+            row.addWidget(b)
+            b = QtWidgets.QPushButton("START schedule")
+            b.clicked.connect(lambda: self.send("SCHED START"))
+            row.addWidget(b)
+            vbox.addLayout(row)
+            self.sched_label = QtWidgets.QLabel()
+            self.sched_label.setWordWrap(True)
+            vbox.addWidget(self.sched_label)
+            self.update_sched_label()
+            lay.addWidget(box)
+
+            box = QtWidgets.QGroupBox("RAW mode")
+            grid = QtWidgets.QGridLayout(box)
+            hint = QtWidgets.QLabel("u = U0 + U sin(ωt), PWM counts. U0 = 0: zero-centered (S18.3); "
+                                    "U0 ≥ U: positive only (S18.4). Use the course value of U.")
+            hint.setWordWrap(True)
+            grid.addWidget(hint, 0, 0, 1, 4)
+            for i, (key, lo, hi) in enumerate((("U", 0, 255), ("U0", -255, 255))):
                 s = QtWidgets.QDoubleSpinBox()
                 s.setRange(lo, hi)
                 s.setDecimals(0)
                 s.setSingleStep(5)
                 s.setValue(DEFAULTS[key])
                 self.spins[key] = s
-                rowu.addWidget(s)
-            rowu.addWidget(QtWidgets.QLabel("U0 = 0: zero-centered (S18.3); U0 ≥ U: positive only "
-                                            "(S18.4). Use the course value of U."))
-            rowu.addStretch(1)
-            lay.addLayout(rowu)
+                grid.addWidget(QtWidgets.QLabel(key), 1, 2 * i)
+                grid.addWidget(s, 1, 2 * i + 1)
+            grid.setColumnStretch(1, 1)
+            grid.setColumnStretch(3, 1)
+            lay.addWidget(box)
 
-            row2 = QtWidgets.QHBoxLayout()
-            for text, cmd in [("START", "START"), ("STOP", "STOP"),
-                              ("CLEAR SAFETY", "CLEAR SAFETY"), ("GET", "GET")]:
-                b = QtWidgets.QPushButton(text)
-                b.clicked.connect(lambda _=False, c=cmd: self.send(c))
-                row2.addWidget(b)
-            imp = QtWidgets.QPushButton("Check a saved file")
-            imp.clicked.connect(self.check_saved_file)
-            row2.addWidget(imp)
-            row2.addWidget(QtWidgets.QLabel("window (s)"))
+            box = QtWidgets.QGroupBox("Plots and files")
+            grid = QtWidgets.QGridLayout(box)
+            grid.addWidget(QtWidgets.QLabel("window (s)"), 0, 0)
             self.win_spin = QtWidgets.QSpinBox()
             self.win_spin.setRange(60, 20000)
             self.win_spin.setValue(600)
-            row2.addWidget(self.win_spin)
-            self.note_edit = QtWidgets.QLineEdit()
-            self.note_edit.setPlaceholderText("note, e.g. 'room T 21.4 C', then Enter")
-            self.note_edit.returnPressed.connect(self.log_note)
-            row2.addWidget(self.note_edit, stretch=2)
-            lay.addLayout(row2)
+            grid.addWidget(self.win_spin, 0, 1)
+            b = QtWidgets.QPushButton("Autoscale plots")
+            b.clicked.connect(self.autoscale_plots)
+            grid.addWidget(b, 1, 0, 1, 2)
+            imp = QtWidgets.QPushButton("Check a saved file")
+            imp.clicked.connect(self.check_saved_file)
+            grid.addWidget(imp, 2, 0, 1, 2)
+            grid.setColumnStretch(1, 1)
+            lay.addWidget(box)
+            lay.addStretch(1)
+            return panel
 
-            # frequency schedule
-            row3 = QtWidgets.QHBoxLayout()
-            self.sched_edit = QtWidgets.QPlainTextEdit(SCHEDULE_PRESETS["Fast test"])
-            self.sched_edit.setFixedHeight(96)
-            self.sched_edit.textChanged.connect(self.update_sched_label)
-            row3.addWidget(QtWidgets.QLabel("schedule\n(duration Ta Tb period\nper line)"))
-            row3.addWidget(self.sched_edit, stretch=2)
-            for name in SCHEDULE_PRESETS:
-                b = QtWidgets.QPushButton(name)
-                b.clicked.connect(lambda _=False, n=name:
-                                  self.sched_edit.setPlainText(SCHEDULE_PRESETS[n]))
-                row3.addWidget(b)
-            b = QtWidgets.QPushButton("Send schedule")
-            b.clicked.connect(self.send_schedule)
-            row3.addWidget(b)
-            b = QtWidgets.QPushButton("START schedule")
-            b.clicked.connect(lambda: self.send("SCHED START"))
-            row3.addWidget(b)
-            self.sched_label = QtWidgets.QLabel()
-            row3.addWidget(self.sched_label)
-            lay.addLayout(row3)
-            self.update_sched_label()
+        def set_scale(self, scale):
+            self.ui_scale = max(0.7, min(2.6, scale))
+            pt = BASE_PT * self.ui_scale
+            font = QtWidgets.QApplication.font()
+            font.setPointSizeF(pt)
+            QtWidgets.QApplication.setFont(font)
+            for box in self.findChildren(QtWidgets.QGroupBox):    # titles keep the old size otherwise
+                box.setFont(font)
+            mono = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont)
+            mono.setPointSizeF(pt * 1.15)
+            metrics = QtGui.QFontMetrics(mono)
+            for lab in self.value_labels.values():
+                lab.setFont(mono)
+                lab.setMinimumWidth(metrics.horizontalAdvance("-000.00"))
+            self.sched_edit.setFont(mono)
+            self.sched_edit.setMinimumHeight(metrics.lineSpacing() * 8 + 12)
+            big = QtGui.QFont(font)
+            big.setPointSizeF(pt * 1.4)
+            big.setBold(True)
+            self.state_label.setFont(big)
+            for plot in self.plots:
+                style_plot(plot, pt)
+            QtCore.QTimer.singleShot(0, self._fit_panes)   # after the font change has reached every widget
 
-            self.status = QtWidgets.QLabel("waiting for the Arduino ...")
-            self.status.setTextFormat(QtCore.Qt.RichText)
-            lay.addWidget(self.status)
-            self.curves = make_plots(lay)
+        def _fit_panes(self):
+            bar = self.side_panes[0].verticalScrollBar().sizeHint().width() + 4
+            for scroll in self.side_panes:
+                scroll.setMinimumWidth(scroll.widget().minimumSizeHint().width() + bar)
+            widths = [scroll.widget().sizeHint().width() + bar for scroll in self.side_panes]
+            self.split.setSizes([max(300, self.split.width() - sum(widths))] + widths)
+
+        def autoscale_plots(self):
+            for plot in self.plots:
+                plot.enableAutoRange(axis="xy", enable=True)
 
         # ---- I/O ----------------------------------------------------------
         def log_event(self, text):
@@ -598,6 +778,8 @@ def run_gui():
             t = list(self.buf["t"])
             for k, c in self.curves.items():
                 c.setData(t, list(self.buf[k]), connect="finite")
+            for plot in self.plots:
+                plot.enableAutoRange(axis="y", enable=True)
             r = self.latest
             state = {0: "idle", 1: "<b style='color:#1a7f37'>RUNNING</b>",
                      2: f"<b style='color:#1a7f37'>SCHEDULE step {r['step']}</b>",
@@ -606,16 +788,15 @@ def run_gui():
 
             def f(v):
                 return "nan" if math.isnan(v) else f"{v:.2f}"
-            self.status.setText(
-                f"{state} &nbsp; t = {r['time_ms'] / 1000:.1f} s &nbsp; "
-                f"set {f(r['setpoint_C'])} &nbsp; TEC {f(r['TEC_C'])} &nbsp; "
-                + " ".join(f"T{i} {f(r[f'T{i}_C'])}" for i in range(1, 6))
-                + f" &nbsp; ff {f(r['feedforward_pwm'])} &nbsp; ctrl "
-                f"{f(r['controller_pwm'])} &nbsp; PWM {r['signed_pwm']}"
-                f" &nbsp; | &nbsp; <b>{r['control_mode']}</b> Ta {r['Ta_C']:g} Tb {r['Tb_C']:g} "
-                f"period {r['period_s']:g} s r {r['heating_to_cooling_ratio']:g}"
-                f"<br>{self.stats.text()} &nbsp; file "
-                f"{os.path.basename(self.csv_path)}")
+            self.state_label.setText(state)
+            self.time_label.setText(f"t = {r['time_ms'] / 1000:.1f} s")
+            self.mode_label.setText(
+                f"<b>{r['control_mode']}</b> &nbsp; Ta {r['Ta_C']:g} &nbsp; Tb {r['Tb_C']:g}"
+                f"<br>period {r['period_s']:g} s &nbsp; r {r['heating_to_cooling_ratio']:g}")
+            for key, lab in self.value_labels.items():
+                lab.setText(f"{r[key]:+d}" if key == "signed_pwm" else f(r[key]))
+            for key, lab in self.stat_labels.items():
+                lab.setText(str(getattr(self.stats, key)))
 
         def check_saved_file(self):
             path, _ = QtWidgets.QFileDialog.getOpenFileName(

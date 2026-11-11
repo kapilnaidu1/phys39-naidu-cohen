@@ -1,0 +1,25 @@
+python3 python/analysis/angstrom_mean_profile.py data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_100s.csv data/module_08/angstrom_fit_angstrom_live_20261102_094506_PI_480s.csv data/module_08/angstrom_fit_angstrom_live_20261104_092527_PI_180s.csv data/module_08/angstrom_fit_angstrom_live_20261104_092527_PI_240s.csv data/module_08/angstrom_fit_angstrom_live_20261104_110306_PI_300s.csv data/module_08/angstrom_fit_sammy_angstrom_live_20261110_164057_PI_480s.csv data/module_08/angstrom_fit_sammy_angstrom_live_20261110_164057_PI_240s.csv data/module_08/angstrom_fit_sammy_angstrom_live_20261110_164057_PI_100s.csv
+
+L = 281.9 +/- 1.3 mm; excluded: none
+Module 7 full-length mean profile: m = 4.117 +/- 0.07 1/m
+
+fit file                                                     Tinf        a0 (C)       mu = mL       m (1/m) chi2/dof m(Tinf+/-0.1)  sqrt(q2-q2p)
+angstrom_fit_angstrom_live_20261102_094506_PI_100s.csv      22.53   33.74+/-0.11   1.224+/-0.045    4.34+/-0.16 34.9/3     4.31/4.37      6.45+/-1.16
+                                                           residuals a_i - fit (C): T1 -0.079  T2 +0.066  T3 +0.228  T4 -0.105  T5 -0.050
+angstrom_fit_angstrom_live_20261102_094506_PI_480s.csv      22.53   34.30+/-0.13   1.151+/-0.060    4.08+/-0.21  0.6/3     4.06/4.11      5.08+/-0.40
+                                                           residuals a_i - fit (C): T1 -0.046  T2 +0.055  T3 +0.077  T4 -0.098  T5 -0.052
+angstrom_fit_angstrom_live_20261104_092527_PI_180s.csv      27.10   36.21+/-0.06   1.213+/-0.032    4.30+/-0.11  2.1/3     4.27/4.34      4.42+/-0.95
+                                                           residuals a_i - fit (C): T1 -0.031  T2 +0.039  T3 +0.077  T4 -0.087  T5 -0.000
+angstrom_fit_angstrom_live_20261104_092527_PI_240s.csv      27.10   36.36+/-0.05   1.173+/-0.024    4.16+/-0.09  5.6/3     4.13/4.19      4.98+/-0.53
+                                                           residuals a_i - fit (C): T1 -0.026  T2 +0.028  T3 +0.074  T4 -0.081  T5 +0.004
+angstrom_fit_angstrom_live_20261104_110306_PI_300s.csv      27.10   36.68+/-0.05   1.070+/-0.023    3.79+/-0.08 10.0/3     3.77/3.82      4.35+/-0.45
+                                                           residuals a_i - fit (C): T1 -0.019  T2 +0.016  T3 +0.077  T4 -0.085  T5 +0.009
+angstrom_fit_sammy_angstrom_live_20261110_164057_PI_480s.csv  24.28   34.12+/-0.53   1.427+/-0.240    5.06+/-0.85 258.1/3     5.02/5.11      4.94+/-0.35
+                                                           residuals a_i - fit (C): T1 -0.733  T2 +0.739  T3 -0.251  T4 -0.092  T5 +0.159
+angstrom_fit_sammy_angstrom_live_20261110_164057_PI_240s.csv  24.28   33.49+/-0.36   1.368+/-0.204    4.85+/-0.72 520.0/3     4.81/4.90      4.64+/-0.50
+                                                           residuals a_i - fit (C): T1 -0.277  T2 +1.066  T3 -0.136  T4 -0.115  T5 +0.035
+angstrom_fit_sammy_angstrom_live_20261110_164057_PI_100s.csv  24.28   33.52+/-0.36   1.382+/-0.192    4.90+/-0.68 777.6/3     4.86/4.95      4.96+/-1.18
+                                                           residuals a_i - fit (C): T1 -0.320  T2 +1.031  T3 -0.136  T4 -0.098  T5 +0.074
+
+m(Tinf+/-0.1) = m refitted with room temperature 0.1 C lower / higher.
+sqrt(q2-q2p) = Angstrom m from the semi-infinite q and q' of the same window.

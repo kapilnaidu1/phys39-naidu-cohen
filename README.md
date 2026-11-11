@@ -376,6 +376,20 @@ python3 python/angstrom_gui.py --check-file <run.csv>              # record coun
 python3 python/analysis/angstrom_fit.py <run.csv> --mode PI --period 480 --cycles 5 --offsets <calibration.csv>
 python3 python/analysis/angstrom_fit.py <run.csv> --compare --period 100 --cycles 3 --offsets <calibration.csv>
 python3 python/analysis/angstrom_actuator.py <run.csv> --tamb 22.53  # feedforward curve, controller vs applied PWM
+python3 python/analysis/plot_angstrom_run.py [<run.csv>] [--live]       # whole run, redrawn every 5 s with --live
+```
+
+Analysis (the modeling app; full walkthrough and results in
+[`docs/module_notes/module_08_modeling_app.md`](docs/module_notes/module_08_modeling_app.md)):
+
+```bash
+# 1. per-sensor sine fits and the semi-infinite spatial fits (q, q', kappa, nu)
+python3 python/analysis/angstrom_fit.py <run.csv> --mode PI --period <P> --cycles <N> --t-end <s> \
+    --offsets data/module_08/calibration_rod_run_20261026_112627.csv [--mask <mask.csv>]
+# 2. semi-infinite against finite-rod fits of the same amplitudes and phases
+python3 python/analysis/angstrom_finite_fit.py data/module_08/angstrom_fit_<run>_PI_<P>s.csv ... --length-mm 281.9 --dx-mm 1
+# 3. mean temperatures against the finite insulated-tip rod (mu = mL, m)
+python3 python/analysis/angstrom_mean_profile.py data/module_08/angstrom_fit_<run>_PI_<P>s.csv ... [--exclude T2]
 ```
 
 ---

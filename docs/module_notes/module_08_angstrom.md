@@ -331,3 +331,36 @@ glitch does not matter.
 m²/s with χ² = 3.5 for 4 degrees of freedom, so the five periods agree within
 their errors, on two days with room temperatures of 22.5 and 27.1 °C. Our κ is
 still 36 % above the handbook value for 6061-T6 (6.9 × 10⁻⁵ m²/s).
+
+## 8. S20 production run, 10 November (run by Sammy)
+
+| File | What happened |
+|---|---|
+| `data/module_08_sammy/sammy_angstrom_live_20261110_164057` | Sammy's copy of the sketch and GUI, same record format. Calipers before heating: T1 to T2, T3, T4, T5 = 25.4, 50.8, 76.2, 101.6 mm, so the sensor map is unchanged. Room temperature 24.28 °C (mean of T1 to T5 over the idle baseline; offsets sum to zero). PI, Kp 12, Ki 0.2, r 2.771. Production schedule ran to `SCHEDULE DONE`: 5 min hold, 7 cycles each at 480, 240 and 100 s. No restarts, PWM never at ±255. T3 to T5 spiked at 36 to 200 s while leads were handled (before the run). T5 read 1 to 4 °C high at 1860 to 2618 s and 3060 to 3141 s (masked). At 2598 s the TEC reading jumped 4.3 °C in one record (see below). |
+
+Fits with our pipeline (`angstrom_fit.py --mask`, then `angstrom_finite_fit.py`)
+reproduce Sammy's own numbers (8.79, 9.15, 9.29 semi-infinite, against his
+8.80, 9.15, 9.29). Settling under our rule (cycle to cycle, 3 % and 0.05 rad):
+
+- 240 s: settled from cycle 2; cycles 2 to 7 kept. κ = 9.10 ± 0.14 (finite rod).
+- 480 s: cycles 2 and 3 settled, then at 2598 s (in cycle 4) the TEC reading
+  stepped up 4.3 °C while T1 kept falling smoothly, PI answered with −176 PWM,
+  and from cycle 5 on every rod amplitude was about 10 % lower and the rod mean
+  about 1.3 °C lower with the TEC reading unchanged. The sensor ratios did not
+  change. Cycles 5 to 7 kept (3, below the minimum): κ = 9.22 ± 0.19.
+- 100 s: cycles 2 to 5 alternate (T4 amplitude ±3 to 5 %, T5 phase ±0.1 rad),
+  so only cycles 5 to 7 pass: κ = 9.28 ± 0.16. Cycles 3 to 7 give 9.41 ± 0.17.
+
+T2's mean reads 1.2 °C above the cosh curve through the other four sensors in
+all three periods, but not at room temperature and not on 2 or 4 Nov; its
+amplitude ratio is normal. Details, the mean-profile fit and the checks are in
+`module_08_modeling_app.md`.
+
+**Frequency consistency, all eight windows (finite rod):** 2 Nov 100 s 9.74 ±
+0.23, 480 s 9.40 ± 0.24; 4 Nov 180 s 9.19 ± 0.20, 240 s 9.36 ± 0.17, 300 s
+9.33 ± 0.15; 10 Nov 480 s 9.22 ± 0.19, 240 s 9.10 ± 0.14, 100 s 9.28 ± 0.16.
+Weighted mean 9.29 ± 0.06 × 10⁻⁵ m²/s, χ² = 6.5 for 7 degrees of freedom (only
+the six windows with at least 5 settled cycles: 9.30 ± 0.07, χ² = 6.3 for 5).
+Five periods, three days, room temperatures 22.5, 27.1 and 24.3 °C, one κ. It is
+35 % above the handbook 6061-T6 value; Sammy's caliper check rules out the
+sensor spacing as the cause.

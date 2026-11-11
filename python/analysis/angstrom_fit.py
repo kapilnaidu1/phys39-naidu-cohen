@@ -5,7 +5,8 @@ Naidu / Cohen
 
     python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_....csv \
         --mode PI --period 100 [--cycles 5] [--t-end S] \
-        [--offsets data/module_08/calibration_rod_run_20261026_112627.csv]
+        [--offsets data/module_08/calibration_rod_run_20261026_112627.csv] \
+        [--mask <run>_mask.csv]
 
     python3 python/analysis/angstrom_fit.py <run> --compare --period 100 [--cycles 3]
         (open loop vs P vs PI at the same drive)
@@ -33,7 +34,9 @@ WHAT IT DOES
      relative to the fundamental.
 
 Offsets (calibration file from rod_calibration.py) are applied in memory;
-the raw file is never changed. Positions come from data/module_08/sensor_map.csv
+the raw file is never changed. A mask file (columns channel,t_start_s,
+t_end_s,reason; channel T1..T5 or TEC) sets those samples to nan in memory
+only; masked samples are left out of every fit. Positions come from data/module_08/sensor_map.csv
 (rows R1..R5 = T1..T5).
 
 OUTPUT
@@ -95,6 +98,19 @@ def load_offsets(path):
     return out
 
 
+def load_mask(path):
+    """[(column, t0, t1, reason)] from a mask CSV."""
+    if not path:
+        return []
+    out = []
+    with open(path, newline="") as fh:
+        for r in csv.DictReader(fh):
+            ch = r["channel"].strip()
+            col = "TEC_C" if ch.upper() == "TEC" else f"{ch}_C"
+            out.append((col, float(r["t_start_s"]), float(r["t_end_s"]), r.get("reason", "")))
+    return out
+
+
 def load_positions(path):
     x, dx = [], []
     with open(path, newline="") as fh:
@@ -122,6 +138,12 @@ def sine_fit(t, y, w, harmonics=1):
     """Least squares a + sum_k [s_k sin(k w t) + c_k cos(k w t)] + d (t - tmid).
     Returns a, B, phi (course convention a + B cos(w t + phi)), the higher
     harmonic amplitudes, and the residuals."""
+    ok = np.isfinite(y)
+    yfull = y
+    t, y = t[ok], y[ok]
+    if t.size < 2 * harmonics + 3:
+        nanh = [np.nan] * (harmonics - 1)
+        return np.nan, np.nan, np.nan, nanh, np.full(yfull.shape, np.nan), np.nan
     tm = t.mean()
     cols = [np.ones_like(t)]
     for k in range(1, harmonics + 1):
@@ -133,14 +155,16 @@ def sine_fit(t, y, w, harmonics=1):
     B = np.hypot(s1, c1)
     phi = np.arctan2(-s1, c1)          # B cos(wt + phi) = B cos phi cos - B sin phi sin
     higher = [np.hypot(p[2 * k - 1], p[2 * k]) for k in range(2, harmonics + 1)]
-    return p[0], B, phi, higher, y - X @ p, p[-1]
+    resid = np.full(yfull.shape, np.nan)
+    resid[ok] = y - X @ p
+    return p[0], B, phi, higher, resid, p[-1]
 
 
 def wrap(a):
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
-def analyse(cols, offsets, mode, period, ncyc, t_end=None):
+def analyse(cols, offsets, mode, period, ncyc, t_end=None, mask=()):
     idx = segment(cols, mode, period)
     t = cols["t"][idx]
     end = t[-1] if t_end is None else t_end
@@ -157,19 +181,33 @@ def analyse(cols, offsets, mode, period, ncyc, t_end=None):
         if ch in offsets:
             a0, b = offsets[ch]
             y = (y - a0) / b
+        nmask = 0
+        for col, m0, m1, _ in mask:
+            if col == ch:
+                hit = (t >= m0) & (t <= m1)
+                nmask += int(hit.sum())
+                y[hit] = np.nan
         a, B, phi, higher, resid, drift = sine_fit(t, y, w, harmonics=3)
         per = []
         for k in range(ncyc):
             m = (t >= start + k * period) & (t < start + (k + 1) * period)
-            _, Bk, pk, _, _, _ = sine_fit(t[m], y[m], w)
-            per.append((Bk, pk))
+            # a cycle with more than 10 % of its samples masked is not used
+            if np.mean(np.isfinite(y[m])) < 0.9:
+                per.append((np.nan, np.nan, np.nan))
+                continue
+            ak, Bk, pk, _, _, _ = sine_fit(t[m], y[m], w)
+            per.append((Bk, pk, ak))
         per = np.array(per)
-        dph = wrap(per[:, 1] - phi)
-        sB = per[:, 0].std(ddof=1) / np.sqrt(ncyc) if ncyc > 1 else np.nan
-        sphi = dph.std(ddof=1) / np.sqrt(ncyc) if ncyc > 1 else np.nan
-        res["fits"][ch] = dict(a=a, B=B, phi=phi, sB=sB, sphi=sphi,
+        good = np.isfinite(per[:, 0])
+        n = int(good.sum())
+        dph = wrap(per[good, 1] - phi)
+        sB = per[good, 0].std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+        sphi = dph.std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+        sa = per[good, 2].std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+        res["fits"][ch] = dict(a=a, B=B, phi=phi, sB=sB, sphi=sphi, sa=sa,
+                               ncyc=n, nmask=nmask,
                                h2=higher[0] / B, h3=higher[1] / B,
-                               rms=np.sqrt(np.mean(resid ** 2)),
+                               rms=np.sqrt(np.nanmean(resid ** 2)),
                                drift=drift * period, per=per, y=y,
                                resid=resid)
     pw = cols["signed_pwm"][sel]
@@ -225,6 +263,10 @@ def report(run, res, sp, x, mode, period, ncyc, offsets_path):
     print(f"Mode {mode}, period {period:g} s, w = {res['w']:.5f} rad/s; window "
           f"{res['start']:.1f} to {res['end']:.1f} s ({ncyc} complete cycles)")
     print(f"Offsets: {offsets_path or 'none (raw values)'}")
+    for ch in CHANNELS:
+        if res["fits"][ch]["nmask"]:
+            print(f"Masked in the window: {ch} {res['fits'][ch]['nmask']} samples, "
+                  f"{res['fits'][ch]['ncyc']} of {ncyc} cycles usable for the errors")
     print(f"Applied PWM range in the window: {res['pwm'][0]:.0f} to {res['pwm'][1]:.0f}")
     print("\nPer channel: T = a + B cos(w t + phi) + drift; errors from cycle-to-cycle scatter")
     print(f"{'channel':>10} {'a (C)':>7} {'B (C)':>7} {'+/-':>6} {'phi':>7} {'+/-':>6} "
@@ -236,7 +278,8 @@ def report(run, res, sp, x, mode, period, ncyc, offsets_path):
     print("\nSettling test, cycle by cycle (B in C, phi in rad):")
     for ch in CHANNELS[1:]:
         per = f[ch]["per"]
-        print(f"{ch:>10} " + "  ".join(f"{b:6.3f}/{p:+.2f}" for b, p in per))
+        print(f"{ch:>10} " + "  ".join(f"{b:6.3f}/{p:+.2f}" if np.isfinite(b) else "   masked  "
+                                       for b, p, _ in per))
     lag_tec = wrap(f["setpoint_C"]["phi"] - f["TEC_C"]["phi"])
     lag_t1 = wrap(f["setpoint_C"]["phi"] - f["T1_C"]["phi"])
     print(f"\nBase tracking: B_TEC/Tb = {f['TEC_C']['B'] / Tb:.3f}, TEC lag "
@@ -331,6 +374,7 @@ def main():
     ap.add_argument("--offsets")
     ap.add_argument("--sensor-map", default=SENSOR_MAP)
     ap.add_argument("--compare", action="store_true")
+    ap.add_argument("--mask", help="CSV of channel,t_start_s,t_end_s,reason to leave out")
     a = ap.parse_args()
 
     cols = load(a.run)
@@ -351,7 +395,7 @@ def main():
         print(f"Wrote {path}")
         return
 
-    res = analyse(cols, offsets, a.mode, a.period, a.cycles, a.t_end)
+    res = analyse(cols, offsets, a.mode, a.period, a.cycles, a.t_end, load_mask(a.mask))
     x, dx = load_positions(a.sensor_map)
     sp = spatial(res, x, dx)
     with redirect_stdout(out):
@@ -363,14 +407,17 @@ def main():
         fh.write(f"python3 python/analysis/angstrom_fit.py {a.run} --mode {a.mode} "
                  f"--period {a.period:g} --cycles {a.cycles}"
                  + (f" --t-end {a.t_end:g}" if a.t_end else "")
-                 + (f" --offsets {a.offsets}" if a.offsets else "") + "\n\n" + text)
+                 + (f" --offsets {a.offsets}" if a.offsets else "")
+                 + (f" --mask {a.mask}" if a.mask else "") + "\n\n" + text)
     with open(os.path.join(DATA_DIR, f"angstrom_fit_{tag}.csv"), "w") as fh:
-        fh.write("channel,x_m,mean_C,B_C,sB_C,phi_rad,sphi_rad,rms_resid_C,B2_over_B1,B3_over_B1\n")
+        fh.write("channel,x_m,mean_C,B_C,sB_C,phi_rad,sphi_rad,rms_resid_C,B2_over_B1,B3_over_B1,"
+                 "s_mean_C\n")
         for ch in CHANNELS:
             d = res["fits"][ch]
             xi = x[ROD.index(ch)] if ch in ROD else float("nan")
             fh.write(f"{ch},{xi:.4f},{d['a']:.4f},{d['B']:.4f},{d['sB']:.4f},"
-                     f"{d['phi']:.4f},{d['sphi']:.4f},{d['rms']:.4f},{d['h2']:.4f},{d['h3']:.4f}\n")
+                     f"{d['phi']:.4f},{d['sphi']:.4f},{d['rms']:.4f},{d['h2']:.4f},{d['h3']:.4f},"
+                     f"{d['sa']:.4f}\n")
     fig = os.path.join(FIG_DIR, f"angstrom_fit_{tag}.png")
     figure(fig, res, sp, x, a.mode, a.period)
     print(f"Wrote angstrom_fit_{tag}.txt/.csv in data/module_08 and {os.path.relpath(fig, REPO)}")

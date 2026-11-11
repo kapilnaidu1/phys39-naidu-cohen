@@ -1,0 +1,6 @@
+wall_clock,time_ms,note
+2026-11-11T12:24:34,125246,"room T baseline <mean of T1-T5>, hands off 2 min"
+2026-11-11T12:26:45,256029,"PLAN phase 1 of 1 start: S18.3 raw PWM, U0 = 0 (RAW)"
+2026-11-11T12:27:13,283033,sign check: +PWM heats
+2026-11-11T12:30:56,506140,"room T baseline 24.2 C (mean of T1-T5, hands off)"
+2026-11-11T13:13:30,3061774,PLAN finished

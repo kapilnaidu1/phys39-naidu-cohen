@@ -1,0 +1,4 @@
+model,chi_h_C_per_count,chi_c_C_per_count,tau_s,T_amb_C,resid_rms_C,note
+fitted to this run,0.4175,0.1494,64.3,24.45,0.241,"least squares on the whole schedule, recorded PWM as input"
+Module 6 simulation defaults,0.46,0.23,80.0,22.0,,python/Lab_6_7_modeling_tec.py
+Module 4 curve,0.50127,0.18091,,,,GUI and sketch defaults; tau not part of the curve

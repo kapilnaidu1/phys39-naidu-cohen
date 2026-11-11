@@ -1,0 +1,108 @@
+{
+  "file": "data/module_08_sammy/sammy_angstrom_live_20261111_122227.csv",
+  "started": "2026-11-11T12:22:27",
+  "git_commit_at_start": "752740a2f48c0f18b5e43b269c3c63a68ce6f2fd",
+  "program": "python/sammy_module8_angstrom_gui.py",
+  "derived_from": "python/angstrom_gui.py at commit 60500c8 (Kapil Naidu)",
+  "sketch": "arduino/module_08_sammy/angstrom_tec_sammy/angstrom_tec_sammy.ino",
+  "serial_port": "/dev/cu.usbmodem101",
+  "baud": 9600,
+  "columns": [
+    "time_ms",
+    "run_state",
+    "control_mode",
+    "step",
+    "Ta_C",
+    "Tb_C",
+    "period_s",
+    "setpoint_C",
+    "feedforward_pwm",
+    "TEC_C",
+    "T1_C",
+    "T2_C",
+    "T3_C",
+    "T4_C",
+    "T5_C",
+    "controller_pwm",
+    "heating_to_cooling_ratio",
+    "signed_pwm"
+  ],
+  "units": {
+    "time_ms": "ms, Arduino millis() at the report",
+    "Ta_C, Tb_C, setpoint_C, TEC_C, T1_C..T5_C": "degC, raw beta-equation values (no offsets); Ta_C, Tb_C and setpoint_C are nan in RAW",
+    "period_s": "s",
+    "step": "active run segment: schedule step, or for a live run 1 at START and +1 at every change of a setting in use; 0 idle",
+    "feedforward_pwm": "OL command from the Module 4 steady-state curve; nan in P, PI and RAW",
+    "controller_pwm": "raw P or PI command before the cooling multiplier and clamp; nan in OL and RAW",
+    "signed_pwm": "applied PWM, + heat, - cool (RAW: U0 + U sin(phase), no multiplier)",
+    "heating_to_cooling_ratio": "r = chi_h/chi_c"
+  },
+  "control_mode": {
+    "OL": "open-loop feedforward",
+    "P": "proportional only",
+    "PI": "PI",
+    "RAW": "open-loop sinusoidal PWM, no feedback"
+  },
+  "placeholder": "nan = does not apply in this mode, or channel unreadable",
+  "run_state": {
+    "0": "idle",
+    "1": "running (live START)",
+    "2": "running a frequency schedule",
+    "9": "safety latched"
+  },
+  "sensor_map_file": "data/module_08_sammy/sensor_map.csv",
+  "sensor_map": [
+    {
+      "channel": "R1",
+      "arduino_pin": "A1",
+      "tape_label": "R1",
+      "order_from_plate": "1",
+      "position_mm": "0",
+      "position_uncertainty_mm": "0",
+      "rfixed_measured_ohm": "100000",
+      "notes": "Module 8 name T1. First rod hole; defines x = 0. Same hole as Kapil's runs. Do not move."
+    },
+    {
+      "channel": "R2",
+      "arduino_pin": "A2",
+      "tape_label": "R2",
+      "order_from_plate": "2",
+      "position_mm": "25.4",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "Module 8 name T2. 1 in (25.4 mm) from R1 by tape measure 28 Oct (Kapil's data/module_08/sensor_map.csv). Caliper-check on run day; edit position_mm here if it disagrees by more than 1 mm."
+    },
+    {
+      "channel": "R3",
+      "arduino_pin": "A3",
+      "tape_label": "R3",
+      "order_from_plate": "3",
+      "position_mm": "50.8",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "Module 8 name T3. 2 in (50.8 mm) from R1, same source and check as R2."
+    },
+    {
+      "channel": "R4",
+      "arduino_pin": "A4",
+      "tape_label": "R4",
+      "order_from_plate": "4",
+      "position_mm": "76.2",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "Module 8 name T4. 3 in (76.2 mm) from R1, same source and check as R2."
+    },
+    {
+      "channel": "R5",
+      "arduino_pin": "A5",
+      "tape_label": "R5",
+      "order_from_plate": "5",
+      "position_mm": "101.6",
+      "position_uncertainty_mm": "1",
+      "rfixed_measured_ohm": "100000",
+      "notes": "Module 8 name T5. 4 in (101.6 mm) from R1, same source and check as R2. Rod top is 281.9 mm from R1 (rod_geometry.csv)."
+    }
+  ],
+  "events_file": "data/module_08_sammy/sammy_angstrom_live_20261111_122227_events.txt",
+  "notes_file": "data/module_08_sammy/sammy_angstrom_live_20261111_122227_notes.csv"
+}

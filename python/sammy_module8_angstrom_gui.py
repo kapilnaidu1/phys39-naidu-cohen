@@ -15,7 +15,11 @@ that file does is kept; the differences are:
     zero-centered trial, U0 >= U is positive only. RAW records carry nan in
     Ta_C, Tb_C, setpoint_C, feedforward_pwm and controller_pwm;
   - two more schedule presets (course periods 500-200-100 in PI; raw-PWM
-    sweep 100-200-500).
+    sweep 100-200-500);
+  - "One long run": START PLAN sends the S18.3 raw-PWM schedule (U0 = 0, U and
+    room T from the boxes) and, if the box is ticked, the PI re-run schedule
+    once the Arduino reports SCHEDULE DONE (FULL_PLAN below). STOP, a safety
+    shutdown, a refused command or an Arduino restart cancels what is left.
 
 Long test (Kapil's S20 plan, about 101 min), after the room-temperature
 baseline with supply and pump off: mode PI, Kp 12, Ki 0.2, chi_h 0.50127,
@@ -81,6 +85,16 @@ SCHEDULE_PRESETS = {
     "Raw PWM sweep": "# RAW mode only (Ta, Tb ignored; U, U0 from the boxes): 6 cycles each, about 80 min\n"
                      "600 40 0 100\n1200 40 0 200\n3000 40 0 500\n",
 }
+# One click for a whole session. The mode is one setting for a whole Arduino schedule, so the GUI sends
+# phase 2 itself when the Arduino reports "SCHEDULE DONE", but only if its box is ticked (default: phase 1
+# only). STOP, a safety shutdown, a refused command or an Arduino restart cancels the rest. Phase 1 takes
+# U and the room T from the boxes, U0 = 0.
+FULL_PLAN = [
+    {"name": "S18.3 raw PWM, U0 = 0", "mode": "RAW", "U0": 0.0,
+     "schedule": "500 40 0 100\n800 40 0 200\n1500 40 0 500\n"},
+    {"name": "PI re-run, 100 s then 480 s", "mode": "PI",
+     "schedule": "300 40 0 100\n1200 40 16 100\n3840 40 16 480\n"},
+]
 
 
 def parse_schedule(text):
@@ -347,6 +361,7 @@ def run_gui():
             self.latest = None
             self.import_windows = []
             self._closing = False
+            self.plan = None
 
             os.makedirs(DATA_DIR, exist_ok=True)
             self.stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -525,6 +540,25 @@ def run_gui():
                 grid.addWidget(b, i // 2, i % 2)
             lay.addWidget(box)
 
+            box = QtWidgets.QGroupBox("One long run")
+            vbox = QtWidgets.QVBoxLayout(box)
+            self.plan_pi = QtWidgets.QCheckBox(f"then the PI re-run (+ {self.phase_minutes(FULL_PLAN[1]):.0f} min)")
+            hint = QtWidgets.QLabel()
+            hint.setTextFormat(QtCore.Qt.RichText)
+            hint.setWordWrap(True)
+            self.plan_pi.toggled.connect(lambda _=False: hint.setText(self.plan_summary()))
+            hint.setText(self.plan_summary())
+            vbox.addWidget(hint)
+            vbox.addWidget(self.plan_pi)
+            b = QtWidgets.QPushButton("START PLAN")
+            b.clicked.connect(self.start_plan)
+            vbox.addWidget(b)
+            self.plan_label = QtWidgets.QLabel("plan not started")
+            self.plan_label.setTextFormat(QtCore.Qt.RichText)
+            self.plan_label.setWordWrap(True)
+            vbox.addWidget(self.plan_label)
+            lay.addWidget(box)
+
             box = QtWidgets.QGroupBox("Note")
             vbox = QtWidgets.QVBoxLayout(box)
             self.note_edit = QtWidgets.QLineEdit()
@@ -680,6 +714,8 @@ def run_gui():
         # next START arrived garbled). Commands therefore go out one at a
         # time, 0.3 s apart.
         def send(self, cmd):
+            if cmd == "STOP":
+                self.cancel_plan("STOP pressed", warn=False)
             self.cmd_queue.append(cmd)
 
         def _send_next(self):
@@ -731,11 +767,110 @@ def run_gui():
             text = self.note_edit.text().strip()
             if not text:
                 return
+            self._write_note(text)
+            self.note_edit.clear()
+
+        def _write_note(self, text):
             t = "" if self.latest is None else self.latest["time_ms"]
             self.notes_w.writerow([datetime.now().isoformat(timespec="seconds"), t, text])
             self.notes.flush()
             print(f"--- NOTE at time_ms {t}: {text}")
-            self.note_edit.clear()
+
+        # ---- one long run -------------------------------------------------
+        def phase_minutes(self, ph):
+            steps, _ = parse_schedule(ph["schedule"])
+            return sum(s[0] for s in steps) / 60
+
+        def plan_phases(self):
+            return FULL_PLAN if self.plan_pi.isChecked() else FULL_PLAN[:1]
+
+        def plan_summary(self):
+            parts, total = [], 0.0
+            for i, ph in enumerate(self.plan_phases(), 1):
+                steps, _ = parse_schedule(ph["schedule"])
+                mins = self.phase_minutes(ph)
+                total += mins
+                parts.append(f"{i}. {ph['name']} ({ph['mode']}): {len(steps)} steps, {mins:.1f} min")
+            return "<br>".join(parts) + f"<br>Total {total:.0f} min from one click. STOP cancels the rest."
+
+        def plan_text(self):
+            if self.plan is None:
+                return "plan not running"
+            i, r = self.plan["phase"], self.latest
+            phases = self.plan["phases"]
+            mins = (r["time_ms"] - self.plan["t_ms"]) / 60000.0
+            return (f"<b>phase {i + 1} of {len(phases)}</b>: {phases[i]['name']}<br>"
+                    f"schedule step {r['step']}, {mins:.1f} min into this phase")
+
+        def start_plan(self):
+            r = self.latest
+            if self.plan is not None:
+                QtWidgets.QMessageBox.warning(self, "Full plan", "The plan is already running.")
+                return
+            if r is None or r["run_state"] != 0 or math.isnan(r["TEC_C"]):
+                QtWidgets.QMessageBox.warning(
+                    self, "Full plan", "Start only when the Arduino is idle (not latched, not running) "
+                    "and the TEC thermistor shows a number.")
+                return
+            text = (self.plan_summary().replace("<br>", "\n")
+                    + f"\n\nRAW phase: U = {self.spins['U'].value():g}, U0 = 0, room T = "
+                    f"{self.spins['TAMB'].value():g} C.\nRoom-temperature baseline done, TEC supply and pump on?")
+            ans = QtWidgets.QMessageBox.question(self, "Full plan", text,
+                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                 QtWidgets.QMessageBox.No)
+            if ans != QtWidgets.QMessageBox.Yes:
+                return
+            self.plan = {"phase": 0, "t_ms": r["time_ms"], "phases": self.plan_phases()}
+            self.log_event("PLAN start")
+            self._plan_phase(0)
+
+        def _plan_phase(self, i):
+            phases = self.plan["phases"]
+            ph = phases[i]
+            self.plan.update(phase=i, t_ms=self.latest["time_ms"])
+            self.mode_box.setCurrentText(ph["mode"])
+            if "U0" in ph:
+                self.spins["U0"].setValue(ph["U0"])
+            self.sched_edit.setPlainText(ph["schedule"])
+            self.send_settings()
+            self.send_schedule()
+            self.send("SCHED START")
+            note = f"PLAN phase {i + 1} of {len(phases)} start: {ph['name']} ({ph['mode']})"
+            self.log_event(note)
+            self._write_note(note)
+
+        def _plan_continue(self, i):
+            if self.plan is None or self.plan["phase"] != i - 1 or self._closing:
+                return
+            self._plan_phase(i)
+
+        def _plan_comment(self, line):
+            if self.plan is None:
+                return
+            if "SCHEDULE DONE" in line:
+                i = self.plan["phase"]
+                if i + 1 < len(self.plan["phases"]):
+                    QtCore.QTimer.singleShot(1500, lambda: self._plan_continue(i + 1))
+                else:
+                    self.log_event("PLAN finished")
+                    self._write_note("PLAN finished")
+                    self.plan = None
+                    self.plan_label.setText("plan finished")
+            elif "SAFETY SHUTDOWN" in line or "REFUSED" in line:
+                self.cancel_plan(line.lstrip("# ").strip())
+
+        def cancel_plan(self, reason, warn=True):
+            if self.plan is None:
+                return
+            i = self.plan["phase"]
+            self.plan = None
+            self.cmd_queue.clear()
+            msg = f"PLAN cancelled in phase {i + 1}: {reason}"
+            self.log_event(msg)
+            self._write_note(msg)
+            self.plan_label.setText(f"<span style='color:#C0392B'>{msg}</span>")
+            if warn and not self._closing:
+                QtWidgets.QMessageBox.warning(self, "Full plan", msg + "\nNothing further is sent.")
 
         def on_line(self, line):
             if self._closing:
@@ -745,6 +880,7 @@ def run_gui():
                 if kind == "comment":
                     print(line)
                     self.log_event(line)
+                    self._plan_comment(line)
                 return
             if kind == "malformed":
                 self.stats.malformed += 1
@@ -761,6 +897,7 @@ def run_gui():
                 for d in self.buf.values():      # Arduino restarted
                     d.clear()
                 self.log_event("RESTART detected (time_ms went backwards)")
+                self.cancel_plan("Arduino restarted")
             self.csv_file.write(line.strip() + "\n")    # unchanged
             self.csv_file.flush()
             self.latest = rec
@@ -797,6 +934,8 @@ def run_gui():
                 lab.setText(f"{r[key]:+d}" if key == "signed_pwm" else f(r[key]))
             for key, lab in self.stat_labels.items():
                 lab.setText(str(getattr(self.stats, key)))
+            if self.plan is not None:
+                self.plan_label.setText(self.plan_text())
 
         def check_saved_file(self):
             path, _ = QtWidgets.QFileDialog.getOpenFileName(

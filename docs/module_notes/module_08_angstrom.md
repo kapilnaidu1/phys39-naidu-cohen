@@ -369,7 +369,8 @@ sensor spacing as the cause.
 
 | File | What happened |
 |---|---|
-| `angstrom_live_20261111_094326`, `_094614` | GUI opened but no records arrived (port not answering). Header only, no data. Not used. |
+| `angstrom_live_20261111_094326` | GUI opened but no records arrived (port not answering). Header only. Not used. |
+| `angstrom_live_20261111_094614` | After re-uploading our sketch (BOOT 27): 73 s idle, output off. T5 started at 28.4 °C and fell to 24.4 °C with the others at 24.2 to 24.4 °C. Closed with STOP. Not used. |
 | `angstrom_live_20261111_094735` | Our sketch re-uploaded. Sensors not moved and not reseated (the note at 09:51:35 says "reseated T1 T2 T5"; that is wrong, nothing was touched). Room temperature 24.37 °C (mean of T1 to T5 with offsets over the idle baseline, all within 0.14 °C). START was pressed by mistake at 09:53:11, giving 19 s of the 100 s sine before the schedule started at 09:53:30; the 5 min hold absorbed it (TEC peak 47 °C, T1 under 30 °C). Then 7 cycles at 480 s, PI, Kp 12, Ki 0.2, r 2.771; `SCHEDULE DONE` at 10:54:29. No nan, no faults. |
 
 Fit: `angstrom_fit_angstrom_live_20261111_094735_PI_480s.*` (cycles 2 to 7,

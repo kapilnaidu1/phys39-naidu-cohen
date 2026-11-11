@@ -1,0 +1,27 @@
+python3 python/analysis/angstrom_model_compare.py data/module_08_sammy/sammy_angstrom_live_20261110_164057.csv --room 24.28 --window 480:2788.9:4228.9 --window 240:4469.3:5909.3 --window 100:6309.8:6609.8 --mask data/module_08_sammy/sammy_angstrom_live_20261110_164057_mask.csv
+
+kappa = 9.172e-05 m2/s, nu = 0.00202 1/s, room 24.28 C, L = 281.9 mm; offsets applied; boundary = measured T1
+T3_C 36 to 200 s masked
+T4_C 36 to 200 s masked
+T5_C 36 to 200 s masked
+T5_C 1860 to 2618 s masked
+T5_C 3060 to 3141 s masked
+
+Window 480 s, 2788.9 to 4228.9 s:
+  sensor rms res (C) mean res (C)  B meas  B model  ratio phase meas-model (rad)
+  T2           1.302        1.294   5.097    4.977  1.024                  0.012
+  T3           0.169        0.154   3.955    3.918  1.009                 -0.003
+  T4           0.206        0.187   3.094    3.071  1.008                  0.000
+  T5           0.340        0.326   2.410    2.398  1.005                 -0.018
+Window 240 s, 4469.3 to 5909.3 s:
+  sensor rms res (C) mean res (C)  B meas  B model  ratio phase meas-model (rad)
+  T2           1.288        1.284   3.623    3.518  1.030                  0.021
+  T3           0.051        0.035   2.582    2.567  1.006                 -0.007
+  T4           0.048        0.017   1.873    1.871  1.001                  0.003
+  T5           0.147        0.136   1.349    1.358  0.994                 -0.022
+Window 100 s, 6309.8 to 6609.8 s:
+  sensor rms res (C) mean res (C)  B meas  B model  ratio phase meas-model (rad)
+  T2           1.280        1.277   1.955    1.857  1.053                  0.040
+  T3           0.050        0.048   1.161    1.152  1.008                 -0.009
+  T4           0.045        0.037   0.719    0.715  1.005                  0.035
+  T5           0.170        0.168   0.440    0.444  0.990                 -0.004

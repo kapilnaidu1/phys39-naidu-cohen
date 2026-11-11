@@ -1,0 +1,10 @@
+python3 python/analysis/angstrom_model_compare.py data/module_08/angstrom_live_20261111_094735.csv --room 24.37 --window 480:1133.8:4013.8
+
+kappa = 9.172e-05 m2/s, nu = 0.00202 1/s, room 24.37 C, L = 281.9 mm; offsets applied; boundary = measured T1
+
+Window 480 s, 1133.8 to 4013.8 s:
+  sensor rms res (C) mean res (C)  B meas  B model  ratio phase meas-model (rad)
+  T2           0.730        0.687   5.630    5.377  1.047                  0.035
+  T3           0.428        0.424   4.304    4.234  1.016                  0.003
+  T4           0.387        0.384   3.366    3.324  1.013                  0.007
+  T5           0.438        0.436   2.616    2.604  1.004                 -0.005

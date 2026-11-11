@@ -392,6 +392,17 @@ python3 python/analysis/angstrom_finite_fit.py data/module_08/angstrom_fit_<run>
 python3 python/analysis/angstrom_mean_profile.py data/module_08/angstrom_fit_<run>_PI_<P>s.csv ... [--exclude T2]
 ```
 
+Part II (k and h; draft packet in
+[`docs/assessments/final_thermal_transport_analysis.md`](docs/assessments/final_thermal_transport_analysis.md),
+exact commands in its section 10):
+
+```bash
+# 4. parameter table, k = kappa rho c, h = nu rho c A/P, Monte Carlo errors incl. positions
+python3 python/analysis/part2_parameters.py --draws 2000 --seed 1
+# 5. rod model driven by the measured T1, against T2..T5 (no fitting)
+python3 python/analysis/angstrom_model_compare.py <run.csv> --room <T> --window <P>:<t0>:<t1> [--mask <mask.csv>]
+```
+
 ---
 
 ## Verification performed

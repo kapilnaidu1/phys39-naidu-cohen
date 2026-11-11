@@ -1,0 +1,46 @@
+{
+  "stamp": "20261110_164057",
+  "records": 12407,
+  "minutes": 112.18,
+  "duplicated": 0,
+  "restarts": 0,
+  "gaps": 4,
+  "gaps_in_schedule": 0,
+  "pwm_min": -225,
+  "pwm_max": 202,
+  "pwm_clipped_samples": 0,
+  "t1_max_C": 41.86,
+  "tec_max_C": 55.89,
+  "step_minutes": {
+    "1": 4.99,
+    "2": 56.0,
+    "3": 28.0,
+    "4": 11.66
+  },
+  "masked_samples": 2462,
+  "t5_prediction": {
+    "2": {
+      "rms_fit": 0.0119,
+      "max_outside": 0.3524,
+      "max_inside": 3.611
+    },
+    "3": {
+      "rms_fit": 0.012,
+      "max_outside": 0.1433,
+      "max_inside": 0.0
+    },
+    "4": {
+      "rms_fit": 0.0082,
+      "max_outside": 0.1527,
+      "max_inside": 0.0
+    }
+  },
+  "hold": {
+    "t_reach": 45.469,
+    "tec_max": 40.03,
+    "overshoot": 0.03,
+    "pwm_max": 202,
+    "t1_end": 33.534,
+    "tec_end": 39.97
+  }
+}

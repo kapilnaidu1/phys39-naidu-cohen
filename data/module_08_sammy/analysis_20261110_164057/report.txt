@@ -1,0 +1,93 @@
+Run data/module_08_sammy/sammy_angstrom_live_20261110_164057.csv
+python3 python/sammy_module8_angstrom_analysis.py data/module_08_sammy/sammy_angstrom_live_20261110_164057.csv --t-room 24.3
+Offsets (in memory only): data/module_08/calibration_rod_run_20261026_112627.csv
+Masks (removed from the fits, raw file unchanged):
+  T3  36 to 200 s  leads being handled before the run (spikes up to 33 C)
+  T4  36 to 200 s  leads being handled before the run (spikes up to 117 C)
+  T5  36 to 200 s  leads being handled before the run (spikes up to 102 C)
+  T5  1860 to 2618 s  reads 1 to 4 C above the T3/T4 prediction (480 s step cycles 3 and 4; cycles counted from 1)
+  T5  3060 to 3141 s  reads up to 3.6 C above the T3/T4 prediction (480 s step cycle 5)
+Settling test: within 3 % in B and 0.05 rad in phase of the block median, counting back from the last cycle; wanted at least 5 settled cycles.
+Hold step: TEC reached 39.5 C after 45 s, max 40.03 C (overshoot +0.03), peak PWM 202, T1 at the end 33.53 C.
+
+==============================================================================
+Period 480 s (step 2), w = 0.01309 rad/s; 7 cycles recorded, settled block = cycles 5 to 7 (3 cycles), window 2788.6 to 4228.6 s
+   channel   a (C)   B (C)    +/-     phi    +/- drift/cyc rms res  B2/B1  B3/B1 cycles
+setpoint_C   40.00  16.000  0.000  -0.376  0.000    -0.000   0.000  0.000  0.000      3
+     TEC_C   39.92  15.877  0.005  -0.533  0.000    +0.027   0.052  0.002  0.000      3
+      T1_C   33.39   6.299  0.020  -1.068  0.004    +0.093   0.141  0.020  0.001      3
+      T2_C   33.81   5.098  0.007  -1.251  0.004    +0.003   0.099  0.021  0.002      3
+      T3_C   31.92   3.956  0.011  -1.463  0.006    +0.002   0.094  0.018  0.002      3
+      T4_C   31.30   3.095  0.013  -1.661  0.006    -0.044   0.075  0.019  0.003      3
+      T5_C   30.90   2.412  0.009  -1.889  0.008    -0.086   0.055  0.020  0.004      3
+Along the rod (T1 = x 0):
+ sensor  x (mm)   B (C)   B/B1  phase lag vs T1 (rad)
+     T1     0.0   6.299  1.000                  0.000
+     T2    25.4   5.098  0.809                  0.183
+     T3    50.8   3.956  0.628                  0.396
+     T4    76.2   3.095  0.491                  0.593
+     T5   101.6   2.412  0.383                  0.821
+q  = 9.36 +/- 0.14 1/m   (ln B against x; chi2 8.6/3)
+q' = 7.95 +/- 0.14 1/m   (unwrapped phi against x; chi2 7.0/3)
+kappa = w/(2 q q') = 8.797e-05 +/- 2.1e-06 m^2/s   (+27 % vs handbook 6.90e-05)
+nu = kappa (q^2 - q'^2) = 2.15e-03 +/- 3.1e-04 1/s
+k = rho cp kappa = 213 +/- 5 W/(m K) (rho 2700, cp 896, handbook values);  h = rho cp (d/4) nu = 16.6 +/- 2.4 W/(m^2 K)
+Checks: finite-length max difference 3.60 % (per sensor: 0.00, 0.41, 1.05, 2.05, 3.60 %);  Bi_radial = 2.5e-04;  m from q = 4.95 1/m vs mean-profile m = 3.72 +/- 0.14 1/m
+Tracking: B_TEC/Tb = 0.992, TEC lag 0.157 rad (12.0 s); B_T1/Tb = 0.394, T1 lag 0.692 rad (52.9 s); PWM -47 to 83, samples at +/-255: 0
+Last five cycles (3 to 7) instead of the settled block: q = 9.95, q' = 8.45, kappa = 7.782e-05 +/- 3.0e-06
+
+==============================================================================
+Period 240 s (step 3), w = 0.02618 rad/s; 7 cycles recorded, settled block = cycles 2 to 7 (6 cycles), window 4469.1 to 5909.1 s
+   channel   a (C)   B (C)    +/-     phi    +/- drift/cyc rms res  B2/B1  B3/B1 cycles
+setpoint_C   40.00  16.000  0.000  +0.822  0.000    -0.000   0.000  0.000  0.000      6
+     TEC_C   39.94  15.315  0.003  +0.522  0.000    -0.000   0.016  0.004  0.002      6
+      T1_C   33.21   4.819  0.013  -0.145  0.001    +0.020   0.035  0.019  0.001      6
+      T2_C   33.63   3.623  0.009  -0.415  0.002    +0.033   0.060  0.019  0.001      6
+      T3_C   31.62   2.582  0.008  -0.734  0.003    +0.033   0.033  0.018  0.001      6
+      T4_C   30.95   1.873  0.007  -1.012  0.004    +0.041   0.035  0.018  0.003      6
+      T5_C   30.52   1.349  0.006  -1.326  0.005    +0.048   0.030  0.017  0.004      6
+Along the rod (T1 = x 0):
+ sensor  x (mm)   B (C)   B/B1  phase lag vs T1 (rad)
+     T1     0.0   4.819  1.000                  0.000
+     T2    25.4   3.623  0.752                  0.270
+     T3    50.8   2.582  0.536                  0.589
+     T4    76.2   1.873  0.389                  0.868
+     T5   101.6   1.349  0.280                  1.181
+q  = 12.42 +/- 0.15 1/m   (ln B against x; chi2 6.3/3)
+q' = 11.52 +/- 0.12 1/m   (unwrapped phi against x; chi2 5.1/3)
+kappa = w/(2 q q') = 9.149e-05 +/- 1.4e-06 m^2/s   (+33 % vs handbook 6.90e-05)
+nu = kappa (q^2 - q'^2) = 1.99e-03 +/- 4.2e-04 1/s
+k = rho cp kappa = 221 +/- 3 W/(m K) (rho 2700, cp 896, handbook values);  h = rho cp (d/4) nu = 15.3 +/- 3.2 W/(m^2 K)
+Checks: finite-length max difference 1.21 % (per sensor: 0.00, 0.11, 0.30, 0.63, 1.21 %);  Bi_radial = 2.2e-04;  m from q = 4.66 1/m vs mean-profile m = 4.17 +/- 0.17 1/m
+Tracking: B_TEC/Tb = 0.957, TEC lag 0.300 rad (11.4 s); B_T1/Tb = 0.301, T1 lag 0.967 rad (36.9 s); PWM -94 to 101, samples at +/-255: 0
+Last five cycles (3 to 7) instead of the settled block: q = 12.44, q' = 11.50, kappa = 9.147e-05 +/- 1.5e-06
+
+==============================================================================
+Period 100 s (step 4), w = 0.06283 rad/s; 7 cycles recorded, settled block = cycles 5 to 7 (3 cycles), window 6309.5 to 6609.5 s
+   channel   a (C)   B (C)    +/-     phi    +/- drift/cyc rms res  B2/B1  B3/B1 cycles
+setpoint_C   40.00  16.000  0.000  -2.126  0.000    -0.000   0.000  0.000  0.000      3
+     TEC_C   39.94  13.795  0.004  -2.746  0.000    +0.002   0.012  0.015  0.003      3
+      T1_C   33.20   2.995  0.006  +2.673  0.001    +0.008   0.014  0.023  0.001      3
+      T2_C   33.60   1.955  0.008  +2.250  0.004    -0.017   0.022  0.016  0.001      3
+      T3_C   31.62   1.161  0.004  +1.738  0.002    +0.015   0.012  0.011  0.004      3
+      T4_C   30.96   0.719  0.005  +1.320  0.006    +0.024   0.014  0.012  0.006      3
+      T5_C   30.53   0.440  0.004  +0.818  0.011    +0.030   0.012  0.013  0.009      3
+Along the rod (T1 = x 0):
+ sensor  x (mm)   B (C)   B/B1  phase lag vs T1 (rad)
+     T1     0.0   2.995  1.000                  0.000
+     T2    25.4   1.955  0.653                  0.423
+     T3    50.8   1.161  0.387                  0.935
+     T4    76.2   0.719  0.240                  1.353
+     T5   101.6   0.440  0.147                  1.855
+q  = 18.73 +/- 0.23 1/m   (ln B against x; chi2 6.9/3)
+q' = 18.06 +/- 0.22 1/m   (unwrapped phi against x; chi2 6.9/3)
+kappa = w/(2 q q') = 9.287e-05 +/- 1.6e-06 m^2/s   (+35 % vs handbook 6.90e-05)
+nu = kappa (q^2 - q'^2) = 2.31e-03 +/- 1.1e-03 1/s
+k = rho cp kappa = 225 +/- 4 W/(m K) (rho 2700, cp 896, handbook values);  h = rho cp (d/4) nu = 17.8 +/- 8.3 W/(m^2 K)
+Checks: finite-length max difference 0.12 % (per sensor: 0.00, 0.01, 0.02, 0.05, 0.12 %);  Bi_radial = 2.5e-04;  m from q = 4.99 1/m vs mean-profile m = 4.12 +/- 0.16 1/m
+Tracking: B_TEC/Tb = 0.862, TEC lag 0.621 rad (9.9 s); B_T1/Tb = 0.187, T1 lag 1.484 rad (23.6 s); PWM -225 to 152, samples at +/-255: 0
+Last five cycles (3 to 7) instead of the settled block: q = 18.68, q' = 17.87, kappa = 9.412e-05 +/- 1.7e-06
+
+==============================================================================
+kappa, periods with >= 5 settled cycles (240 s): weighted mean 9.149e-05 +/- 1.4e-06; plain mean 9.149e-05 with spread (sd) nan
+kappa, all periods (480, 240, 100 s): weighted mean 9.124e-05 +/- 9.5e-07; plain mean 9.078e-05 with spread (sd) 2.5e-06

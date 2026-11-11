@@ -521,7 +521,7 @@ sinusoidal, so they are a consistency check, not a second measurement of κ.
 - The start-up cycles are skipped by a rule (2.5 τ with the default τ). With the fitted τ = 64.3 s the skipped time is 3.1 to 7.8 τ, so a small remainder of the start-up can be left (e^(−3.1) is 4 %); the drift term of the fit absorbs the slow part of it.
 - The one-lump model is an approximation. With one τ it misses the amplitude by up to about 12 % at 100 s and the lag by about 0.11 rad there (section 6.7). The fitted χ and τ are those of this plate, rod and room, not universal values.
 - T_amb in the fit is the idle TEC reading (24.45 °C), not the Module 6 default (22 °C); the rod sensors read 0.24 °C lower at idle.
-- One run on one rod. S18.4 (positive-only PWM) is not covered, and the page's remaining open-loop, P and PI comparisons are separate runs.
+- One run on one rod. S18.4 (positive-only PWM) is not covered here, it has its own page, and the page's remaining open-loop, P and PI comparisons are separate runs.
 - The photos are of the GUI display and are not data; the data are the CSV records they quote.
 
 ## 10. The series of PWM runs, and what comes next
@@ -530,12 +530,11 @@ sinusoidal, so they are a consistency check, not a second measurement of κ.
 | --- | --- | --- | --- |
 | idle | u = 0 | room temperature and sensor noise | done (this file, section 6.1) |
 | S18.3 | u = 50 sin(2π t/P), U0 = 0, P = 100, 200 and 500 s | uncompensated response; effect of unequal heating and cooling | done (this file) |
-| S18.4 | u = U0 + U sin(2π t/P) with U0 = U, so u ≥ 0 | the response when the current never reverses; separates the polarity asymmetry from other imperfections | not yet run |
+| S18.4 | u = U0 + U sin(2π t/P) with U0 = U, so u ≥ 0 | the response when the current never reverses; separates the polarity asymmetry from other imperfections | not yet run; has its own page (link below) |
 | S18.5 to S18.8 | feedforward, P and PI control of a requested sine | tracking at 100, 200 and 500 s | the PI part was run on 10 November (production run) |
 
-For S18.4 the push never changes sign, so only one susceptibility acts and the problem is the equal-susceptibility one again with a constant added: u = U (1 + sin ωt) gives
-θ = χh U + R sin(ωt − φ) + (start-up), with R = χh U N and φ = arctan(ωτ). The mean temperature is T_amb + χh U, so the PWM amplitude for a target mean T* is
-U = (T* − T_amb)/χh; with the fitted χh = 0.417 °C/count and T_amb = 24.5 °C that is U = (T* − 24.5) / 0.417 counts. The target mean of the page was lost from the pasted text; it is needed before this run.
+S18.4 has its own page, [Sammy_Module_8_S18_4_Positive_Only_PWM_Walkthrough.md](Sammy_Module_8_S18_4_Positive_Only_PWM_Walkthrough.md): the math, the series of steps for the run and the predictions
+made from this run.
 
 ## 11. Files and how to reproduce
 

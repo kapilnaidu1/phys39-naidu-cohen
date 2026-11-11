@@ -604,7 +604,7 @@ def write(A, path):
     add(f"- The start-up cycles are skipped by a rule (2.5 τ with the default τ). With the fitted τ = {f(tau, 1)} s the skipped time is {f(min(skip_tau), 1)} to {f(max(skip_tau), 1)} τ, so a small remainder of the start-up can be left (e^(−{f(min(skip_tau), 1)}) is {pct(math.exp(-min(skip_tau)))}); the drift term of the fit absorbs the slow part of it.")
     add("- The one-lump model is an approximation. With one τ it misses the amplitude by up to about 12 % at 100 s and the lag by about 0.11 rad there (section 6.7). The fitted χ and τ are those of this plate, rod and room, not universal values.")
     add(f"- T_amb in the fit is the idle TEC reading ({f(base)} °C), not the Module 6 default ({M6['T_amb']:g} °C); the rod sensors read {f(base - rod0, 2)} °C lower at idle.")
-    add("- One run on one rod. S18.4 (positive-only PWM) is not covered, and the page's remaining open-loop, P and PI comparisons are separate runs.")
+    add("- One run on one rod. S18.4 (positive-only PWM) is not covered here, it has its own page, and the page's remaining open-loop, P and PI comparisons are separate runs.")
     add("- The photos are of the GUI display and are not data; the data are the CSV records they quote.")
     add("")
 
@@ -614,13 +614,12 @@ def write(A, path):
     ext(table(["Run", "PWM command", "What it shows", "Status"], [
         ["idle", "u = 0", "room temperature and sensor noise", "done (this file, section 6.1)"],
         ["S18.3", f"u = {U:.0f} sin(2π t/P), U0 = 0, P = {pers}", "uncompensated response; effect of unequal heating and cooling", "done (this file)"],
-        ["S18.4", "u = U0 + U sin(2π t/P) with U0 = U, so u ≥ 0", "the response when the current never reverses; separates the polarity asymmetry from other imperfections", "not yet run"],
+        ["S18.4", "u = U0 + U sin(2π t/P) with U0 = U, so u ≥ 0", "the response when the current never reverses; separates the polarity asymmetry from other imperfections", "not yet run; has its own page (link below)"],
         ["S18.5 to S18.8", "feedforward, P and PI control of a requested sine", "tracking at 100, 200 and 500 s", "the PI part was run on 10 November (production run)"],
     ]))
     add("")
-    add("For S18.4 the push never changes sign, so only one susceptibility acts and the problem is the equal-susceptibility one again with a constant added: u = U (1 + sin ωt) gives")
-    add("θ = χh U + R sin(ωt − φ) + (start-up), with R = χh U N and φ = arctan(ωτ). The mean temperature is T_amb + χh U, so the PWM amplitude for a target mean T* is")
-    add(f"U = (T* − T_amb)/χh; with the fitted χh = {f(m['chi_h'], 3)} °C/count and T_amb = {f(base, 1)} °C that is U = (T* − {f(base, 1)}) / {f(m['chi_h'], 3)} counts. The target mean of the page was lost from the pasted text; it is needed before this run.")
+    add("S18.4 has its own page, [Sammy_Module_8_S18_4_Positive_Only_PWM_Walkthrough.md](Sammy_Module_8_S18_4_Positive_Only_PWM_Walkthrough.md): the math, the series of steps for the run and the predictions")
+    add("made from this run.")
     add("")
 
     # ------------------------------------------------------------------ section 11

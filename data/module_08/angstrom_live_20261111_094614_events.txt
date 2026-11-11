@@ -1,0 +1,8 @@
+2026-11-11T09:46:19	# Phys 39 Module 8 Angstrom, arduino/module_08/angstrom_tec. Naidu / Cohen
+2026-11-11T09:46:19	# BOOT 27
+2026-11-11T09:46:19	# TEC on A0 (1000 readings), T1-T5 on A1-A5 (500 readings, 4 discarded), report every 500 ms
+2026-11-11T09:46:19	# modes: OL u_ff from the Module 4 curve; P and PI on the TEC thermistor, cooling x r; clamp +-255
+2026-11-11T09:46:19	# placeholders: nan = does not apply in this mode, or channel unreadable
+2026-11-11T09:46:19	# latch: T1 > 56 C, TEC > 65 C, or 5 bad TEC readings. Output is 0 until START.
+2026-11-11T09:46:19	# SETTINGS mode=PI Ta=40.00 Tb=16.00 period_s=100.0 Kp=12.000 Ki=0.2000 r=2.771 Tamb=21.54 T1_limit=56.0 TEC_limit=65.0 run_state=0 sched_steps=0
+2026-11-11T09:47:31	SENT STOP

@@ -364,3 +364,38 @@ the six windows with at least 5 settled cycles: 9.30 ± 0.07, χ² = 6.3 for 5).
 Five periods, three days, room temperatures 22.5, 27.1 and 24.3 °C, one κ. It is
 35 % above the handbook 6061-T6 value; Sammy's caliper check rules out the
 sensor spacing as the cause.
+
+## 9. S21 repeat at 480 s, 11 November
+
+| File | What happened |
+|---|---|
+| `angstrom_live_20261111_094326`, `_094614` | GUI opened but no records arrived (port not answering). Header only, no data. Not used. |
+| `angstrom_live_20261111_094735` | Our sketch re-uploaded. Sensors not moved and not reseated (the note at 09:51:35 says "reseated T1 T2 T5"; that is wrong, nothing was touched). Room temperature 24.37 °C (mean of T1 to T5 with offsets over the idle baseline, all within 0.14 °C). START was pressed by mistake at 09:53:11, giving 19 s of the 100 s sine before the schedule started at 09:53:30; the 5 min hold absorbed it (TEC peak 47 °C, T1 under 30 °C). Then 7 cycles at 480 s, PI, Kp 12, Ki 0.2, r 2.771; `SCHEDULE DONE` at 10:54:29. No nan, no faults. |
+
+Fit: `angstrom_fit_angstrom_live_20261111_094735_PI_480s.*` (cycles 2 to 7,
+1133.8 to 4013.8 s), `angstrom_finite_angstrom_live_20261111_094735.txt`,
+`angstrom_mean_profile_20261111.*`.
+
+Settling: cycle 1 was 10 % low and is dropped. From cycle 2 on every sensor stays
+within 1.5 % in B and 0.02 rad in φ from one cycle to the next, but all rod
+amplitudes creep up together, about 0.7 % per cycle (T1 6.72 to 6.94 °C over
+cycles 2 to 7) with the TEC amplitude flat. The ratios along the rod do not drift
+(B5/B1 0.386 in cycle 2, 0.380 in cycle 7), so q and q′ are not biased by it.
+Cycles 3 to 7 alone give κ 8.82 against 8.84 for 2 to 7 (semi-infinite).
+
+| | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) | B5/B1 | lag T1 to T5 (rad) |
+|---|---|---|---|---|---|
+| semi-infinite | 9.37 ± 0.25 | 7.90 ± 0.20 | 8.84 ± 0.33 | 0.384 | 0.82 |
+| finite rod | 9.05 ± 0.26 | 7.80 ± 0.19 | 9.27 ± 0.35 | | |
+
+The spatial fits are poorer than on other days (χ² 18 and 24 for 3, errors
+scaled up). T2 is the outlier: B2/B1 = 0.827 and lag 0.162 rad, against 0.809 to
+0.813 and 0.18 rad at 480 s on 2 and 10 Nov. Its mean also sits +0.35 °C above
+the cosh curve through the others (mean-profile fit: m = 4.36 ± 0.30 1/m,
+χ² 80 for 3). T2 behaves as if its bead sat closer to T1 or had better contact
+than the others; it has now been odd on two days running. Worth checking how T2
+sits in its hole before the next run.
+
+**All nine windows (finite rod):** weighted mean 9.29 ± 0.06 × 10⁻⁵ m²/s,
+χ² = 6.5 for 8 degrees of freedom. The 480 s period now has two windows with at
+least 5 settled cycles (2 Nov 9.40 ± 0.24, 11 Nov 9.27 ± 0.35).

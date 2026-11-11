@@ -1,0 +1,40 @@
+python3 python/analysis/angstrom_fit.py data/module_08/angstrom_live_20261111_094735.csv --mode PI --period 480 --cycles 6 --t-end 4013.8 --offsets data/module_08/calibration_rod_run_20261026_112627.csv
+
+Run data/module_08/angstrom_live_20261111_094735.csv
+Mode PI, period 480 s, w = 0.01309 rad/s; window 1133.8 to 4013.8 s (6 complete cycles)
+Offsets: data/module_08/calibration_rod_run_20261026_112627.csv
+Applied PWM range in the window: -46 to 85
+
+Per channel: T = a + B cos(w t + phi) + drift; errors from cycle-to-cycle scatter
+   channel   a (C)   B (C)    +/-     phi    +/- drift/cyc rms res  B2/B1  B3/B1
+setpoint_C   40.00  16.000  0.000  +2.436  0.000    -0.000   0.000  0.000  0.000
+     TEC_C   39.94  15.878  0.004  +2.275  0.000    +0.000   0.020  0.001  0.001
+      T1_C   35.11   6.808  0.038  +1.763  0.002    +0.054   0.074  0.017  0.002
+      T2_C   34.75   5.630  0.028  +1.602  0.003    +0.014   0.086  0.017  0.002
+      T3_C   33.59   4.304  0.022  +1.371  0.004    +0.052   0.060  0.016  0.002
+      T4_C   32.77   3.366  0.016  +1.171  0.004    +0.051   0.054  0.015  0.003
+      T5_C   32.16   2.616  0.011  +0.945  0.004    +0.051   0.051  0.013  0.003
+
+Settling test, cycle by cycle (B in C, phi in rad):
+     TEC_C 15.887/+2.28  15.893/+2.28  15.895/+2.28  15.890/+2.28  15.872/+2.27  15.880/+2.27
+      T1_C  6.715/+1.76   6.721/+1.76   6.747/+1.76   6.797/+1.76   6.895/+1.76   6.935/+1.77
+      T2_C  5.538/+1.59   5.554/+1.60   5.592/+1.60   5.630/+1.59   5.686/+1.60   5.701/+1.61
+      T3_C  4.239/+1.36   4.234/+1.36   4.267/+1.37   4.293/+1.36   4.354/+1.36   4.350/+1.38
+      T4_C  3.324/+1.15   3.315/+1.16   3.339/+1.17   3.365/+1.15   3.412/+1.16   3.390/+1.18
+      T5_C  2.594/+0.93   2.581/+0.94   2.597/+0.95   2.624/+0.93   2.655/+0.93   2.633/+0.95
+
+Base tracking: B_TEC/Tb = 0.992, TEC lag 0.162 rad (12.4 s); B_T1/Tb = 0.426, T1 lag 0.673 rad (51.4 s)
+
+Along the rod (T1 = x 0):
+ sensor  x (mm)   B (C)   B/B1  phase lag vs T1 (rad)
+     T1     0.0   6.808  1.000                  0.000
+     T2    25.4   5.630  0.827                  0.162
+     T3    50.8   4.304  0.632                  0.393
+     T4    76.2   3.366  0.494                  0.592
+     T5   101.6   2.616  0.384                  0.818
+
+q  = 9.37 +/- 0.25 1/m   (ln B against x; chi2 18.0/3)
+q' = 7.90 +/- 0.20 1/m   (unwrapped phi against x; chi2 23.5/3)
+kappa = w/(2 q q') = 8.843e-05 +/- 3.3e-06 m^2/s
+nu = kappa (q^2 - q'^2) = 2.25e-03 +/- 5.1e-04 1/s
+Point errors: cycle-to-cycle scatter combined with the sensor-map position uncertainty. Slope errors are scaled by sqrt(chi2/dof) when that exceeds 1. The fits assume a semi-infinite rod; see the Module 7 finite-length check.

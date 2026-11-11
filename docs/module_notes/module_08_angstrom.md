@@ -1,5 +1,7 @@
 # Module 8, Part I: Angstrom method
 
+**Read first:** `module_08_part1_complete.md` answers the whole course page in order with all results; this file is the detailed bench log.
+
 Naidu / Cohen. Course page: Module 8, Part I (S18 to S22), as updated on
 2 November (GUI only, no serial logger; open loop, P and PI compared). Data
 in `data/module_08/`, figures in `docs/figures/module_08/`.

@@ -351,6 +351,8 @@ python3 python/analysis/stationary_fin_fit.py <run.csv> --length-mm L --troom T 
 
 ## Module 8, Part I: Angstrom method
 
+Study note covering the whole course page with every result: [`docs/module_notes/module_08_part1_complete.md`](docs/module_notes/module_08_part1_complete.md).
+
 Notes: [`docs/module_notes/module_08_angstrom.md`](docs/module_notes/module_08_angstrom.md)
 (acquisition, run order, P3 predictions, S18 results). Rod geometry:
 [`data/module_08/rod_geometry.csv`](data/module_08/rod_geometry.csv).

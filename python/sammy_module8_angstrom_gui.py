@@ -16,10 +16,12 @@ that file does is kept; the differences are:
     Ta_C, Tb_C, setpoint_C, feedforward_pwm and controller_pwm;
   - two more schedule presets (course periods 500-200-100 in PI; raw-PWM
     sweep 100-200-500);
-  - "One long run": START PLAN sends the S18.3 raw-PWM schedule (U0 = 0, U and
-    room T from the boxes) and, if the box is ticked, the PI re-run schedule
-    once the Arduino reports SCHEDULE DONE (FULL_PLAN below). STOP, a safety
-    shutdown, a refused command or an Arduino restart cancels what is left.
+  - "One long run": START PLAN runs the bench list left open on 16 Nov
+    (FULL_PLAN below: PI 200 s, RAW positive-only 100 s and, if the box is
+    ticked, PI 400 s). It sets the mode and the PI or RAW boxes itself, sends
+    each schedule and starts the next one when the Arduino reports SCHEDULE
+    DONE. STOP, a safety shutdown, a refused command or an Arduino restart
+    cancels what is left.
 
 Long test (Kapil's S20 plan, about 101 min), after the room-temperature
 baseline with supply and pump off: mode PI, Kp 12, Ki 0.2, chi_h 0.50127,
@@ -85,15 +87,18 @@ SCHEDULE_PRESETS = {
     "Raw PWM sweep": "# RAW mode only (Ta, Tb ignored; U, U0 from the boxes): 6 cycles each, about 80 min\n"
                      "600 40 0 100\n1200 40 0 200\n3000 40 0 500\n",
 }
-# One click for a whole session. The mode is one setting for a whole Arduino schedule, so the GUI sends
-# phase 2 itself when the Arduino reports "SCHEDULE DONE", but only if its box is ticked (default: phase 1
-# only). STOP, a safety shutdown, a refused command or an Arduino restart cancels the rest. Phase 1 takes
-# U and the room T from the boxes, U0 = 0.
+# One click for a whole session: the three bench runs still open on 16 Nov (Kapil's gap analysis, priority order).
+# The mode is one setting for a whole Arduino schedule, so the GUI sets the boxes listed in "spins", sends one
+# schedule per phase and starts the next phase when the Arduino reports "SCHEDULE DONE". The last phase only runs
+# if its box is ticked (default: ticked). STOP, a safety shutdown, a refused command or an Arduino restart cancels
+# the rest.
+PI_SPINS = {"TA": 40.0, "TB": 16.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2, "CHIH": 0.50127, "CHIC": 0.18091}
+RAW_SPINS = {"U": 36.0, "U0": 38.0}
 FULL_PLAN = [
-    {"name": "S18.3 raw PWM, U0 = 0", "mode": "RAW", "U0": 0.0,
-     "schedule": "500 40 0 100\n800 40 0 200\n1500 40 0 500\n"},
-    {"name": "PI re-run, 100 s then 480 s", "mode": "PI",
-     "schedule": "300 40 0 100\n1200 40 16 100\n3840 40 16 480\n"},
+    {"name": "PI 200 s", "mode": "PI", "spins": PI_SPINS, "schedule": "1400 40 16 200\n"},
+    {"name": f"RAW positive-only, U0 {RAW_SPINS['U0']:g}, U {RAW_SPINS['U']:g}, 100 s", "mode": "RAW",
+     "spins": RAW_SPINS, "schedule": "900 40 0 100\n"},
+    {"name": "PI 400 s", "mode": "PI", "spins": PI_SPINS, "schedule": "300 40 0 100\n2800 40 16 400\n"},
 ]
 
 
@@ -542,14 +547,16 @@ def run_gui():
 
             box = QtWidgets.QGroupBox("One long run")
             vbox = QtWidgets.QVBoxLayout(box)
-            self.plan_pi = QtWidgets.QCheckBox(f"then the PI re-run (+ {self.phase_minutes(FULL_PLAN[1]):.0f} min)")
+            self.plan_last = QtWidgets.QCheckBox(
+                f"also run {len(FULL_PLAN)}: {FULL_PLAN[-1]['name']} (+ {self.phase_minutes(FULL_PLAN[-1]):.0f} min)")
+            self.plan_last.setChecked(True)
             hint = QtWidgets.QLabel()
             hint.setTextFormat(QtCore.Qt.RichText)
             hint.setWordWrap(True)
-            self.plan_pi.toggled.connect(lambda _=False: hint.setText(self.plan_summary()))
+            self.plan_last.toggled.connect(lambda _=False: hint.setText(self.plan_summary()))
             hint.setText(self.plan_summary())
             vbox.addWidget(hint)
-            vbox.addWidget(self.plan_pi)
+            vbox.addWidget(self.plan_last)
             b = QtWidgets.QPushButton("START PLAN")
             b.clicked.connect(self.start_plan)
             vbox.addWidget(b)
@@ -782,7 +789,7 @@ def run_gui():
             return sum(s[0] for s in steps) / 60
 
         def plan_phases(self):
-            return FULL_PLAN if self.plan_pi.isChecked() else FULL_PLAN[:1]
+            return FULL_PLAN if self.plan_last.isChecked() else FULL_PLAN[:-1]
 
         def plan_summary(self):
             parts, total = [], 0.0
@@ -813,8 +820,9 @@ def run_gui():
                     "and the TEC thermistor shows a number.")
                 return
             text = (self.plan_summary().replace("<br>", "\n")
-                    + f"\n\nRAW phase: U = {self.spins['U'].value():g}, U0 = 0, room T = "
-                    f"{self.spins['TAMB'].value():g} C.\nRoom-temperature baseline done, TEC supply and pump on?")
+                    + f"\n\nPI: Kp {PI_SPINS['KP']:g}, Ki {PI_SPINS['KI']:g}, chi_h {PI_SPINS['CHIH']:g}, "
+                    f"chi_c {PI_SPINS['CHIC']:g}. RAW: U {RAW_SPINS['U']:g}, U0 {RAW_SPINS['U0']:g}."
+                    "\nThe boxes are set and the schedules sent for you.\nTEC supply and pump on?")
             ans = QtWidgets.QMessageBox.question(self, "Full plan", text,
                                                  QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                  QtWidgets.QMessageBox.No)
@@ -829,8 +837,8 @@ def run_gui():
             ph = phases[i]
             self.plan.update(phase=i, t_ms=self.latest["time_ms"])
             self.mode_box.setCurrentText(ph["mode"])
-            if "U0" in ph:
-                self.spins["U0"].setValue(ph["U0"])
+            for key, val in ph["spins"].items():
+                self.spins[key].setValue(val)
             self.sched_edit.setPlainText(ph["schedule"])
             self.send_settings()
             self.send_schedule()

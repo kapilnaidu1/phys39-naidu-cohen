@@ -10,8 +10,9 @@ The page was rewritten after our S18 and S19 runs. The old version asked for a
 240, 180 and 300 s. The new version fixes the periods: pilots at 100 and 200 s,
 production at 100, 200, 300, 400 and 500 s, and it adds a raw-PWM stage. Our
 data are good (κ agrees across every period we ran), but they are at the wrong
-periods for the new list. **Missing on the bench: 200, 400 and 500 s with PI,
-and the positive-only PWM run.** Everything else missing is analysis or
+periods for the new list. **Missing on the bench: 200 and 400 s with PI, and
+the positive-only PWM run.** The professor accepted our 480 s runs in place of
+500 s (16 Nov). Everything else missing is analysis or
 simulation and needs no bench time.
 
 ## Requirement by requirement
@@ -33,7 +34,7 @@ simulation and needs no bench time.
 | Stage 5, 200 s | Same | None | Missing |
 | Stage 5, 300 s | Same | 4 Nov `110306`, cycles 2 to 7 | Done |
 | Stage 5, 400 s | Same | None | Missing |
-| Stage 5, 500 s | Same | None. We have **480 s** on 2 Nov, 11 Nov and today | Missing (ask if 480 counts) |
+| Stage 5, 500 s | Same | **480 s** on 2 Nov, 11 Nov and today | Done: 480 s accepted for 500 s (professor, 16 Nov) |
 | Extra periods | Not asked for | 180 s and 240 s (4 Nov, 10 Nov) | Keep as supporting data |
 | Stage 6 fits | q, q′, κ, ν, mean-profile m, checks | Done for every period we have | Done |
 | Stage 6 characteristic-length plot | 1/m, 1/q, 1/q′ curves from our κ, ν over 100 to 500 s, with fitted points | Not done | Missing (analysis only) |
@@ -46,8 +47,8 @@ simulation and needs no bench time.
 Schedule: `300 40 0 100`, `1200 40 16 100`, `3840 40 16 480`, about 89 min.
 
 - The 100 s part (12 cycles) is a good repeat of a period we already have.
-- The 480 s part (8 cycles) is a third copy of a period the new page does not
-  list. It does not fill any gap.
+- The 480 s part (8 cycles) is a third copy of 480 s. Now that 480 s counts
+  for 500 s it is useful as a repeat, but it does not fill a missing row.
 
 Better use of the same time: stop after the 100 s step (25 min in) and run
 `1400 40 16 200` (about 23 min). That one run fills three rows at once: the
@@ -60,21 +61,23 @@ Better use of the same time: stop after the 100 s step (25 min in) and run
 | 1 | PI 200 s, `1400 40 16 200` | S18.10, Stage 5 200 s, S18.7 200 s | ~25 min |
 | 2 | RAW, U0 = 38, U = 36, `900 40 0 100` | S18.4 | ~15 min |
 | 3 | PI 400 s, 7 cycles | Stage 5 400 s | ~50 min |
-| 4 | PI 500 s, 7 cycles | Stage 5 500 s | ~60 min |
-| 5 | RAW zero-centred 300 s, U = 50 | S18.3 300 s | ~30 min |
+| 4 | RAW zero-centred 300 s, U = 50 | S18.3 300 s | ~30 min |
 
-Runs 1 and 2 fit today. Runs 3 to 5 need a supervised repeat if the professor
+Runs 1 and 2 fit today. Runs 3 and 4 need a supervised repeat if the professor
 wants them (the page says to bring an incomplete dataset to P4 with the missing
 periods named).
 
 ## Questions for the professor
 
-1. Can our 480 s runs (three of them) stand in for 500 s, or do we book 400 and
-   500 s?
-2. Is Sammy's raw sweep at 500 s acceptable in place of 300 s?
-3. Our feedforward used the inverted steady-state curve, as the earlier page
-   asked. Do we also need the new straight-line heating-branch version
-   (ua ≈ 35, ub ≈ 32 counts at room 22.5 °C)?
+1. ~~Can our 480 s runs stand in for 500 s?~~ Yes (16 Nov).
+2. **Raw PWM periods.** Stage 2 drives the TEC with a plain sine of PWM, no
+   temperature control, at 300, 200 and 100 s. Sammy ran it at 100, 200 and
+   500 s. Is 500 s fine in place of 300 s, or do we run 300 s (about 30 min)?
+3. **Open-loop method.** On 2 Nov the open-loop trial worked out the PWM from
+   the full Module 4 heating and cooling curve, as the old page asked. The new
+   page uses a simpler heating-only command, PWM = 35 + 32 sin(ωt) counts
+   (from χh = 0.501 °C per count and room 22.5 °C). Is our version fine, or
+   do we redo the open-loop trial the new way (about 10 min at 100 s)?
 
 ## What needs no bench time (we can do this now)
 

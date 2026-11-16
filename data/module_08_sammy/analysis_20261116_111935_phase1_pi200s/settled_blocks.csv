@@ -1,0 +1,2 @@
+period_s,cycles_recorded,first_settled_cycle,last_settled_cycle,settled_cycles,window_start_s,window_end_s,meets_5_cycle_minimum,tolerance_B,tolerance_phi_rad
+200,7,2,7,6,442.2,1642.2,1,0.03,0.05

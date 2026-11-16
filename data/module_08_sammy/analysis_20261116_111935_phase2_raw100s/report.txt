@@ -1,0 +1,29 @@
+S18.4 positive-only PWM: data/module_08_sammy/sammy_angstrom_live_20261116_111935_phase2_raw100s.csv
+python3 python/sammy_module8_s184_analysis.py data/module_08_sammy/sammy_angstrom_live_20261116_111935_phase2_raw100s.csv --t-amb 23.05 --t-room 22.7
+
+Schedule: 100 s period, 9 whole cycles (899.7 s), TEC at the start 35.26 °C
+Applied PWM: 2 to 74 counts, never negative: yes; fitted U0 = 38.00, U = 36.02; highest T1 35.97 °C
+Settled block (counting back from the last cycle while the TEC mean is within 0.2 °C, its amplitude within 3 % and its lag within 0.05 rad of the block median): cycles 2 to 9 (8 cycles); first rejected cycle 1
+
+TEC thermistor over the settled block (3 harmonics + drift):
+  mean 39.38 °C (-0.62 from the 40 °C target); highest 43.48, lowest 35.11 °C (latch 65)
+  A1 3.994 °C, lag 1.420 rad = 22.6 s, A2/A1 0.002, A3/A1 0.001
+  highest peak above the mean 4.10, lowest below 4.27; steepest rise 0.251, steepest fall -0.252 °C/s
+
+Prediction made before the run (S18.3 one-lump fit chi_h 0.417, tau 64.3 s, T_amb 23.05 °C, this run's U0 and U):
+  mean 38.91  A1 3.613  lag 1.328 rad = 21.1 s  highest 42.5  lowest 35.3 °C
+  measured minus predicted: mean +0.46 °C, A1 +0.381 °C (+10.5 %), lag +0.091 rad (+1.5 s)
+  whole run, model integrated with the recorded PWM from the first record: RMS of TEC - model over the settled block 0.58 °C
+
+One-lump check with this run's own numbers (mean = T_amb + chi U0, A1 = chi U N, N = 1 / sqrt(1 + (w tau)^2), lag = arctan(w tau)):
+  chi from the mean 0.430 °C/count (S18.3 fit chi_h 0.417);  tau from the amplitude 59.6 s, tau from the lag 104.5 s (S18.3 fit 64.3 s); one lump would give the same tau twice
+
+Shape of the TEC cycle, S18.4 (u >= 0) against S18.3 at 100 s (u = 50 sin wt):
+                                       S18.4         S18.3
+  A2/A1                                0.002         0.102
+  peak above / below mean (°C)   4.10/4.27     4.12/3.74  
+  steepest rise / fall (°C/s)   0.251/-0.252  0.284/-0.208
+  lag behind the PWM (rad)             1.420         1.442
+
+Rod, settled block, same fits as the PI runs: q 17.97 +/- 0.39 1/m, q' 18.06 +/- 0.27 1/m, kappa 9.682e-05 +/- 2.6e-06 m^2/s; T1 amplitude 1.066 °C, T5 0.165 °C
+  mean-profile loss rate m 3.56 1/m (T_room 22.7 °C) against sqrt(q^2 - q'^2): undefined here (q' is above q)

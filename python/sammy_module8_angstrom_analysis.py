@@ -37,6 +37,7 @@ import json
 import math
 import os
 import re
+import textwrap
 import warnings
 from datetime import datetime
 
@@ -448,6 +449,11 @@ def fig_cycles(path, res, t, data, raw, info):
     plt.close(fig)
 
 
+def suptitle(fig, text, n, width, **kw):
+    """One-period figures are narrower than the long titles, so wrap the title there."""
+    fig.suptitle(text if n > 1 else textwrap.fill(text, width), y=0.995, **kw)
+
+
 def fig_spatial(path, results, x):
     n = len(results)
     fig, axs = plt.subplots(2, n, figsize=(4.4 * n, 7), squeeze=False)
@@ -472,7 +478,7 @@ def fig_spatial(path, results, x):
         a2.set_ylabel("unwrapped phase φ (rad)")
         a2.set_xlabel("x from T1 (mm)")
         a1.set_xlabel("x from T1 (mm)")
-    fig.suptitle("Amplitude and phase against distance along the rod (settled blocks)", y=0.995)
+    suptitle(fig, "Amplitude and phase against distance along the rod (settled blocks)", n, 32)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -501,8 +507,8 @@ def fig_settling(path, results):
             axs[0, j].set_ylabel("B vs settled block (%)")
             axs[1, j].set_ylabel("phase vs settled block (rad)")
             axs[0, j].legend(fontsize=8, ncol=3, loc="upper left")
-    fig.suptitle("Settling test: green = settled block, grey band = tolerance (3 %, 0.05 rad); T5 gaps are masked cycles",
-                 y=0.995, fontsize=11)
+    suptitle(fig, "Settling test: green = settled block, grey band = tolerance (3 %, 0.05 rad); T5 gaps are masked cycles",
+             n, 40, fontsize=11)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -602,7 +608,7 @@ def fig_profile(path, results, x, t_room):
         ax.set_xlabel("x from T1 (mm)")
         if j == 0:
             ax.set_ylabel(f"mean T − T_room (°C), T_room = {t_room:.1f}")
-    fig.suptitle("Mean temperature profile along the rod (settled blocks)", y=0.995)
+    suptitle(fig, "Mean temperature profile along the rod (settled blocks)", n, 32)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -631,7 +637,7 @@ def fig_tracking(path, results, t, data):
             axs[0, j].set_ylabel("temperature (°C)")
             axs[1, j].set_ylabel("applied PWM")
             axs[0, j].legend(fontsize=9)
-    fig.suptitle("PI controller tracking: TEC follows the setpoint, T1 is smaller and later", y=0.995)
+    suptitle(fig, "PI controller tracking: TEC follows the setpoint, T1 is smaller and later", n, 32)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)

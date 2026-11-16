@@ -1,0 +1,26 @@
+{
+  "stamp": "20261116_111935_phase1_pi200s",
+  "records": 2585,
+  "minutes": 23.42,
+  "duplicated": 0,
+  "restarts": 0,
+  "gaps": 2,
+  "gaps_in_schedule": 0,
+  "pwm_min": -106,
+  "pwm_max": 227,
+  "pwm_clipped_samples": 0,
+  "t1_max_C": 40.32,
+  "tec_max_C": 55.1,
+  "step_minutes": {
+    "1": 23.33
+  },
+  "masked_samples": 0,
+  "t5_prediction": {
+    "1": {
+      "rms_fit": 0.0127,
+      "max_outside": 0.761,
+      "max_inside": 0.0
+    }
+  },
+  "hold": null
+}

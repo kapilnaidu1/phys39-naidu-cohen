@@ -1,0 +1,2 @@
+period_s,Tb_C,B_TEC_over_Tb,TEC_lag_rad,TEC_lag_s,B_T1_over_Tb,T1_lag_rad,T1_lag_s,T1_B2_over_B1,T1_rms_resid_C,pwm_min,pwm_max,samples_at_pm255
+200,16,0.9388,0.3681,11.72,0.3320,1.0082,32.09,0.0155,0.2350,-106,120,0

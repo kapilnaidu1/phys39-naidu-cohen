@@ -38,6 +38,7 @@ import math
 import os
 import re
 import warnings
+from datetime import datetime
 
 import numpy as np
 import matplotlib
@@ -365,7 +366,12 @@ def label(ch):
     return ch.replace("_C", "")
 
 
-def fig_overview(path, cols, data, masked, steps, mask):
+def run_date(stamp):
+    d = datetime.strptime(stamp[:8], "%Y%m%d")
+    return f"{d.day} {d.strftime('%b')} {d.year}"
+
+
+def fig_overview(path, cols, data, masked, steps, mask, when="10 Nov 2026"):
     t = cols["t"]
     fig, axs = plt.subplots(3, 1, figsize=(12, 7.4), sharex=True,
                             gridspec_kw={"height_ratios": [3, 1.1, 1.1]})
@@ -383,7 +389,8 @@ def fig_overview(path, cols, data, masked, steps, mask):
         for a, b, _ in wins:
             if a > steps[0]["t0"] - 1:
                 ax.axvspan(a, b, ymin=0, ymax=1, color="#d62728", alpha=0.25, lw=0)
-    ax.plot([], [], color="#d62728", alpha=0.4, lw=6, label="masked in fits")
+    if any(mask.values()):
+        ax.plot([], [], color="#d62728", alpha=0.4, lw=6, label="masked in fits")
     ax.set_ylabel("temperature (°C)")
     ax.set_ylim(21, 65)
     ax.legend(ncol=9, fontsize=9, loc="upper center", bbox_to_anchor=(0.5, 1.0), frameon=False)
@@ -401,7 +408,7 @@ def fig_overview(path, cols, data, masked, steps, mask):
     ax3.set_ylim(-12, 12)
     ax3.set_xlabel("Arduino time (s)")
     ax3.set_xlim(0, steps[-1]["t1"] + 130)
-    fig.suptitle("SAMMY production run 10 Nov 2026: setpoint, TEC and rod temperatures, applied PWM", y=0.995)
+    fig.suptitle(f"SAMMY production run {when}: setpoint, TEC and rod temperatures, applied PWM", y=0.995)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -656,9 +663,9 @@ def t5_models(cols, raw, masked, steps):
 
 
 def fig_t5_check(path, cols, steps, mask, models):
-    """T5 against its prediction from T3 and T4 over the 480 s step (documents the mask)."""
+    """T5 against its prediction from T3 and T4 over step 2 (documents the mask); skipped without a T5 mask."""
     s2 = [s for s in steps if s["step"] == 2]
-    if not s2 or 2 not in models:
+    if not s2 or 2 not in models or not mask.get("T5_C"):
         return
     s2, m = s2[0], models[2]
     t, sel = cols["t"], models[2]["inrun"]
@@ -677,7 +684,7 @@ def fig_t5_check(path, cols, steps, mask, models):
     axs[1].set_ylabel("T5 − prediction (°C)")
     axs[1].set_xlabel("Arduino time (s)")
     axs[1].set_ylim(-1.5, 4.5)
-    axs[0].set_title(f"480 s step: T5 against its prediction from T3 and T4 (fit on the last two cycles, RMS "
+    axs[0].set_title(f"{s2['period']:.0f} s step: T5 against its prediction from T3 and T4 (fit on the last two cycles, RMS "
                      f"{m['rms_fit']:.3f} °C); red = masked windows", fontsize=11)
     fig.tight_layout()
     fig.savefig(path, dpi=200)
@@ -1058,7 +1065,8 @@ def main():
     ap.add_argument("--geometry", default=GEOMETRY)
     ap.add_argument("--out-dir")
     ap.add_argument("--fig-dir", default=FIG_DIR)
-    ap.add_argument("--summary", default=None, help="markdown summary path (default in docs/sammy_module_08_guide)")
+    ap.add_argument("--summary", default=None, help="markdown summary path (default in docs/sammy_module_08_guide; "
+                    "'none' skips it, the text is written for the 10 Nov run)")
     a = ap.parse_args()
 
     run = os.path.abspath(a.run)
@@ -1109,7 +1117,7 @@ def main():
         fh.write(report)
 
     fig = lambda name: os.path.join(a.fig_dir, f"{stamp}_{name}.png")
-    fig_overview(fig("run_overview"), cols, data, masked, steps, mask)
+    fig_overview(fig("run_overview"), cols, data, masked, steps, mask, run_date(stamp))
     for r in results:
         fig_cycles(fig(f"cycles_{r['info']['period']:.0f}s"), r, t, data, raw, r["info"])
     fig_spatial(fig("spatial_fits"), results, x)
@@ -1122,13 +1130,15 @@ def main():
     fig_t5_check(fig("t5_mask_check"), cols, steps, mask, models)
 
     summary = a.summary or os.path.join(GUIDE_DIR, "Sammy_Module_8_Production_Run_Summary.md")
-    os.makedirs(os.path.dirname(summary), exist_ok=True)
     rs = run_stats(cols, data, steps)
     write_run_json(os.path.join(out_dir, "run_summary.json"), stamp, rs, models, nmasked, hold)
-    write_summary(summary, run, results, steps, hold, models, rs, mask, nmasked)
+    if summary != "none":
+        os.makedirs(os.path.dirname(summary), exist_ok=True)
+        write_summary(summary, run, results, steps, hold, models, rs, mask, nmasked)
     print(report)
     print(f"Wrote tables and report in {os.path.relpath(out_dir, REPO)}, figures in "
-          f"{os.path.relpath(a.fig_dir, REPO)}, summary {os.path.relpath(summary, REPO)}")
+          f"{os.path.relpath(a.fig_dir, REPO)}"
+          + (f", summary {os.path.relpath(summary, REPO)}" if summary != "none" else ""))
 
 
 if __name__ == "__main__":

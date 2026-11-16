@@ -1,0 +1,4 @@
+wall_clock,time_ms,note
+2026-11-16T11:23:35,237632,PLAN phase 1 of 3 start: PI 200 s (PI)
+2026-11-16T11:47:00,1643600,"PLAN phase 2 of 3 start: RAW positive-only, U0 38, U 36, 100 s (RAW)"
+2026-11-16T12:02:06,2549948,PLAN phase 3 of 3 start: PI 400 s (PI)

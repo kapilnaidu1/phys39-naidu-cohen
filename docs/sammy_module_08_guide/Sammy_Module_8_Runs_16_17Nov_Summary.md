@@ -3,8 +3,14 @@
 Summary of the 16 Nov GUI plan run (`sammy_angstrom_live_20261116_111935.csv`: PI 200 s, S18.4 positive-only PWM, interrupted PI 400 s) and of the
 17 Nov PI 400 s repeat (`sammy_angstrom_live_20261117_162612.csv`), written by `python/sammy_module8_runs_summary.py`.
 Tables and reports: `data/module_08_sammy/analysis_<stamp>/` (the 16 Nov run is analysed phase by phase from verbatim slices of the file),
-compiled table `data/module_08_sammy/compiled_periods.csv`. Figures: `docs/figures/module_08_sammy/`. Photos: `docs/images/module08_sammy_gui_plan_*.jpg`
-and `module08_sammy_gui_pi400_*.jpg`. Kapil Naidu's acquisition code, analysis scripts and data are unchanged; everything here is an addition.
+compiled table `data/module_08_sammy/compiled_periods.csv`, finite-rod fits `data/module_08_sammy/finite_rod_fits.csv`. Figures:
+`docs/figures/module_08_sammy/`. Photos: `docs/images/module08_sammy_gui_plan_*.jpg` and `module08_sammy_gui_pi400_*.jpg`. Kapil Naidu's
+acquisition code, analysis scripts and data are unchanged; everything here is an addition.
+
+**Fits.** q, q′, κ and ν are joint finite-rod (insulated tip) fits of the five per-sensor amplitudes and phases, L = 281.9 mm
+(`python/sammy_module8_finite_rod.py`, the method of Kapil's `angstrom_finite_fit.py`); the semi-infinite columns are the two-line fits of the
+analysis script. On the 10 Nov SAMMY run the finite-rod code gives κ = 9.28, 9.10 and
+9.22 × 10⁻⁵ m²/s at 100, 240 and 480 s, the values in Kapil's own finite-rod output for that run.
 
 ## What was run
 
@@ -40,9 +46,9 @@ CSV record with that number. The window is cropped a few pixels inside its edges
 Slice `sammy_angstrom_live_20261116_111935_phase1_pi200s.csv`, analysed with `python3 python/sammy_module8_angstrom_analysis.py ... --t-room 22.7 --summary none`
 (room T from the calibrated idle sensors before the plan). PI settings Kp 12, Ki 0.2, r 2.771; no sample masked.
 
-| Period (s) | Settled cycles (strict test) | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) | ν (10⁻³ 1/s) | κ, last five cycles |
-|---|---|---|---|---|---|---|
-| 200 | 6 of 7 | 13.32 ± 0.16 | 12.80 ± 0.15 | 9.21 ± 0.15 | 1.26 ± 0.53 | 9.17 ± 0.16 |
+| Period (s) | Settled cycles (strict test) | q (1/m) | q′ (1/m) | κ, finite rod (10⁻⁵ m²/s) | κ, semi-infinite | ν (10⁻³ 1/s) | κ, last five cycles (finite rod) |
+|---|---|---|---|---|---|---|---|
+| 200 | 6 of 7 | 13.33 ± 0.16 | 12.87 ± 0.15 | 9.16 ± 0.15 | 9.21 ± 0.15 | 1.12 ± 0.52 | 9.11 ± 0.16 |
 
 Tracking: B_TEC/Tb = 0.939, TEC lag 11.7 s, B_T1/Tb = 0.332, T1 lag 32.1 s,
 PWM -106 to 120 in the settled block (whole slice -106 to 227, never at ±255). The TEC peaked at 55.1 °C and T1 at 40.3 °C
@@ -95,9 +101,9 @@ Analysed with `python3 python/sammy_module8_angstrom_analysis.py data/module_08_
 overshoot, peak PWM 216. The PWM then ran -43 to 95 (never at ±255); the TEC peaked at 55.8 °C and T1 at
 42.2 °C. No sample was masked.
 
-| Period (s) | Settled cycles (strict test) | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) | ν (10⁻³ 1/s) | κ, last five cycles |
-|---|---|---|---|---|---|---|
-| 400 | 2 of 7 | 10.14 ± 0.16 | 8.87 ± 0.11 | 8.73 ± 0.17 | 2.10 ± 0.33 | 8.84 ± 0.18 |
+| Period (s) | Settled cycles (strict test) | q (1/m) | q′ (1/m) | κ, finite rod (10⁻⁵ m²/s) | κ, semi-infinite | ν (10⁻³ 1/s) | κ, last five cycles (finite rod) |
+|---|---|---|---|---|---|---|---|
+| 400 | 2 of 7 | 9.90 ± 0.13 | 8.89 ± 0.12 | 8.93 ± 0.17 | 8.73 ± 0.17 | 1.70 ± 0.30 | 9.05 ± 0.17 |
 
 Tracking: B_TEC/Tb = 0.985, TEC lag 12.6 s, B_T1/Tb = 0.436, T1 lag 44.5 s.
 
@@ -108,13 +114,13 @@ after the start-up cycle 1, cycles 2 to 7 agree within -2.0 to +2.5 % in amplitu
 and the amplitude follows the slow warming of the rod (the T5 mean rises from 31.23 to 31.60 °C between cycles 2 and 5). Fitting other sets of cycles with the same
 code (`analyse_block`):
 
-| Cycles fitted | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) |
-|---|---|---|---|
-| strict block (cycles 6 to 7) | 10.14 ± 0.16 | 8.87 ± 0.11 | 8.73 ± 0.17 |
-| all cycles after the start-up cycle (2 to 7) | 10.08 ± 0.16 | 8.82 ± 0.10 | 8.83 ± 0.17 |
-| last five cycles (3 to 7) | 10.07 ± 0.16 | 8.82 ± 0.10 | 8.84 ± 0.18 |
+| Cycles fitted | q (1/m) | q′ (1/m) | κ, finite rod (10⁻⁵ m²/s) | κ, semi-infinite |
+|---|---|---|---|---|
+| strict block (cycles 6 to 7) | 9.90 ± 0.13 | 8.89 ± 0.12 | 8.93 ± 0.17 | 8.73 ± 0.17 |
+| all cycles after the start-up cycle (2 to 7) | 9.82 ± 0.14 | 8.85 ± 0.10 | 9.04 ± 0.17 | 8.83 ± 0.17 |
+| last five cycles (3 to 7) | 9.81 ± 0.14 | 8.85 ± 0.11 | 9.05 ± 0.17 | 8.84 ± 0.18 |
 
-The three κ agree within 1.2 %. Per cycle (amplitude B of the fundamental, calibrated sensors):
+The three finite-rod κ agree within 1.4 %. Per cycle (amplitude B of the fundamental, calibrated sensors):
 
 | Cycle | TEC mean (°C) | T1 B (°C) | T3 B (°C) | T3 B against the mean of cycles 2 to 7 (%) | T5 B (°C) | T5 mean (°C) | In the strict block |
 |---|---|---|---|---|---|---|---|
@@ -126,49 +132,78 @@ The three κ agree within 1.2 %. Per cycle (amplitude B of the fundamental, cali
 | 6 | 39.94 | 6.931 | 4.142 | -1.6 | 2.445 | 31.56 | yes |
 | 7 | 39.94 | 6.953 | 4.184 | -0.6 | 2.482 | 31.58 | yes |
 
-Model-validity checks: finite-length difference 2.75 %, radial Biot number 2.4e-04; the side-loss rate from the
-mean temperature profile (3.19 ± 0.09 1/m) does not match the one from q and q′ (4.90 1/m), as in the earlier runs, so ν and h
-should be quoted with caution. Figures: `20261117_162612_*.png` (settling test: `20261117_162612_settling.png`).
+Model-validity checks: finite-length difference 2.75 %, radial Biot number 2.4e-04; the mean-decay coefficient m from the
+mean temperature profile (3.19 ± 0.09 1/m) does not match √(q² − q′²) from the oscillation (4.36 1/m with the finite-rod q and q′,
+4.90 1/m semi-infinite), as in the earlier runs, so ν and h should be quoted with caution. Figures: `20261117_162612_*.png` (settling test: `20261117_162612_settling.png`).
 
 ## All periods compiled
 
-Every SAMMY analysis and Kapil's PI fits, one row per period and run (`compiled_periods.csv`). The strict test is the settling test above; the last-five
-column is Kapil's rule.
+Every SAMMY analysis and Kapil's PI fits, one row per period and run (`compiled_periods.csv`, which also holds the nu, last-five and semi-infinite
+columns). κ, q and q′ are the finite-rod fits. The strict test is the settling test above; the last-five column is Kapil's rule applied without a
+settling test (for 10 Nov 480 s it includes the cycles disturbed by the TEC-sensor jump).
 
-| Period (s) | Source | Settled cycles (strict) | ≥ 5 | q (1/m) | q′ (1/m) | κ (10⁻⁵ m²/s) | κ, last five cycles |
-|---|---|---|---|---|---|---|---|
-| 100 | SAMMY 10 Nov | 3 of 7 | no | 18.73 | 18.06 | 9.29 ± 0.16 | 9.41 ± 0.17 |
-| 100 | SAMMY 16 Nov, morning | 6 of 12 | yes | 18.74 | 18.20 | 9.21 ± 0.16 | 9.23 ± 0.16 |
-| 100 | Kapil (PI, 2 and 4 Nov) | last five cycles |  | 18.53 | 17.37 | 9.76 ± 0.23 |  |
-| 180 | Kapil (PI, 2 and 4 Nov) | last five cycles |  | 14.10 | 13.39 | 9.24 ± 0.20 |  |
-| 200 | SAMMY 16 Nov, PI 200 s | 6 of 7 | yes | 13.32 | 12.80 | 9.21 ± 0.15 | 9.17 ± 0.16 |
-| 240 | SAMMY 10 Nov | 6 of 7 | yes | 12.42 | 11.52 | 9.15 ± 0.14 | 9.15 ± 0.15 |
-| 240 | Kapil (PI, 2 and 4 Nov) | last five cycles |  | 12.34 | 11.29 | 9.40 ± 0.17 |  |
-| 300 | Kapil (PI, 2 and 4 Nov) | last five cycles |  | 11.06 | 10.17 | 9.31 ± 0.16 |  |
-| 400 | SAMMY 17 Nov, PI 400 s | 2 of 7 | no | 10.14 | 8.87 | 8.73 ± 0.17 | 8.84 ± 0.18 |
-| 480 | SAMMY 10 Nov | 3 of 7 | no | 9.36 | 7.95 | 8.80 ± 0.21 | 7.78 ± 0.30 |
-| 480 | SAMMY 16 Nov, morning | 7 of 8 | yes | 9.33 | 7.99 | 8.78 ± 0.18 | 8.75 ± 0.19 |
-| 480 | Kapil (PI, 2 and 4 Nov) | last five cycles |  | 9.34 | 7.84 | 8.94 ± 0.24 |  |
+| Period (s) | Source | Settled cycles | ≥ 5 | q (1/m) | q′ (1/m) | κ, finite rod (10⁻⁵ m²/s) | κ, semi-infinite | κ, last five cycles (finite rod) |
+|---|---|---|---|---|---|---|---|---|
+| 100 | Kapil (PI, 2 and 4 Nov) | 5 (his selection) | yes | 18.55 | 17.39 | 9.74 ± 0.23 | 9.76 ± 0.23 |  |
+| 100 | SAMMY 10 Nov | 3 of 7 | no | 18.75 | 18.06 | 9.28 ± 0.16 | 9.29 ± 0.16 | 9.40 ± 0.17 |
+| 100 | SAMMY 16 Nov, morning | 6 of 12 | yes | 18.76 | 18.21 | 9.20 ± 0.16 | 9.21 ± 0.16 | 9.22 ± 0.16 |
+| 180 | Kapil (PI, 2 and 4 Nov) | 5 (his selection) | yes | 14.13 | 13.44 | 9.19 ± 0.20 | 9.24 ± 0.20 |  |
+| 200 | SAMMY 16 Nov, PI 200 s | 6 of 7 | yes | 13.33 | 12.87 | 9.16 ± 0.15 | 9.21 ± 0.15 | 9.11 ± 0.16 |
+| 240 | Kapil (PI, 2 and 4 Nov) | 5 (his selection) | yes | 12.30 | 11.37 | 9.36 ± 0.17 | 9.40 ± 0.17 |  |
+| 240 | SAMMY 10 Nov | 6 of 7 | yes | 12.39 | 11.60 | 9.10 ± 0.14 | 9.15 ± 0.14 | 9.10 ± 0.15 |
+| 300 | Kapil (PI, 2 and 4 Nov) | 6 (his selection) | yes | 10.94 | 10.27 | 9.33 ± 0.15 | 9.31 ± 0.16 |  |
+| 400 | SAMMY 17 Nov, PI 400 s | 2 of 7 | no | 9.90 | 8.89 | 8.93 ± 0.17 | 8.73 ± 0.17 | 9.05 ± 0.17 |
+| 480 | Kapil (PI, 11 Nov) | 6 (his selection) | yes | 9.05 | 7.80 | 9.27 ± 0.35 | 8.84 ± 0.33 |  |
+| 480 | Kapil (PI, 2 and 4 Nov) | 5 (his selection) | yes | 9.02 | 7.72 | 9.40 ± 0.24 | 8.94 ± 0.24 |  |
+| 480 | SAMMY 10 Nov | 3 of 7 | no | 9.05 | 7.85 | 9.22 ± 0.19 | 8.80 ± 0.21 | 8.14 ± 0.33 |
+| 480 | SAMMY 16 Nov, morning | 7 of 8 | yes | 9.02 | 7.90 | 9.19 ± 0.18 | 8.78 ± 0.18 | 9.15 ± 0.19 |
 
-The SAMMY runs with at least five settled cycles give a weighted mean κ = **9.11 ± 0.08 × 10⁻⁵ m²/s**. All 12 period fits (SAMMY and Kapil) lie between
-8.73 and 9.76; their mean is 33 % above the handbook value for 6061-T6 (6.9), as in each earlier run. The mean κ is
-9.32 at 100 to 300 s and 8.81 at 400 and 480 s. In every row q is larger than q′, the signature of the side loss.
+The windows with at least five settled cycles (4 SAMMY windows and 6 of Kapil's) give a weighted mean κ = **9.26 ± 0.06 × 10⁻⁵ m²/s**
+(χ² 7.4 for 9 degrees of freedom) and ν = 1.74 ± 0.14 × 10⁻³ 1/s; the SAMMY windows alone give κ = 9.16 ± 0.08.
+With the handbook ρ and c that is k = 224 W/(m K). All 13 fits lie between 8.93 and 9.74; their mean is
+34 % above the handbook value for 6061-T6 (6.9), as in each earlier run. In every row q is larger than q′, the signature of the side loss.
+
+**Semi-infinite against finite rod.** The insulated tip reflects part of the wave. At 400 and 480 s the reflection reaches the far sensors nearly
+opposite in phase and lowers their amplitude (the largest finite-length difference is 2.8 % at 400 s and 3.6 % at 480 s), which a semi-infinite
+fit reads as faster decay, so its κ is too low there. Finite-rod κ divided by semi-infinite κ for the SAMMY windows: 0.999 at 100 s, 0.994 at 200 s, 0.995 at 240 s, 1.022 at 400 s, 1.047 at 480 s. The semi-infinite κ
+falls from 9.32 at 100 to 300 s to 8.82 at 400 and 480 s; the finite-rod κ is 9.29 and 9.20, so most of that fall is the model and the
+periods agree within their errors. The lowest finite-rod window is the strict 400 s block (8.93 ± 0.17), with only 2 settled cycles.
 
 ![kappa against period, all runs](../figures/module_08_sammy/compiled_kappa_vs_period.png)
 
-![characteristic length against period, all runs](../figures/module_08_sammy/compiled_characteristic_length.png)
+![characteristic lengths against period, all runs](../figures/module_08_sammy/compiled_characteristic_length.png)
+
+The 1/m points are the mean-profile fits of the SAMMY runs (room T from the idle sensors); they lie above the 1/m curve, the same mismatch between the
+mean profile and the oscillation noted in the 17 Nov validity checks.
+
+## Sensor T2
+
+| Window | Period (s) | T2 amplitude against the fit (%) | T2 phase against the fit (rad) | κ without T2 against κ (%) | χ², all five sensors → without T2 |
+|---|---|---|---|---|---|
+| SAMMY 10 Nov | 100 | +4.9 | +0.036 | -0.6 | 14.3 → 3.6 |
+| SAMMY 16 Nov, morning | 100 | +5.3 | +0.024 | -0.5 | 17.3 → 7.2 |
+| SAMMY 16 Nov, PI 200 s | 200 | +3.4 | +0.025 | -0.4 | 12.9 → 2.8 |
+| SAMMY 10 Nov | 240 | +2.8 | +0.024 | -0.5 | 11.2 → 2.0 |
+| SAMMY 17 Nov, PI 400 s | 400 | +2.6 | +0.018 | -0.5 | 10.4 → 0.8 |
+| SAMMY 10 Nov | 480 | +2.1 | +0.012 | -0.1 | 9.5 → 1.8 |
+| SAMMY 16 Nov, morning | 480 | +2.6 | +0.016 | -0.7 | 14.4 → 2.3 |
+
+In every SAMMY window the finite-rod fit through all five sensors leaves T2 above the line in amplitude (+2.1 to +5.3 %)
+and ahead of it in phase (+0.012 to +0.036 rad), the direction Kapil found in his runs. It is the largest single misfit: the summed χ² falls from
+90 (42 degrees of freedom) to 20 (28) when T2 is left out, and κ moves by -0.7 to -0.1 %. The numbers above keep T2, as
+Kapil's fits do. The cause (seating, contact or calibration) is not known; the effect on κ is small and does not explain the κ excess over the handbook.
 
 ## The five production periods of the course page
 
 Kapil's gap analysis of 16 November (commit `a1c84f5`) lists Stage 5 at 100, 200, 300, 400 and 500 s, at least five settled cycles each:
 
-| Period | Covered by | κ (10⁻⁵ m²/s) | Status |
+| Period | Covered by | κ, finite rod (10⁻⁵ m²/s) | Status |
 |---|---|---|---|
-| 100 s | SAMMY 16 Nov morning (6 settled cycles), SAMMY 10 Nov (3), Kapil | 9.21 ± 0.16 | covered |
-| 200 s | SAMMY 16 Nov, phase 1 of the GUI plan (6 settled cycles) | 9.21 ± 0.15 | covered |
-| 300 s | Kapil, 4 Nov (SAMMY did not repeat it) | 9.31 ± 0.16 | covered (Kapil) |
-| 400 s | SAMMY 17 Nov (7 cycles recorded, 2 settled by the strict test) | 8.73 ± 0.17 (last five cycles 8.84 ± 0.18) | recorded; the strict count is below five (see the 17 Nov section) |
-| 500 s | the 480 s runs: SAMMY 16 Nov morning (7 settled cycles), SAMMY 10 Nov (3), Kapil | 8.78 ± 0.18 | covered with 480 s for 500 s, as in the gap analysis |
+| 100 s | SAMMY 16 Nov morning (6 settled cycles), SAMMY 10 Nov (3), Kapil | 9.20 ± 0.16 | covered |
+| 200 s | SAMMY 16 Nov, phase 1 of the GUI plan (6 settled cycles) | 9.16 ± 0.15 | covered |
+| 300 s | Kapil, 4 Nov (SAMMY did not repeat it) | 9.33 ± 0.15 | covered (Kapil) |
+| 400 s | SAMMY 17 Nov (7 cycles recorded, 2 settled by the strict test) | 8.93 ± 0.17 (last five cycles 9.05 ± 0.17) | recorded; the strict count is below five (see the 17 Nov section) |
+| 500 s | the 480 s runs: SAMMY 16 Nov morning (7 settled cycles), SAMMY 10 Nov (3), Kapil | 9.19 ± 0.18 | covered with 480 s for 500 s, as in the gap analysis |
 
 Not covered by this page: the S18 evidence table, the course-simulator runs, the S18.5 and S18.6 open-loop trial (2 Nov, done the earlier way) and A5.
 
@@ -176,5 +211,7 @@ Not covered by this page: the S18 evidence table, the course-simulator runs, the
 
 - The 400 s run has one start-up cycle and then six cycles whose amplitudes differ by a few percent with the rod's slow warming; the strict test keeps two of them. The
   strict result, the last-five result and the all-cycles result are all given, and they agree within the stated errors.
+- The finite-rod fit assumes an insulated tip and one side-loss rate along the rod. The tip correction grows with the period, so the 400 s and 480 s κ depend on that
+  assumption more than the 100 to 240 s values do.
 - The room temperature is a measured idle value (22.4 °C on 17 Nov, 22.7 °C on 16 Nov), used only for the mean-profile check, not for q, q′ or κ.
 - The 16 Nov plan run lost its third phase when the GUI process ended; the 17 Nov file holds the complete 400 s dataset.

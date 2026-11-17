@@ -16,12 +16,13 @@ that file does is kept; the differences are:
     Ta_C, Tb_C, setpoint_C, feedforward_pwm and controller_pwm;
   - two more schedule presets (course periods 500-200-100 in PI; raw-PWM
     sweep 100-200-500);
-  - "One long run": START PLAN runs the bench list left open on 16 Nov
-    (FULL_PLAN below: PI 200 s, RAW positive-only 100 s and, if the box is
-    ticked, PI 400 s). It sets the mode and the PI or RAW boxes itself, sends
-    each schedule and starts the next one when the Arduino reports SCHEDULE
-    DONE. STOP, a safety shutdown, a refused command or an Arduino restart
-    cancels what is left.
+  - "One long run": START PLAN runs the bench list for 18 Nov (FULL_PLAN
+    below: RAW zero-centered 300 s, PI production at 400 and 500 s, RAW
+    feedforward 100 s, P only, two PI tuning trials; the last one only if the
+    box is ticked). It sets the mode and the boxes itself, sends each
+    schedule and starts the next one when the Arduino reports SCHEDULE DONE.
+    STOP, a safety shutdown, a refused command or an Arduino restart cancels
+    what is left. (16 Nov: PI 200 s, RAW positive-only 100 s, PI 400 s.)
 
 Long test (Kapil's S20 plan, about 101 min), after the room-temperature
 baseline with supply and pump off: mode PI, Kp 12, Ki 0.2, chi_h 0.50127,
@@ -87,18 +88,21 @@ SCHEDULE_PRESETS = {
     "Raw PWM sweep": "# RAW mode only (Ta, Tb ignored; U, U0 from the boxes): 6 cycles each, about 80 min\n"
                      "600 40 0 100\n1200 40 0 200\n3000 40 0 500\n",
 }
-# One click for a whole session: the three bench runs still open on 16 Nov (Kapil's gap analysis, priority order).
-# The mode is one setting for a whole Arduino schedule, so the GUI sets the boxes listed in "spins", sends one
-# schedule per phase and starts the next phase when the Arduino reports "SCHEDULE DONE". The last phase only runs
-# if its box is ticked (default: ticked). STOP, a safety shutdown, a refused command or an Arduino restart cancels
-# the rest.
+# One click for a whole session (bench day 18 Nov: what the 16 and 17 Nov runs left weak or open; the reasons and the
+# pass criteria are in docs/sammy_module_08_guide/Sammy_Module_8_Bench_Plan_18Nov.md). The mode is one setting for a whole
+# Arduino schedule, so the GUI sets the boxes listed in "spins", sends one schedule per phase and starts the next phase when
+# the Arduino reports "SCHEDULE DONE". The last phase only runs if its box is ticked (default: ticked). STOP, a safety
+# shutdown, a refused command or an Arduino restart cancels the rest.
 PI_SPINS = {"TA": 40.0, "TB": 16.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2, "CHIH": 0.50127, "CHIC": 0.18091}
-RAW_SPINS = {"U": 36.0, "U0": 38.0}
+HOLD_AND_7 = "300 40 0 100\n700 40 16 100\n"      # 5 min hold at 40 C, then 7 cycles of 100 s
 FULL_PLAN = [
-    {"name": "PI 200 s", "mode": "PI", "spins": PI_SPINS, "schedule": "1400 40 16 200\n"},
-    {"name": f"RAW positive-only, U0 {RAW_SPINS['U0']:g}, U {RAW_SPINS['U']:g}, 100 s", "mode": "RAW",
-     "spins": RAW_SPINS, "schedule": "900 40 0 100\n"},
-    {"name": "PI 400 s", "mode": "PI", "spins": PI_SPINS, "schedule": "300 40 0 100\n2800 40 16 400\n"},
+    {"name": "RAW zero-centered 300 s", "mode": "RAW", "spins": dict(PI_SPINS, U=50.0, U0=0.0), "schedule": "1800 40 0 300\n"},
+    {"name": "PI production 400 s and 500 s", "mode": "PI", "spins": PI_SPINS,
+     "schedule": "1200 40 0 100\n4000 40 16 400\n3500 40 16 500\n"},
+    {"name": "RAW feedforward 100 s", "mode": "RAW", "spins": dict(PI_SPINS, U=32.0, U0=35.0), "schedule": "900 40 0 100\n"},
+    {"name": "P only Kp 12, 100 s", "mode": "P", "spins": dict(PI_SPINS, KP=12.0, KI=0.0), "schedule": HOLD_AND_7},
+    {"name": "PI Kp 12 Ki 0.5, 100 s", "mode": "PI", "spins": dict(PI_SPINS, KP=12.0, KI=0.5), "schedule": HOLD_AND_7},
+    {"name": "PI Kp 20 Ki 0.2, 100 s", "mode": "PI", "spins": dict(PI_SPINS, KP=20.0, KI=0.2), "schedule": HOLD_AND_7},
 ]
 
 
@@ -788,6 +792,12 @@ def run_gui():
             steps, _ = parse_schedule(ph["schedule"])
             return sum(s[0] for s in steps) / 60
 
+        def phase_settings(self, ph):
+            s = ph["spins"]
+            if ph["mode"] == "RAW":
+                return f"RAW: U {s['U']:g}, U0 {s['U0']:g}"
+            return f"{ph['mode']}: Kp {s['KP']:g}, Ki {s['KI']:g}"
+
         def plan_phases(self):
             return FULL_PLAN if self.plan_last.isChecked() else FULL_PLAN[:-1]
 
@@ -819,9 +829,9 @@ def run_gui():
                     self, "Full plan", "Start only when the Arduino is idle (not latched, not running) "
                     "and the TEC thermistor shows a number.")
                 return
-            text = (self.plan_summary().replace("<br>", "\n")
-                    + f"\n\nPI: Kp {PI_SPINS['KP']:g}, Ki {PI_SPINS['KI']:g}, chi_h {PI_SPINS['CHIH']:g}, "
-                    f"chi_c {PI_SPINS['CHIC']:g}. RAW: U {RAW_SPINS['U']:g}, U0 {RAW_SPINS['U0']:g}."
+            text = (self.plan_summary().replace("<br>", "\n") + "\n\nSettings per run:\n"
+                    + "\n".join(f"{i}. {self.phase_settings(ph)}" for i, ph in enumerate(self.plan_phases(), 1))
+                    + f"\nchi_h {PI_SPINS['CHIH']:g}, chi_c {PI_SPINS['CHIC']:g} in the P and PI runs."
                     "\nThe boxes are set and the schedules sent for you.\nTEC supply and pump on?")
             ans = QtWidgets.QMessageBox.question(self, "Full plan", text,
                                                  QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,

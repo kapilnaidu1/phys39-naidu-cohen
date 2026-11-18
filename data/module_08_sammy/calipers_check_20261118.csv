@@ -1,0 +1,2 @@
+date,applies_to,check,statement,source,in_run_notes
+2026-11-18,sammy_angstrom_live_20261118_104629 and sammy_angstrom_live_20261118_122006,calipers on the sensor spacing T1 to T2 T3 T4 T5,"same as on 9 and 10 Nov (1 in spacing; recorded then as 25.4 50.8 76.2 101.6 mm); the sensor positions in both _meta.json files are unchanged","Sammy Cohen, reported after the runs; the readings were not written down",no

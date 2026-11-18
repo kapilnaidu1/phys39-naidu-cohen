@@ -4,6 +4,9 @@ Phys 39 Module 8, Part I: live Angstrom GUI. SAMMY copy.
 
     python3 python/sammy_module8_angstrom_gui.py                 (from the repository root)
     python3 python/sammy_module8_angstrom_gui.py --check-file F  (saved-file report, no window)
+    python3 python/sammy_module8_angstrom_gui.py --short         (START PLAN runs SHORT_PLAN: PI 400 s with a 600 s hold,
+                                                                  P only, two PI trials)
+    python3 python/sammy_module8_angstrom_gui.py --trials        (START PLAN runs TRIALS_PLAN: PI Kp 20 Ki 0.2, then PI Kp 12 Ki 0.5)
 
 Based on Kapil Naidu's python/angstrom_gui.py (commit 60500c8), which stays
 unchanged. Pair with arduino/module_08_sammy/angstrom_tec_sammy. Everything
@@ -104,6 +107,10 @@ FULL_PLAN = [
     {"name": "PI Kp 12 Ki 0.5, 100 s", "mode": "PI", "spins": dict(PI_SPINS, KP=12.0, KI=0.5), "schedule": HOLD_AND_7},
     {"name": "PI Kp 20 Ki 0.2, 100 s", "mode": "PI", "spins": dict(PI_SPINS, KP=20.0, KI=0.2), "schedule": HOLD_AND_7},
 ]
+# --short: the PI 400 s run with a 600 s hold, then the S18.7 trials (the last trial stays optional).
+SHORT_PLAN = [dict(FULL_PLAN[1], schedule="600 40 0 100\n4000 40 16 400\n")] + FULL_PLAN[3:]
+# --trials: the S18.7 gain trials left after the 400 s run (P only exists from 2 Nov); the second is optional; room T 24.9 C of 18 Nov.
+TRIALS_PLAN = [dict(ph, spins=dict(ph["spins"], TAMB=24.9)) for ph in (FULL_PLAN[5], FULL_PLAN[4])]
 
 
 def parse_schedule(text):
@@ -995,11 +1002,17 @@ def run_gui():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check-file", help="report on a saved record file and exit")
+    ap.add_argument("--short", action="store_true", help="START PLAN runs SHORT_PLAN (PI 400 s, P only, two PI trials)")
+    ap.add_argument("--trials", action="store_true", help="START PLAN runs TRIALS_PLAN (PI Kp 20 Ki 0.2, PI Kp 12 Ki 0.5)")
     a = ap.parse_args()
     if a.check_file:
         _, stats, segments, counts = check_file(a.check_file)
         print(report_text(a.check_file, stats, segments, counts))
         return
+    if a.short:
+        FULL_PLAN[:] = SHORT_PLAN
+    if a.trials:
+        FULL_PLAN[:] = TRIALS_PLAN
     run_gui()
 
 

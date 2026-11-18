@@ -1,0 +1,2 @@
+period_s,omega_rad_s,settled_cycles,q_1_m,sq_1_m,qprime_1_m,sqprime_1_m,kappa_m2_s,skappa_m2_s,nu_1_s,snu_1_s,k_W_mK,sk_W_mK,h_W_m2K,sh_W_m2K,m_from_q_1_m,m_mean_profile_1_m,sm_mean_profile_1_m,Bi_radial,finite_length_max_rel_diff,chi2_lnB,chi2_phi,dof,q_last5_1_m,qprime_last5_1_m,kappa_last5_m2_s,skappa_last5_m2_s
+100,0.062832,2,18.475,0.300,17.664,0.385,9.6270e-05,2.62e-06,2.822e-03,1.69e-03,232.9,6.3,21.8,13.1,5.415,3.430,0.114,2.98e-04,1.304e-03,13.23,13.63,3,18.287,17.789,9.6571e-05,2.71e-06

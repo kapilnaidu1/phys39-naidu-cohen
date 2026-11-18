@@ -1,0 +1,11 @@
+key,run,gains,period_s,interval,mean_error_C,amplitude_ratio,lag_rad,lag_s,rms_error_C,pwm_min,pwm_max,samples_at_255_percent,cycle_amplitude_spread_percent,residual_amplitude_C,A2_over_A1,criteria_met
+raw0,"RAW zero-centered, u = 50 sin","U 50, U0 0",100,"SAMMY 11 Nov, 461.7 to 761.7 s",-11.419,0.2384,1.4387,22.90,16.071,-50,50,0.00,1.60,0.444,0.1017,none
+raw1,RAW positive-only,"U 36, U0 38",100,"SAMMY 16 Nov, 2249 to 2549 s",-0.659,0.2496,1.4196,22.59,11.251,2,74,0.00,0.32,0.103,0.0020,mean
+ff,"Feedforward (OL), from the steady-state curve",no feedback,100,"Kapil 2 Nov, 779 to 1079 s",-0.980,0.2343,1.4177,22.56,11.268,3,67,0.00,0.32,0.135,0.0024,mean
+p,P only,"Kp 12, Ki 0",100,"Kapil 2 Nov, 1291 to 1591 s",-2.627,0.7639,0.5525,8.79,6.567,-195,134,0.00,0.21,0.177,0.0109,none
+pi100,PI,"Kp 12, Ki 0.2",100,"Kapil 2 Nov, 2326 to 2626 s",-0.064,0.8680,0.6234,9.92,6.633,-216,156,0.00,0.11,0.258,0.0138,mean
+pi100b,PI,"Kp 12, Ki 0.2",100,"SAMMY 16 Nov, 1492 to 1792 s",-0.060,0.8545,0.6527,10.39,6.904,-221,164,0.00,0.66,0.245,0.0143,mean
+pi200,PI,"Kp 12, Ki 0.2",200,"SAMMY 16 Nov, 1042 to 1642 s",-0.059,0.9386,0.3683,11.72,4.074,-106,119,0.00,0.28,0.111,0.0048,"mean, ratio"
+pi300,PI,"Kp 12, Ki 0.2",300,"Kapil 4 Nov, 1787 to 2687 s",-0.060,0.9698,0.2511,11.99,2.813,-95,88,0.00,0.35,0.153,0.0058,all four
+kp20,PI,"Kp 20, Ki 0.2",100,"SAMMY 18 Nov, 826 to 1126 s",0.081,0.9271,0.4335,6.90,4.762,-255,179,1.27,0.82,0.266,0.0137,"mean, ratio"
+ki05,PI,"Kp 12, Ki 0.5",100,"SAMMY 18 Nov, 1833 to 2133 s",0.947,1.0306,0.6821,10.86,7.753,-255,200,1.64,0.99,0.653,0.0247,"mean, ratio"

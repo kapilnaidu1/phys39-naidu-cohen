@@ -128,12 +128,14 @@ def kapil_rows():
     return out
 
 
-def compiled_rows():
+def compiled_rows(runs=None):
     """SAMMY rows: finite-rod fit of the strict settled block (kappa, q, q', nu) and of the last five cycles, the analysis script's
-    two-line semi-infinite fit (ks, qs, qps), and the finite-rod fit without T2. Plus Kapil's rows. Also returns the raw fits."""
-    fin = FR.compute([s for _, s, _, _ in RUNS])
+    two-line semi-infinite fit (ks, qs, qps), and the finite-rod fit without T2. Plus Kapil's rows. Also returns the raw fits.
+    runs: (label, analysis stem, marker, colour) per SAMMY run; default RUNS (the page of 16 and 17 Nov); A5 adds the 18 Nov run."""
+    runs = RUNS if runs is None else runs
+    fin = FR.compute([s for _, s, _, _ in runs])
     rows = []
-    for label, stamp, mk, col in RUNS:
+    for label, stamp, mk, col in runs:
         kap = read_csv(os.path.join(adir(stamp), "kappa_by_period.csv"))
         blk = {int(float(r["period_s"])): r for r in read_csv(os.path.join(adir(stamp), "settled_blocks.csv"))}
         for r in kap:
@@ -223,8 +225,8 @@ def curves(kap, nu, P):
     return 1000 * np.sqrt(2 * kap / (r + nu)), 1000 * np.sqrt(2 * kap / (r - nu)), np.full(len(w), 1000 * math.sqrt(kap / nu))
 
 
-def fig_length(path, rows, kw, nu):
-    fig, ax = plt.subplots(figsize=(9.4, 7.4))
+def fig_length(path, rows, kw, nu, figsize=(9.4, 7.4), mean_label="SAMMY mean-profile 1/m (room T from the idle sensors)"):
+    fig, ax = plt.subplots(figsize=figsize)
     P = np.logspace(math.log10(60), math.log10(700), 120)
     base = curves(kw[0], nu[0], P)
     corners = [curves(kw[0] + a * kw[1], nu[0] + b * nu[1], P) for a in (-1, 1) for b in (-1, 1)]
@@ -245,7 +247,7 @@ def fig_length(path, rows, kw, nu):
         if not r["kapil"]:
             ax.errorbar(r["period"] * 0.97, 1000 / r["m_mean"], yerr=1000 * r["sm_mean"] / r["m_mean"] ** 2, fmt="^", color=green,
                         mfc="none", ms=6, capsize=3, alpha=0.8,
-                        label=None if mean_seen else "SAMMY mean-profile 1/m (room T from the idle sensors)")
+                        label=None if mean_seen else mean_label)
             mean_seen = True
     ax.axhline(1000 * A.load_geometry(A.GEOMETRY)["L"], color="#999999", ls=":", lw=1)
     ax.text(135, 1000 * A.load_geometry(A.GEOMETRY)["L"] + 4, "analysis length L = 281.9 mm (T1 hole to rod top)", fontsize=9, color="#666666")

@@ -25,7 +25,7 @@ The code checkpoint of a given account is the commit named on its first page.
 | 100 | [sammy_angstrom_live_20261116_090538.csv](../../data/module_08_sammy/sammy_angstrom_live_20261116_090538.csv) | 7 to 12 | 1192.5 to 1792.5 | strict settling test |
 | 200 | [sammy_angstrom_live_20261116_111935_phase1_pi200s.csv](../../data/module_08_sammy/sammy_angstrom_live_20261116_111935_phase1_pi200s.csv) | 2 to 7 | 442.2 to 1642.2 | strict settling test |
 | 300 | [angstrom_live_20261104_110306.csv](../../data/module_08/angstrom_live_20261104_110306.csv) | 2 to 7 | 887.2 to 2687.2 | Naidu's selection |
-| 400 | [sammy_angstrom_live_20261118_104629.csv](../../data/module_08_sammy/sammy_angstrom_live_20261118_104629.csv) | 2 to 8 | 1526.2 to 4326.2 | strict settling test with a T3 burst in cycle 4 masked ([mask](../../data/module_08_sammy/sammy_angstrom_live_20261118_104629_mask.csv)); without the mask only cycles 5 to 8 qualify. The 17 Nov run ([sammy_angstrom_live_20261117_162612.csv](../../data/module_08_sammy/sammy_angstrom_live_20261117_162612.csv), cycles 3 to 7 = last five, only 6 and 7 strict) gives κ = 9.05 ± 0.17 (finite-rod, last five cycles) and is kept as a cross-check |
+| 400 | [sammy_angstrom_live_20261118_104629.csv](../../data/module_08_sammy/sammy_angstrom_live_20261118_104629.csv) | 4 to 8 | 2326.2 to 4326.2 | last five cycles (five-cycle rule); the strict test counts cycles 5 to 8 because cycle 4 fails on a burst on T3 (not masked); κ = 9.30 ± 0.26 (finite-rod), left out of the shared mean. The 17 Nov run ([sammy_angstrom_live_20261117_162612.csv](../../data/module_08_sammy/sammy_angstrom_live_20261117_162612.csv), cycles 3 to 7 = last five, only 6 and 7 strict) gives κ = 9.05 ± 0.17 and is kept as a cross-check |
 | 480 (for 500) | [sammy_angstrom_live_20261116_090538.csv](../../data/module_08_sammy/sammy_angstrom_live_20261116_090538.csv) | 2 to 8 | 2272.8 to 5632.8 | the page changed to 500 s after our 480 s runs |
 
 Fits of every window: [a5_windows.csv](../../data/module_08_sammy/a5_windows.csv), [compiled_periods.csv](../../data/module_08_sammy/compiled_periods.csv), [finite_rod_fits.csv](../../data/module_08_sammy/finite_rod_fits.csv).
@@ -34,7 +34,7 @@ Fits of every window: [a5_windows.csv](../../data/module_08_sammy/a5_windows.csv
 
 - S18.7: two single-gain trials were run on 18 Nov (Kp 20, Ki 0.5) with no retuning after them; P only was not repeated (Naidu's 2 Nov run).
 - S18.3, S18.4 and the focused S19 simulation: the course's six-sensor simulator tables were not filled; our own Python models were used instead.
-- 400 s: seven settled cycles by the strict test only with a documented mask of a T3 burst in cycle 4 (four without it); the cause of the burst is unknown, no note was typed.
+- 400 s: five cycles by the five-cycle rule (cycles 4 to 8), four by the strict settling test: cycle 4 fails on one burst on T3 (cause unknown, no note typed); no mask was applied.
 - The contact between the TEC plate and the rod changed between sessions: T1/TEC amplitude 0.44 (17 Nov) and 0.40 (18 Nov) at 400 s, 0.27 (16 Nov) and 0.22 (18 Nov) at 100 s, G<sub>c</sub> 0.265 and 0.21 W/K; the cause is unknown.
 - No caliper reading was recorded on 18 Nov.
 

@@ -78,11 +78,11 @@ def main():
     r18 = (chk18[0][1], chk18[2][1])
     bc = M.burst_check(M.RUN18, 400)
     bs = M.burst_stats(M.RUN18, "T3_C", 2445, 2467)
-    wd_nm = M.sammy_window(M.RUN18, 400, "strict", use_mask=False)
-    assert wb[400]["wd"]["ncyc"] == 7 and len(bc["block"]) == 4 and bc["sensor"] == "T3_C", "typed counts in Part 1 are stale"
+    wd_m = M.sammy_window(M.RUN18, 400, "strict", mask=M.T3_BURST)
+    assert wb[400]["wd"]["ncyc"] == 5 and len(bc["block"]) == 4 and wd_m["ncyc"] == 7 and bc["sensor"] == "T3_C", "typed counts in the text are stale"
     xs, dxs = A.load_positions(A.SENSOR_MAP)
-    phi_nm = wd_nm["phi"][0] + M.np.unwrap(wd_nm["phi"] - wd_nm["phi"][0])
-    fin_nm = FR.joint_fit(xs, dxs, wd_nm["B"], wd_nm["sB"], phi_nm, wd_nm["sphi"], 2 * math.pi / 400, A.load_geometry(A.GEOMETRY)["L"], True)
+    phi_m = wd_m["phi"][0] + M.np.unwrap(wd_m["phi"] - wd_m["phi"][0])
+    fin_m = FR.joint_fit(xs, dxs, wd_m["B"], wd_m["sB"], phi_m, wd_m["sphi"], 2 * math.pi / 400, A.load_geometry(A.GEOMETRY)["L"], True)
     cp = M.comparison(g_c, tau_s, kap, nu, wb[300])
     s183 = read_csv(os.path.join(A.DATA_DIR, "s183_analysis_20261111_122227", "s183_by_period.csv"))[0]
     fitrow = next(r for r in read_csv(os.path.join(A.DATA_DIR, "s183_analysis_20261111_122227", "s183_model_fit.csv")) if r["model"].startswith("fitted"))
@@ -214,11 +214,11 @@ Repository: https://github.com/kapilnaidu1/phys39-naidu-cohen, branch main
 - **S18 record.** The team's S18 evidence table (one row per step S18.1 to S18.10: result, evidence, departures) is `docs/module_notes/module_08_s18_evidence_table.md`.
   Departures that matter here: the 2 Nov feedforward inverted the measured steady-state curve instead of using the S18.5 straight line, which gives nearly the same command (3 to 67 counts against {ff_lo:.1f} to {ff_hi:.1f});
   the PI pair (Kp 12, Ki 0.2) came from the Module 6 plate model and ran at every period, and the S18.7 tuning log is the two single-gain trials of 18 Nov (Kp 20, then Ki 0.5, at 100 s; Table 1),
-  neither of which met all four criteria, so I did not retune further; the 400 s window has seven settled cycles by the strict test (3 % in amplitude, 0.05 rad) only after masking one burst on T3 in cycle 4
-  (four without the mask; Question 3); 480 s stands in for 500 s.
+  neither of which met all four criteria, so I did not retune further; the 400 s window (18 Nov) has five cycles by the five-cycle rule but four by the strict settling test (3 % in amplitude, 0.05 rad)
+  because a burst on T3 spoils cycle 4; I did not mask it (Question 3); 480 s stands in for 500 s.
 - **Data and code.** Raw runs, each with `_events.txt`, `_notes.csv` and `_meta.json`: Kapil's `angstrom_live_20261102_094506` (feedforward, P, PI 100 s) and `angstrom_live_20261104_110306` (PI 300 s, the matched run) in `data/module_08/`;
   mine in `data/module_08_sammy/`, all `sammy_angstrom_live_` + `20261111_122227` (raw zero-centered), `20261116_090538` (PI 100 and 480 s), `20261116_111935` (phases: PI 200 s, raw positive-only), `20261117_162612` and `20261118_104629`
-  (PI 400 s; the latter with its `_mask.csv`) and `20261118_122006` (the two gain trials, as phase slices). Each figure caption names its run and interval (also in `a5_control_table.csv` and `a5_windows.csv`). Code (in `python/`):
+  (PI 400 s) and `20261118_122006` (the two gain trials, as phase slices). Each figure caption names its run and interval (also in `a5_control_table.csv` and `a5_windows.csv`). Code (in `python/`):
   `sammy_module8_a5_write.py` regenerates every number, table and figure below with `sammy_module8_a5.py`, `sammy_module8_a5_figs.py`, `sammy_module8_angstrom_analysis.py`, `sammy_module8_finite_rod.py`,
   `sammy_module8_runs_summary.py` and the model `sammy_module8_tec_rod_sim.py`; `build_a5_cohen_pdf.py` makes this PDF. The commit named on this page contains all of them.
 
@@ -289,7 +289,7 @@ insulated tip matters for it, whereas the oscillation is confined to the first o
 ![Characteristic lengths](../figures/module_08_sammy/a5_fig2_lengths.png)
 
 **Figure 2.** Characteristic lengths against period. Curves: 1/q, 1/q\u2032 and 1/m for the shared \u03ba = {pm(kap, kw[1], 1e5)} \u00d7 10\u207b\u2075 m\u00b2/s and \u03bd = {pm(nu, nuw[1], 1e3)} \u00d7 10\u207b\u00b3 s\u207b\u00b9 (bands: \u00b11 standard error). Points: finite-rod fits of the
-five production windows of Table 2 (circles 1/q, squares 1/q\u2032, with errors) and 1/m from the finite mean-profile fit of each window (triangles; the 200 s window had no pre-hold, so its mean was still rising).
+five production windows of Table 2 (circles 1/q, squares 1/q\u2032, with errors) and 1/m from the finite mean-profile fit of each window (triangles; the 200 s window had no pre-hold, so its mean was still rising). Open markers: the 400 s window uses the last five cycles, only {len(bc['block'])} of them strictly settled.
 
 ### Question 3: how do the measurements determine diffusivity and heat loss?
 
@@ -307,9 +307,9 @@ and raises \u03c7\u00b2/dof to {min(chi_dof):.1f} to {max(chi_dof):.1f} (the err
 a semi-infinite fit would give \u03ba {semi_low[400]:.1f} % (400 s) and {semi_low[480]:.1f} % (480 s) too low. (iii) Mean profile: the finite cosh fit to the mean temperatures agrees with \u221a(q\u00b2 \u2212 q\u2032\u00b2) within errors at 100, 300, 400 and 480 s ({mcmp} 1/m), as does Module 7's full-length steady-state fit of the same rod,
 m = 4.12 \u00b1 0.07 1/m (`docs/module_notes/module_08_stationary_fin.md`); at 200 s the run started from room temperature without a hold, the mean was still rising and m is too large.
 (iv) The transverse Biot number Bi = (D/4)\u00b2(q\u00b2 \u2212 q\u2032\u00b2) = {sci(min(w['bi'] for w in wins))} to {sci(max(w['bi'] for w in wins))} \u226a 0.1: one temperature per cross-section.
-(v) The 400 s window (18 Nov): without a mask the strict test rejects cycle {bc['cycle']} on {bc['sensor'][:2]} alone (amplitude {n(bc['dB'][2], 1, True)} %, phase {n(bc['dphi'][2], 2, True)} rad; the other sensors are within {max(abs(v) for i, v in enumerate(bc['dB']) if i != 2):.1f} %),
-because of a burst on T3 ({bs['n']} points more than 0.25 \u00b0C from their running median, jumps up to {bs['jump']:.1f} \u00b0C between 0.5 s samples; 11:27:15 to 11:27:37, no note, cause unknown). I masked those 22 s of T3 (`sammy_angstrom_live_20261118_104629_mask.csv`; the raw file is unchanged),
-which leaves cycles {wb[400]['wd']['cycles']} settled; without the mask only cycles {bc['block'][0] + 1} to {bc['block'][-1] + 1} qualify ({len(bc['block'])}, below the five required) and \u03ba = {pm(fin_nm['kappa'], fin_nm['skappa'], 1e5)} \u00d7 10\u207b\u2075 m\u00b2/s against {pm(wb[400]['fin']['kappa'], wb[400]['fin']['skappa'], 1e5)} with it, so the mask does not decide the result.
+(v) The 400 s window (18 Nov) is the last five cycles of its step (cycles {wb[400]['wd']['cycles']}, no mask). The strict test counts {len(bc['block'])} of them ({bc['block'][0] + 1} to {bc['block'][-1] + 1}) because it rejects cycle {bc['cycle']} on {bc['sensor'][:2]} alone (amplitude {n(bc['dB'][2], 1, True)} %, phase {n(bc['dphi'][2], 2, True)} rad; the other sensors are within {max(abs(v) for i, v in enumerate(bc['dB']) if i != 2):.1f} %),
+the effect of a burst on T3 ({bs['n']} points more than 0.25 \u00b0C from their running median, jumps up to {bs['jump']:.1f} \u00b0C between 0.5 s samples; 11:27:15 to 11:27:37, no note, cause unknown). I kept the burst in the fit (\u03ba = {pm(wb[400]['fin']['kappa'], wb[400]['fin']['skappa'], 1e5)} \u00d7 10\u207b\u2075 m\u00b2/s) and left the window out of the shared mean,
+since only {len(bc['block'])} of its cycles are strictly settled. Masking T3 for those 22 s instead would give {wd_m['ncyc']} settled cycles ({wd_m['cycles']}) and \u03ba = {pm(fin_m['kappa'], fin_m['skappa'], 1e5)}, so the burst does not decide the result.
 
 **The most important limitation.** The five periods agree with each other, so the frequency-consistency test passes, but \u03ba is {100 * (kap / kh - 1):.0f} % above the handbook {kh * 1e5:.1f} \u00d7 10\u207b\u2075 m\u00b2/s of 6061-T6 at every period (k = {k_cond:.0f} against 167 W/(m K)),
 and a frequency-independent systematic cannot show up in a test across frequency. It is not the sensor spacing (the calipers read 25.4 mm; {25.4 * math.sqrt(kh / kap):.0f} mm would be needed), and not T2 (dropping it changes \u03ba by {n(max(t2_dk.values()), 1, True)} to {n(min(t2_dk.values()), 1, True)} %). The alloy,
@@ -320,7 +320,7 @@ the assumed \u03c1 and c, and the effective bead positions are untested.
 **Figure 3.** (a) ln of the amplitude ratio, (b) unwrapped phase and (c) mean excess temperature against distance from the T1 hole for the five windows (SAMMY 16 Nov 100 s and 480 s, SAMMY 16 Nov 200 s, Kapil 4 Nov 300 s, SAMMY 18 Nov 400 s; cycles in Table 2),
 with the finite-rod curves of the fitted q and q\u2032 and the cosh fit of the mean.
 
-**Table 2.** Spatial fits of the five production windows (finite insulated tip; settled cycles are numbered from the start of the step; \u03ba<sub>sh</sub> is the shared value above; the 400 s window masks a T3 burst, Checks (v)). Intervals, residuals, finite-length differences, mean-profile slopes and Biot numbers are in `a5_windows.csv`.
+**Table 2.** Spatial fits of the five production windows (finite insulated tip; settled cycles are numbered from the start of the step; \u03ba<sub>sh</sub> is the shared value above; the 400 s window is the last five cycles of its step, Checks (v)). Intervals, residuals, finite-length differences, mean-profile slopes and Biot numbers are in `a5_windows.csv`.
 
 {t2}
 
@@ -359,7 +359,7 @@ The \u03bd spread between windows (Table 2) is as large as this effect, so I can
 
 The aluminium rod behaves as a one-dimensional rod that diffuses and loses heat to the air: the amplitude and phase lengths grow as \u221a\u03c4, one pair of parameters describes all periods (\u03ba = {pm(kap, kw[1], 1e5)} \u00d7 10\u207b\u2075 m\u00b2/s, \u03bd = {pm(nu, nuw[1], 1e3)} \u00d7 10\u207b\u00b3 s\u207b\u00b9,
 h \u2248 {h_conv:.0f} W/(m\u00b2 K)), and a finite-rod calculation and a coupled TEC and rod simulation both reproduce the 300 s run to a few percent in amplitude and a few hundredths of a radian in phase. The TEC follows the requested sinusoid only at the longer periods (at Kp 12 a delay of 10 to 13 s
-limits the phase; a higher Kp shortens it to {bm('kp20', 'lag_s'):.0f} s but then clips the PWM at 100 s), so the rod is analysed from T1, not from the setpoint. The conclusion is limited by a {100 * (kap / kh - 1):.0f} % excess of \u03ba over the handbook value that a test across frequencies cannot reveal, and a \u03bd good to only {min(nu_err):.0f} to {max(nu_err):.0f} % per window. The one measurement that would best resolve the first is an independent determination of the rod's conductivity or alloy (its density from mass and volume, or a steady-state conduction measurement with a known heater power), which would show whether the excess is in k or in the effective sensor spacing.
+limits the phase; a higher Kp shortens it to {bm('kp20', 'lag_s'):.0f} s but then clips the PWM at 100 s), so the rod is analysed from T1, not from the setpoint. The conclusion is limited by a {100 * (kap / kh - 1):.0f} % excess of \u03ba over the handbook value that a test across frequencies cannot reveal, a \u03bd good to only {min(nu_err):.0f} to {max(nu_err):.0f} % per window and a 400 s window with {len(bc['block'])} strictly settled cycles out of its five. The one measurement that would best resolve the first is an independent determination of the rod's conductivity or alloy (its density from mass and volume, or a steady-state conduction measurement with a known heater power), which would show whether the excess is in k or in the effective sensor spacing.
 
 **AI assistance.** The analysis code, the numerical TEC and rod model and the first draft of this account were written with an AI assistant (GitHub Copilot). Every number and figure is regenerated from the raw files by the scripts named in Part 1, and I am responsible for the content.
 """

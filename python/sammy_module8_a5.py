@@ -42,13 +42,14 @@ RUN18 = "20261118_104629"                                          # 18 Nov: PI 
 TR1 = "20261118_122006_phase1_pi_kp_20_ki_0_2_100s"                # 18 Nov gain trials at 100 s (slices of one plan run)
 TR2 = "20261118_122006_phase2_pi_kp_12_ki_0_5_100s"
 T_ROOM18 = 24.91                                                   # calibrated T1 to T5 mean of the idle lead-in, 18 Nov
+T3_BURST = {"T3_C": [(2445.0, 2467.0, "burst on T3, cycle 4 of the 400 s step")]}   # sensitivity check only: no window is masked
 T_AMB_2NOV, T_AMB_4NOV = 22.53, 27.10
 TA, TB = 40.0, 16.0
 # acceptance criteria for "approached 40 + 16 sin(2 pi t / tau)" (mean error, amplitude ratio, phase lag, rms error)
 CRIT = dict(mean=1.0, ratio_lo=0.90, ratio_hi=1.10, lag=0.30, rms=0.20 * TB)
 # (period, label, source stamp or None for Kapil's 300 s, block, room T for the mean profile)
 WINDOWS = [(100, "SAMMY 16 Nov", RUN16, "strict", 22.2), (200, "SAMMY 16 Nov", PH1, "strict", 22.7),
-           (300, "Kapil 4 Nov", None, "his", T_AMB_4NOV), (400, "SAMMY 18 Nov", RUN18, "strict", T_ROOM18),
+           (300, "Kapil 4 Nov", None, "his", T_AMB_4NOV), (400, "SAMMY 18 Nov", RUN18, "last5", T_ROOM18),
            (480, "SAMMY 16 Nov", RUN16, "strict", 22.2)]
 RUNS_EXTRA = [("SAMMY 18 Nov, PI 400 s", RUN18, "P", "#c0392b")]       # added to the compiled rows of sammy_module8_runs_summary
 COLORS = {100: "#1F4E79", 200: "#2a9d8f", 300: "#888888", 400: "#8e44ad", 480: "#e07b00"}
@@ -56,11 +57,11 @@ wrap = A.wrap
 
 
 def load_run(path, mask=None, use_mask=True):
-    """Run file with the offsets; the mask is <run>_mask.csv when that file exists (use_mask=False: none, for the sensitivity check)."""
+    """Run file with the offsets; mask: a file or a {column: [(t0, t1, reason)]} dict, default <run>_mask.csv when that file exists (none exists for the 18 Nov run)."""
     cols = A.load(path)
     if mask is None and use_mask and os.path.exists(path.replace(".csv", "_mask.csv")):
         mask = path.replace(".csv", "_mask.csv")
-    _, data, _ = A.prepare(cols, A.load_offsets(A.OFFSETS), A.load_mask(mask) if mask else {})
+    _, data, _ = A.prepare(cols, A.load_offsets(A.OFFSETS), (A.load_mask(mask) if isinstance(mask, str) else mask) if mask else {})
     return cols, data
 
 
@@ -154,7 +155,7 @@ def control_rows():
 # ---------------------------------------------------------------------------
 
 CONTACT_1617 = ((RUN16, 100, "strict"), (PH1, 200, "strict"), (RUN17, 400, "last5"))
-CONTACT_18 = ((TR1, 100, "strict"), (TR2, 100, "strict"), (RUN18, 400, "strict"))
+CONTACT_18 = ((TR1, 100, "strict"), (TR2, 100, "strict"), (RUN18, 400, "last5"))
 
 
 def fit_contact(kappa, nu, windows=CONTACT_1617):
@@ -212,8 +213,8 @@ def variant(kp, ki, mode, g_c, tau_s, period=100.0):
 # windows, spatial fits, mean profile (Q2, Q3)
 # ---------------------------------------------------------------------------
 
-def sammy_window(stamp, period, which, use_mask=True):
-    cols, data = load_run(f"{DATA}/module_08_sammy/sammy_angstrom_live_{stamp}.csv", use_mask=use_mask)
+def sammy_window(stamp, period, which, use_mask=True, mask=None):
+    cols, data = load_run(f"{DATA}/module_08_sammy/sammy_angstrom_live_{stamp}.csv", mask=mask, use_mask=use_mask)
     t = cols["t"]
     info = next(s for s in A.find_steps(cols) if abs(s["period"] - period) < 1 and s["tb"] > 0)
     cyc = A.cycle_fits(t, data, info)

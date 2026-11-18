@@ -15,7 +15,7 @@
     "1": 9.99,
     "2": 53.32
   },
-  "masked_samples": 41,
+  "masked_samples": 0,
   "t5_prediction": {
     "2": {
       "rms_fit": 0.0192,

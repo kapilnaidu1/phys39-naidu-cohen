@@ -1,2 +1,0 @@
-channel,t_start_s,t_end_s,reason
-T3,2445,2467,burst on T3 only: jumps up to 3.3 C between 0.5 s samples and excursions up to 3.8 C from the waveform of cycles 5 to 8 (17 points more than 0.25 C from the 11-sample running median at 2447.2 to 2464.6 s; T2 and T4 clean; wall clock 11:27:15 to 11:27:37; cause unknown; no note typed; cycle 4 of the 400 s step)

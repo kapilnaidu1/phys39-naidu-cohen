@@ -1,0 +1,4 @@
+wall_clock,time_ms,note
+2026-11-18T12:22:10,121496,"PLAN phase 1 of 2 start: PI Kp 20 Ki 0.2, 100 s (PI)"
+2026-11-18T12:38:57,1127917,"PLAN phase 2 of 2 start: PI Kp 12 Ki 0.5, 100 s (PI)"
+2026-11-18T12:55:41,2132500,PLAN finished

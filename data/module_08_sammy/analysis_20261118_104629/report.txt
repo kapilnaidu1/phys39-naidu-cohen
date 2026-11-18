@@ -2,7 +2,7 @@ Run data/module_08_sammy/sammy_angstrom_live_20261118_104629.csv
 python3 python/sammy_module8_angstrom_analysis.py data/module_08_sammy/sammy_angstrom_live_20261118_104629.csv --t-room 24.91
 Offsets (in memory only): data/module_08/calibration_rod_run_20261026_112627.csv
 Masks (removed from the fits, raw file unchanged):
-  T3  2445 to 2467 s  burst of jumps up to 0.9 C between 0.5 s samples on T3 only (17 points more than 0.25 C from the 11-sample running median at 2447.2 to 2464.6 s; T2 and T4 clean; wall clock 11:27:15 to 11:27:37; cause unknown; no note typed; cycle 4 of the 400 s step)
+  T3  2445 to 2467 s  burst on T3 only: jumps up to 3.3 C between 0.5 s samples and excursions up to 3.8 C from the waveform of cycles 5 to 8 (17 points more than 0.25 C from the 11-sample running median at 2447.2 to 2464.6 s; T2 and T4 clean; wall clock 11:27:15 to 11:27:37; cause unknown; no note typed; cycle 4 of the 400 s step)
 Settling test: within 3 % in B and 0.05 rad in phase of the block median, counting back from the last cycle; wanted at least 5 settled cycles.
 Hold step: TEC reached 39.5 C after 29 s, max 40.34 C (overshoot +0.34), peak PWM 198, T1 at the end 34.40 C.
 

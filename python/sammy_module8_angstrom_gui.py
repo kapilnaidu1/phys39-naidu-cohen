@@ -17,7 +17,7 @@ that file does is kept; the differences are:
   - two more schedule presets (course periods 500-200-100 in PI; raw-PWM
     sweep 100-200-500);
   - "One long run": START PLAN runs the bench list for 18 Nov (FULL_PLAN
-    below: RAW zero-centered 300 s, PI production at 400 and 500 s, RAW
+    below: RAW zero-centered 300 s, PI production at 400 s, RAW
     feedforward 100 s, P only, two PI tuning trials; the last one only if the
     box is ticked). It sets the mode and the boxes itself, sends each
     schedule and starts the next one when the Arduino reports SCHEDULE DONE.
@@ -97,8 +97,8 @@ PI_SPINS = {"TA": 40.0, "TB": 16.0, "PERIOD": 100.0, "KP": 12.0, "KI": 0.2, "CHI
 HOLD_AND_7 = "300 40 0 100\n700 40 16 100\n"      # 5 min hold at 40 C, then 7 cycles of 100 s
 FULL_PLAN = [
     {"name": "RAW zero-centered 300 s", "mode": "RAW", "spins": dict(PI_SPINS, U=50.0, U0=0.0), "schedule": "1800 40 0 300\n"},
-    {"name": "PI production 400 s and 500 s", "mode": "PI", "spins": PI_SPINS,
-     "schedule": "1200 40 0 100\n4000 40 16 400\n3500 40 16 500\n"},
+    {"name": "PI production 400 s", "mode": "PI", "spins": PI_SPINS,
+     "schedule": "1200 40 0 100\n4000 40 16 400\n"},
     {"name": "RAW feedforward 100 s", "mode": "RAW", "spins": dict(PI_SPINS, U=32.0, U0=35.0), "schedule": "900 40 0 100\n"},
     {"name": "P only Kp 12, 100 s", "mode": "P", "spins": dict(PI_SPINS, KP=12.0, KI=0.0), "schedule": HOLD_AND_7},
     {"name": "PI Kp 12 Ki 0.5, 100 s", "mode": "PI", "spins": dict(PI_SPINS, KP=12.0, KI=0.5), "schedule": HOLD_AND_7},
